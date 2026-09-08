@@ -33,6 +33,7 @@ import com.fongmi.android.tv.browse.BrowseTree;
 import com.fongmi.android.tv.event.ActionEvent;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.player.PlayerManager;
+import com.fongmi.android.tv.player.media.ArtworkBitmapLoader;
 import com.fongmi.android.tv.player.media.PlaySpec;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.Task;
@@ -63,7 +64,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
 
     private NavigationCallback navigationCallback;
     private MediaLibrarySession session;
-    private Runnable onNewBinding;
+    private ActivityBinding binding;
     private PlayerManager player;
     private String navigationKey;
     private Player sessionPlayer;
@@ -72,9 +73,21 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
         return running;
     }
 
-    public void replaceBinding(Runnable callback) {
-        if (onNewBinding != null) onNewBinding.run();
-        onNewBinding = callback;
+    public void claimBinding(NavigationCallback owner, Runnable onReplaced) {
+        if (ownsBinding(owner)) return;
+        if (binding != null) binding.onReplaced().run();
+        binding = new ActivityBinding(owner, onReplaced);
+    }
+
+    public boolean ownsBinding(NavigationCallback owner) {
+        return binding != null && binding.owner() == owner;
+    }
+
+    public boolean releaseBinding(NavigationCallback owner) {
+        if (navigationCallback == owner) setNavigationCallback(null, null);
+        if (!ownsBinding(owner)) return false;
+        binding = null;
+        return true;
     }
 
     public PlayerManager player() {
@@ -92,7 +105,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
         player = new PlayerManager(this);
         sessionPlayer = player.getPlayer();
         sessionPlayer.addListener(listener);
-        session = new MediaLibrarySession.Builder(this, wrap(sessionPlayer), this).build();
+        session = new MediaLibrarySession.Builder(this, wrap(sessionPlayer), this).setBitmapLoader(new ArtworkBitmapLoader(this)).build();
         session.setSessionActivity(buildDefaultIntent());
         EventBus.getDefault().register(this);
         Server.get().setService(this);
@@ -174,7 +187,6 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
     public void onDestroy() {
         running = false;
         releaseSession();
-        player.stop();
         player.release();
         removeForeground();
         Server.get().setService(null);
@@ -184,6 +196,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
 
     private void stopAndClear() {
         player.stop();
+        player.clearPreload();
         player.clearMediaItems();
     }
 
@@ -495,7 +508,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
     }
 
     @Override
-    public void onDanmakuSourceChanged(Uri uri) {
+    public void onDanmakuSourceChanged(@Nullable Uri uri) {
         playerCallbacks.forEach(callback -> callback.onDanmakuSourceChanged(uri));
     }
 
@@ -596,7 +609,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
         default void onPlayerRebuild(Player player) {
         }
 
-        default void onDanmakuSourceChanged(Uri uri) {
+        default void onDanmakuSourceChanged(@Nullable Uri uri) {
         }
 
         default void onDanmakuConfigChanged(DanmakuConfig config) {
@@ -625,6 +638,9 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
 
         default void onAudio() {
         }
+    }
+
+    private record ActivityBinding(NavigationCallback owner, Runnable onReplaced) {
     }
 
     public class LocalBinder extends Binder {

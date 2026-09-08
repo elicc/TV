@@ -1,37 +1,62 @@
 package com.fongmi.android.tv.player.engine;
 
+import androidx.annotation.Nullable;
+import androidx.media3.common.C;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
+import androidx.media3.common.TrackSelectionOverride;
+import androidx.media3.ui.PlayerView;
 
 import com.fongmi.android.tv.bean.Sub;
+import com.fongmi.android.tv.player.effect.PlayerEffect;
 import com.fongmi.android.tv.player.media.PlaySpec;
+
+import java.util.List;
 
 public interface PlayerEngine {
 
-    int SOFT = 0;
-    int HARD = 1;
+    int SOFT = C.DECODE_SOFTWARE;
+    int HARD = C.DECODE_HARDWARE;
 
     Type getType();
 
+    default boolean needsRebuild() {
+        return false;
+    }
+
     Player getPlayer();
+
+    int getAudioChannelCount();
 
     void release();
 
-    Player rebuild();
+    void setDecode(int decode);
 
-    boolean setDecode(int decode);
+    default PlayerEffect getEffect() {
+        return PlayerEffect.NONE;
+    }
 
     void start(PlaySpec spec, long startPositionMs);
 
-    default void stop() {
-        getPlayer().stop();
+    default void preload(PlaySpec spec, long startPositionMs) {
     }
 
-    boolean isLive();
+    default void clearPreload() {
+    }
 
-    boolean isVod();
+    default void bindPlayerView(PlayerView playerView) {
+    }
 
-    default void setSubtitleStyle() {
+    void stop();
+
+    default void applySubtitleStyle() {
+    }
+
+    default SecondarySubtitleState getSecondarySubtitleState() {
+        return SecondarySubtitleState.EMPTY;
+    }
+
+    default void setSecondarySubtitleSelection(@Nullable TrackSelectionOverride selection) {
     }
 
     default boolean addSubtitle(Sub sub) {
@@ -51,5 +76,14 @@ public interface PlayerEngine {
     enum Type {
         EXO,
         MPV
+    }
+
+    record SecondarySubtitleState(@Nullable TrackSelectionOverride primarySelection, @Nullable TrackSelectionOverride explicitSelection, List<TrackSelectionOverride> secondaryCandidates, boolean secondaryPromotedToPrimary) {
+
+        public static final SecondarySubtitleState EMPTY = new SecondarySubtitleState(null, null, List.of(), false);
+
+        public SecondarySubtitleState {
+            secondaryCandidates = List.copyOf(secondaryCandidates);
+        }
     }
 }

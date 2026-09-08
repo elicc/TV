@@ -12,6 +12,7 @@ import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.databinding.DialogDanmakuSettingBinding;
 import com.fongmi.android.tv.player.PlayerManager;
+import com.fongmi.android.tv.player.subtitle.ExternalFont;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Util;
 
@@ -21,6 +22,10 @@ public final class DanmakuSettingDialog {
 
     public static DanmakuSettingDialog create() {
         return new DanmakuSettingDialog();
+    }
+
+    private static DialogDanmakuSettingBinding inflate(LayoutInflater inflater, ViewGroup container) {
+        return DialogDanmakuSettingBinding.inflate(inflater, container, false);
     }
 
     public DanmakuSettingDialog player(PlayerManager player) {
@@ -35,14 +40,12 @@ public final class DanmakuSettingDialog {
         else new BottomSheet(player).show(manager, null);
     }
 
-    private static DialogDanmakuSettingBinding inflate(LayoutInflater inflater, ViewGroup container) {
-        return DialogDanmakuSettingBinding.inflate(inflater, container, false);
-    }
-
     public static final class BottomSheet extends BaseBottomSheetDialog {
 
-        private DialogDanmakuSettingBinding binding;
         private final PlayerManager player;
+        private final ExternalFontSelector fontSelector = new ExternalFontSelector(this, this::onFontSelected);
+        private DialogDanmakuSettingBinding binding;
+        private DanmakuSettingPanel panel;
 
         BottomSheet(PlayerManager player) {
             this.player = player;
@@ -54,15 +57,35 @@ public final class DanmakuSettingDialog {
         }
 
         @Override
+        protected int getMaxHeight() {
+            return ResUtil.getScreenHeight() / 2;
+        }
+
+        @Override
         protected void initView() {
-            new DanmakuSettingPanel(binding, player).bind();
+            panel = new DanmakuSettingPanel(binding, player, fontSelector);
+            panel.bind();
+        }
+
+        private void onFontSelected(@Nullable ExternalFont.Item font) {
+            if (panel != null) panel.onFontSelected(font);
+        }
+
+        @Override
+        public void onDestroyView() {
+            fontSelector.release();
+            panel = null;
+            binding = null;
+            super.onDestroyView();
         }
     }
 
     public static final class SideSheet extends BaseSideSheetDialog {
 
-        private DialogDanmakuSettingBinding binding;
         private final PlayerManager player;
+        private final ExternalFontSelector fontSelector = new ExternalFontSelector(this, this::onFontSelected);
+        private DialogDanmakuSettingBinding binding;
+        private DanmakuSettingPanel panel;
 
         SideSheet(PlayerManager player) {
             this.player = player;
@@ -80,7 +103,20 @@ public final class DanmakuSettingDialog {
 
         @Override
         protected void initView() {
-            new DanmakuSettingPanel(binding, player).bind();
+            panel = new DanmakuSettingPanel(binding, player, fontSelector);
+            panel.bind();
+        }
+
+        private void onFontSelected(@Nullable ExternalFont.Item font) {
+            if (panel != null) panel.onFontSelected(font);
+        }
+
+        @Override
+        public void onDestroyView() {
+            fontSelector.release();
+            panel = null;
+            binding = null;
+            super.onDestroyView();
         }
     }
 }

@@ -9,48 +9,50 @@ import com.fongmi.android.tv.bean.Vod;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VodFallbackPolicy {
+class VodFallbackPolicy {
 
     private final VodPlaybackController controller;
     private final VodPlaybackState state;
     private final VodPlaybackHost host;
+    private final VodDataSource dataSource;
 
-    public VodFallbackPolicy(VodPlaybackController controller, VodPlaybackState state, VodPlaybackHost host) {
+    VodFallbackPolicy(VodPlaybackController controller, VodPlaybackState state, VodPlaybackHost host, VodDataSource dataSource) {
         this.controller = controller;
         this.state = state;
         this.host = host;
+        this.dataSource = dataSource;
     }
 
-    public void playbackError() {
+    void playbackError() {
         fallbackToNextLineOrSource();
     }
 
-    public void emptyFlag() {
+    void emptyFlag() {
         fallbackToNextLineOrSource();
     }
 
-    public void emptyDetail() {
+    void emptyDetail() {
         fallbackToNextSource(false);
     }
 
-    public void manualSwitchSource() {
+    void manualSwitchSource() {
         fallbackToNextSource(true);
     }
 
-    public void search(String keyword, boolean autoFallback) {
+    void search(String keyword, boolean autoFallback) {
         state.setSearchKeyword(keyword);
         state.setAutoFallback(autoFallback);
         state.setSelectFirstSource(autoFallback);
         host.onSearchStarted(keyword);
-        host.requestSearch(getSearchableSites(), keyword);
+        dataSource.searchContent(getSearchableSites(), keyword, true);
     }
 
-    public void onSearchResult(Result result) {
+    void onSearchResult(Result result) {
         List<Vod> items = new ArrayList<>(result.getList());
         items.removeIf(this::mismatch);
         state.setSources(items);
-        host.renderSources(state.getSources());
-        if (state.isSelectFirstSource()) nextSource();
+        if (state.isSelectFirstSource() && state.hasSources()) nextSource();
+        else host.renderSources(state.getSources());
         if (items.isEmpty()) return;
         host.onSearchResult();
     }

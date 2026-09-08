@@ -27,8 +27,13 @@
     native <methods>;
 }
 
+# libmedia3ass resolves these classes and constructors by their binary names.
+-keep class androidx.media3.exoplayer.libass.LibassNative { *; }
+-keep class androidx.media3.exoplayer.libass.LibassFrame { *; }
+-keep class androidx.media3.exoplayer.libass.LibassImage { *; }
+
 -keep, includedescriptorclasses class androidx.media3.decoder.ffmpeg.FfmpegAudioDecoder {
-  private java.nio.ByteBuffer growOutputBuffer(androidx.media3.decoder.SimpleDecoderOutputBuffer, int);
+  private java.nio.ByteBuffer growOutputBuffer(androidx.media3.decoder.SimpleDecoderOutputBuffer, int, int);
 }
 
 -keep class is.xyz.mpv.MPVLib { *; }
@@ -60,7 +65,12 @@
 
 -dontnote androidx.media3.decoder.ffmpeg.FfmpegVideoRenderer
 -keepclassmembers class androidx.media3.decoder.ffmpeg.FfmpegVideoRenderer {
-  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int, int);
+  <init>(android.content.Context, long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
+}
+
+-dontnote androidx.media3.decoder.ffmpeg.FfmpegDolbyVisionP7Converter$Factory
+-keep class androidx.media3.decoder.ffmpeg.FfmpegDolbyVisionP7Converter$Factory {
+  <init>();
 }
 
 -dontnote androidx.media3.decoder.opus.LibopusAudioRenderer
@@ -149,6 +159,7 @@
   <init>();
   androidx.media3.effect.DefaultVideoFrameProcessor$Factory build();
   androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder setEnableReplayableCache(boolean);
+  androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder setOutputSurfaceSizeAdjustmentEnabled(boolean);
 }
 
 -dontnote androidx.media3.effect.SingleInputVideoGraph$Factory
@@ -191,8 +202,7 @@
 }
 
 -dontnote androidx.media3.exoplayer.util.DebugTextViewHelper
--keepnames class androidx.media3.exoplayer.util.DebugTextViewHelper {}
--keepclassmembers class androidx.media3.exoplayer.util.DebugTextViewHelper {
+-keep class androidx.media3.exoplayer.util.DebugTextViewHelper {
   <init>(androidx.media3.exoplayer.ExoPlayer, android.widget.TextView);
   void start();
   void stop();
@@ -201,6 +211,8 @@
 -dontnote androidx.media3.mpvplayer.MpvPlayer
 -keepclassmembers class androidx.media3.mpvplayer.MpvPlayer {
   boolean toggleGeneralStats();
+  void setOsdSurfaceView(android.view.SurfaceView);
+  void clearOsdSurfaceView(android.view.SurfaceView);
 }
 
 -keepnames class androidx.media3.transformer.CompositionPlayer {}

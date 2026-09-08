@@ -4,12 +4,16 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.media3.ui.danmaku.DanmakuConfig;
 
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.databinding.DialogDanmakuSettingBinding;
 import com.fongmi.android.tv.player.PlayerManager;
+import com.fongmi.android.tv.player.subtitle.ExternalFont;
 import com.fongmi.android.tv.setting.DanmakuSetting;
+import com.fongmi.android.tv.utils.SliderUtil;
+import com.fongmi.android.tv.utils.Util;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.slider.Slider;
@@ -26,11 +30,13 @@ final class DanmakuSettingPanel {
 
     private final DialogDanmakuSettingBinding binding;
     private final PlayerManager player;
+    private final ExternalFontSelector fontSelector;
     private int currentTab;
 
-    DanmakuSettingPanel(DialogDanmakuSettingBinding binding, PlayerManager player) {
+    DanmakuSettingPanel(DialogDanmakuSettingBinding binding, PlayerManager player, ExternalFontSelector fontSelector) {
         this.binding = binding;
         this.player = player;
+        this.fontSelector = fontSelector;
     }
 
     void bind() {
@@ -39,14 +45,20 @@ final class DanmakuSettingPanel {
         bindDensity();
         bindDisplay();
         bindTabs();
+        bindReset();
         showTab(0);
-        binding.tabAppearance.requestFocus();
-        binding.reset.setOnClickListener(this::onReset);
+        if (Util.isLeanback()) binding.tabAppearance.requestFocus();
         binding.tabGroup.check(binding.tabAppearance.getId());
+    }
+
+    void onFontSelected(@Nullable ExternalFont.Item font) {
+        DanmakuSetting.putFont(font);
+        applyConfig();
     }
 
     private void bindAppearance() {
         var appearance = binding.appearance;
+        bindFont();
         setupSwitch(appearance.textBoldSwitch, DanmakuSetting.isTextBold(), DanmakuSetting::putTextBold);
         setupFloat(appearance.textSizeSlider, appearance.textSizeValue, DanmakuSetting.getTextScale(), "%.1f", DanmakuSetting::putTextScale);
         setupFloat(appearance.alphaSlider, appearance.alphaValue, DanmakuSetting.getTransparency(), "%.2f", DanmakuSetting::putTransparency);
@@ -59,6 +71,14 @@ final class DanmakuSettingPanel {
         setupChip(appearance.colorChipGroup, DanmakuSetting.getColorMode(), this::colorChipForMode, this::colorModeForChip, this::onColorModeChanged);
         updateStyleSubSettings(DanmakuSetting.getStyleMode());
         updateColorOverrideHint(DanmakuSetting.getColorMode());
+    }
+
+    private void bindFont() {
+        fontSelector.bind(binding.appearance.fontGroup, DanmakuSetting.getFont());
+    }
+
+    private boolean isPlayerAvailable() {
+        return player != null && !player.isReleased();
     }
 
     private void bindTiming() {
@@ -101,8 +121,17 @@ final class DanmakuSettingPanel {
     }
 
     private void checkOnFocus(MaterialButton button) {
+        if (!Util.isLeanback()) return;
         button.setOnFocusChangeListener((v, focused) -> {
             if (focused) binding.tabGroup.check(button.getId());
+        });
+    }
+
+    private void bindReset() {
+        binding.reset.setOnClickListener(this::onReset);
+        binding.reset.setOnLongClickListener(view -> {
+            resetAll();
+            return true;
         });
     }
 
@@ -139,6 +168,19 @@ final class DanmakuSettingPanel {
         binding.reset.setNextFocusDownId(tabs[currentTab = index].getId());
     }
 
+    private void resetAll() {
+        DanmakuSetting.resetAppearance();
+        DanmakuSetting.resetTiming();
+        DanmakuSetting.resetDensity();
+        DanmakuSetting.resetDisplay();
+        bindAppearance();
+        bindTiming();
+        bindDensity();
+        bindDisplay();
+        updateDependentControls();
+        applyConfig();
+    }
+
     private void updateStyleSubSettings(int mode) {
         var appearance = binding.appearance;
         applyVisible(mode == DanmakuConfig.STYLE_SHADOW, appearance.shadowAlphaRow, appearance.shadowAlphaSlider);
@@ -167,7 +209,7 @@ final class DanmakuSettingPanel {
 
     private void updateDependentControls() {
         var density = binding.density;
-        applyEnabled(density.maxScrollLinesRow, density.maxScrollLinesSlider, DanmakuSetting.isShowScroll());
+        applyEnabled(density.maxScrollLinesRow, density.maxScrollLinesSlider, DanmakuSetting.isShowScroll() || DanmakuSetting.isShowReverse());
         applyEnabled(density.maxTopLinesRow, density.maxTopLinesSlider, DanmakuSetting.isShowTop());
         applyEnabled(density.maxBottomLinesRow, density.maxBottomLinesSlider, DanmakuSetting.isShowBottom());
     }
@@ -178,7 +220,7 @@ final class DanmakuSettingPanel {
     }
 
     private void applyConfig() {
-        if (player != null) player.setDanmakuConfig(DanmakuSetting.getConfig());
+        if (isPlayerAvailable()) player.setDanmakuConfig(DanmakuSetting.getConfig());
     }
 
     private int styleChipForMode(int mode) {
@@ -224,15 +266,16 @@ final class DanmakuSettingPanel {
     }
 
     private void setupSlider(Slider slider, TextView label, float initial, Function<Float, String> formatter, Consumer<Float> setter) {
-        float clamped = Math.clamp(initial, slider.getValueFrom(), slider.getValueTo());
+        float clamped = SliderUtil.snap(slider, initial);
         slider.clearOnChangeListeners();
         slider.setLabelFormatter(formatter::apply);
-        slider.setValue(clamped);
+        SliderUtil.setValue(slider, clamped);
         label.setText(formatter.apply(clamped));
         slider.addOnChangeListener((source, value, fromUser) -> {
             if (!fromUser) return;
-            setter.accept(value);
-            label.setText(formatter.apply(value));
+            float snapped = SliderUtil.snap(source, value);
+            setter.accept(snapped);
+            label.setText(formatter.apply(snapped));
             applyConfig();
         });
     }

@@ -22,7 +22,7 @@ public class Danmaku {
     @SerializedName("url")
     private String url;
 
-    private boolean selected;
+    private transient boolean selected;
 
     public static List<Danmaku> arrayFrom(String str) {
         Type listType = TypeToken.getParameterized(List.class, Danmaku.class).getType();
@@ -30,31 +30,23 @@ public class Danmaku {
         return items == null ? Collections.emptyList() : items;
     }
 
-    public static Danmaku from(String path) {
-        Danmaku danmaku = new Danmaku();
-        danmaku.setName(path);
-        danmaku.setUrl(path);
-        return danmaku;
+    public static Danmaku from(String url) {
+        return from(url, url);
     }
 
-    public static Danmaku empty() {
-        return new Danmaku();
+    public static Danmaku from(String name, String url) {
+        Danmaku danmaku = new Danmaku();
+        danmaku.name = name;
+        danmaku.url = url;
+        return danmaku;
     }
 
     public String getName() {
         return TextUtils.isEmpty(name) ? getUrl() : name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getUrl() {
         return TextUtils.isEmpty(url) ? "" : url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public boolean isSelected() {
@@ -78,6 +70,11 @@ public class Danmaku {
         if (this == obj) return true;
         if (!(obj instanceof Danmaku it)) return false;
         return getUrl().equals(it.getUrl());
+    }
+
+    @Override
+    public int hashCode() {
+        return getUrl().hashCode();
     }
 
     @NonNull
