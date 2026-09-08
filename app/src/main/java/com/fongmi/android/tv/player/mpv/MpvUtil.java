@@ -11,7 +11,6 @@ import androidx.media3.mpvplayer.MpvSubtitleOptions;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.player.subtitle.AndroidFontConfig;
-import com.fongmi.android.tv.player.subtitle.ExternalFont;
 import com.fongmi.android.tv.player.track.LangUtil;
 import com.fongmi.android.tv.setting.DecodeSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
@@ -62,7 +61,7 @@ public final class MpvUtil {
 
     static List<String> getManagedOptionNames() {
         List<String> options = new ArrayList<>(PLAYER_OPTIONS);
-        boolean hasFontOverride = SubtitleSetting.getFont() != null;
+        boolean hasFontOverride = SubtitleSetting.getFontFamily() != null;
         boolean hasStyleOverride = SubtitleSetting.isStyleForced();
         if (PreloadSetting.isEnabled()) options.addAll(CACHE_OPTIONS);
         if (hasFontOverride) options.addAll(FONT_OPTIONS);
@@ -103,10 +102,7 @@ public final class MpvUtil {
         MpvSubtitleOptions.Builder builder = new MpvSubtitleOptions.Builder();
         if (SubtitleSetting.isPositionSet()) builder.setPosition(getSubtitlePosition());
         if (SubtitleSetting.isScaleApplied()) builder.setScale(SubtitleSetting.getAppliedScale());
-        if (SubtitleSetting.isSecondaryPositionSet()) builder.setSecondarySubtitlePosition(SubtitleSetting.getSecondaryPosition());
-        if (SubtitleSetting.isStyleForced()) builder.setSecondaryAssStyleOverride(true);
-        String fontFamily = SubtitleSetting.getFontFamily();
-        if (fontFamily != null) builder.setFontFamily(fontFamily).setFontsDirectory(ExternalFont.getDirectory().getAbsolutePath());
+        if (SubtitleSetting.isSecondaryPositionSet()) builder.setSecondarySubtitle(SubtitleSetting.getSecondaryTrackId(), SubtitleSetting.getSecondaryPosition(), SubtitleSetting.isStyleForced());
         if (SubtitleSetting.isCustomStyle()) builder.setCustomStyle(SubtitleSetting.getTextColor(), SubtitleSetting.getBackgroundColor(), SubtitleSetting.getEdgeType(), SubtitleSetting.getEdgeColor(), SubtitleSetting.getEdgeWidth(), SubtitleSetting.getShadow());
         else if (SubtitleSetting.isSystemStyle()) builder.setSystemCaptionStyle();
         return builder.build();

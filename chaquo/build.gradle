@@ -14,6 +14,11 @@ android {
         ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
         python {
             version = "3.10"
+            // buildPython 主次版本须与 version 一致;PATH 上无 python3.10 时回退到 pyenv 安装的 3.10.x
+            def pyenv310 = new File(System.getProperty('user.home'), '.pyenv/versions')
+            def fallback = pyenv310.listFiles()?.findAll { it.name.startsWith('3.10') }
+                ?.collect { new File(it, 'bin/python3.10') }?.find { it.exists() }
+            if (fallback != null) buildPython fallback.absolutePath
             pip {
                 install("-r", "requirements.txt")
             }
