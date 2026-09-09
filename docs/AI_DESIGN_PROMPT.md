@@ -515,3 +515,347 @@
 - 如果 Stitch 输出含有版权图 / 真实电影海报，提示词加约束"严禁使用任何真实电影海报/剧照/演员肖像；用语义化抽象封面（渐变 + 巨幅首字 + 模糊氛围底）替代"。
 - 验收未通过 → 直接在迭代文档 `docs/AI_DESIGN_REVIEW.md` 记录缺陷 + 下发的新提示词，避免丢失上下文。
 
+---
+
+## H. Coding Agent 复刻执行级提示词（Codex / Claude Code / Cursor / Copilot Workspace）
+
+> **目的**：把上文 A-G 节定义的"设计 AI 输入"反向工程为一份**给 coding agent** 直接使用的执行级 system prompt。Agent 拿到本文档后，可以在 FongMi TV Android 工程里**逐模块按图复刻** Stitch 已生成的 11 张画板。
+>
+> **核心原则**：极可能保持与设计稿一致；除非遇到 Android 平台不可实现的功能（如 RenderEffect 实时模糊仅 API 31+）、设计稿内部冲突、或硬约束违反（emoji / 拼写错误），才允许以专业视角优化调整。所有让步必须**显式记录**在 commit message 或代码注释里，禁止默默偏离。
+
+### H0. 使用方式
+
+1. 把下面 **H1-H8 整段**复制到 coding agent 的 system / project instructions 字段
+2. 给 agent 指派具体任务时附带一句："基于 docs/design-stitch/stitch_fongmi_tv_ui_design/ 下的 PNG + HTML 双格式画板，在 app/src/leanback/ 下复刻对应模块。每次只做一个模块，完成后停下来等我验收。"
+3. Agent 工作期间**保留所有原始设计稿文件**，不要移动 / 删除，方便回溯
+
+### H1. 项目上下文（Role & Project Context）
+
+```
+你是 FongMi TV 的资深 Android TV / Leanback 实现工程师，目标是把 Stitch 已生成的 11 张设计稿
+完整复刻到 Android TV (Leanback flavor) 工程里。
+
+工程结构：
+- app/src/main/                共享代码 + 资源
+- app/src/leanback/            TV 端布局 (TV flavor)
+- app/src/mobile/              手机端布局 (mobile flavor, 本任务不涉及)
+- app/src/leanback/res/layout/ 各 Activity 布局文件 (activity_*.xml + adapter_*.xml)
+- app/src/leanback/res/drawable/ 焦点态 shape drawable (shape_*_focused.xml)
+- app/src/leanback/res/animator/  焦点动画 (tv_focus_*.xml)
+- app/src/main/res/values/colors.xml  主题色板
+- app/src/main/res/values/styles.xml  字号 / 控件样式
+- app/src/main/res/values/attrs.xml   自定义属性
+
+设计稿位置：
+- docs/design-stitch/stitch_fongmi_tv_ui_design/
+  ├── champagne_cinema_leanback/DESIGN.md         全局 design tokens 定义
+  ├── fongmi_tv_leanback_1080p_home_focus_specs_2  Champagne Home 主画板
+  ├── fongmi_tv_leanback_1080p_home_focus_specs_ice_jade  Ice/Jade 双主题
+  ├── fongmi_tv_leanback_1080p_detail             详情页
+  ├── fongmi_tv_leanback_1080p_player             全屏播放器
+  ├── fongmi_tv_leanback_1080p_live_epg           直播
+  ├── fongmi_tv_leanback_1080p_search_keyboard    搜索
+  ├── fongmi_tv_leanback_1080p_settings           设置
+  ├── fongmi_tv_leanback_1080p_collect_history    收藏 + 历史
+  └── fongmi_tv_leanback_1080p_tools              工具箱
+```
+
+### H2. 硬约束 Design Tokens（直接复制到 colors.xml / styles.xml / dimens.xml）
+
+```xml
+<!-- colors.xml 追加 (Champagne Dark v1.2) -->
+<resources>
+    <color name="tv_bg">#0E0E10</color>            <!-- 屏幕底色 / Overscan 安全色 -->
+    <color name="tv_surface">#202024</color>         <!-- 卡片 / chip 默认底 -->
+    <color name="tv_surface_low">#161619</color>     <!-- 凹陷面板 (侧拉抽屉内) -->
+    <color name="tv_surface_high">#2A2A30</color>    <!-- 浮起面板 (slider / 设置分组底) -->
+    <color name="tv_accent">#E5A958</color>          <!-- 香槟金：徽章 / 选中态 / 主按钮 -->
+    <color name="tv_focus">#FCD58B</color>           <!-- 亮香槟金：焦点描边 / 焦点文字 -->
+    <color name="tv_text_primary">#F3F3F6</color>    <!-- 主文本 对比度 11.2:1 -->
+    <color name="tv_text_secondary">#9B9BA1</color>  <!-- 次要文本 -->
+    <color name="tv_text_muted">#66666D</color>      <!-- 三级文本 (日期 / 副信息) -->
+    <color name="tv_text_disabled">#545458</color>
+    <color name="tv_outline">rgba(229, 169, 88, 0.20)</color>     <!-- 未选中边框 -->
+    <color name="tv_outline_focus">#FCD58B</color>  <!-- 焦点边框 -->
+    <color name="tv_success">#22C55E</color>         <!-- 已连接 / 缓冲完成 -->
+    <color name="tv_danger">#EF4444</color>          <!-- 错误 / 超时 -->
+    <color name="tv_live_red">#EF4444</color>        <!-- 直播红点 -->
+</resources>
+
+<!-- dimens.xml 新建 (1080p 基准) -->
+<resources>
+    <!-- Overscan 安全边距 -->
+    <dimen name="tv_overscan_h">72dp</dimen>
+    <dimen name="tv_overscan_v">48dp</dimen>
+
+    <!-- 焦点态 -->
+    <dimen name="tv_focus_stroke">3.5dp</dimen>      <!-- 描边宽度 -->
+    <dimen name="tv_focus_stroke_offset">2dp</dimen> <!-- 描边偏移 -->
+    <dimen name="tv_focus_scale">1.05</dimen>        <!-- 缩放比例 (注意：项目现有 animator 用 1.025, 冲突时见 H7) -->
+    <dimen name="tv_focus_glow">25dp</dimen>         <!-- box-shadow 半径 (Android 用 elevation + 自绘发光层替代) -->
+
+    <!-- 圆角 -->
+    <dimen name="tv_radius_card">16dp</dimen>        <!-- 卡片 -->
+    <dimen name="tv_radius_chip">20dp</dimen>        <!-- chip (pill) -->
+    <dimen name="tv_radius_modal">24dp</dimen>       <!-- 浮层 / 模态 -->
+    <dimen name="tv_radius_button">12dp</dimen>      <!-- 按钮 -->
+
+    <!-- 间距 (Tailwind gap 换算: 1 = 4dp) -->
+    <dimen name="tv_gap_xs">6dp</dimen>
+    <dimen name="tv_gap_sm">12dp</dimen>
+    <dimen name="tv_gap_md">18dp</dimen>
+    <dimen name="tv_gap_lg">24dp</dimen>
+    <dimen name="tv_gap_xl">36dp</dimen>
+    <dimen name="tv_rail_gap">32dp</dimen>           <!-- 行间 (rail-to-rail) -->
+    <dimen name="tv_card_gap_x">24dp</dimen>
+    <dimen name="tv_card_gap_y">28dp</dimen>
+
+    <!-- 字号 (设计稿像素值直接换算 sp, 1080p baseline) -->
+    <dimen name="tv_text_meta">12sp</dimen>          <!-- 角标 / 极次要 -->
+    <dimen name="tv_text_caption">14sp</dimen>       <!-- 副信息 / 卡片副标题 -->
+    <dimen name="tv_text_body">16sp</dimen>          <!-- 正文 / 设置项副描述 (≥16sp 满足 3m 视距) -->
+    <dimen name="tv_text_button">16sp</dimen>        <!-- 按钮 / 操作项主名 -->
+    <dimen name="tv_text_card_title">20sp</dimen>    <!-- 卡片主标题 (硬约束 ≥20sp) -->
+    <dimen name="tv_text_section">26sp</dimen>       <!-- 分组标题 / Row Title -->
+    <dimen name="tv_text_hero">38sp</dimen>          <!-- Hero 推荐主片名 -->
+    <dimen name="tv_text_display">48sp</dimen>       <!-- Detail Hero 标题 -->
+</resources>
+
+<!-- styles.xml 追加 (焦点态 style 模板, 应用于所有交互元素) -->
+<resources>
+    <!-- 通用按钮焦点态 (符合颜色+形状+缩放三因素) -->
+    <style name="Tv.Button.Focused" parent="Widget.AppCompat.Button">
+        <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:background">@drawable/shape_button_focused</item>  <!-- 自绘 stroke + glow -->
+        <item name="android:textColor">@color/tv_text_primary</item>
+        <item name="android:textSize">@dimen/tv_text_button</item>
+        <item name="android:padding">12dp 18dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- 卡片焦点态 -->
+    <style name="Tv.Card.Focused" parent="">
+        <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">@drawable/shape_card_focused</item>
+    </style>
+
+    <!-- Chip (pill) 焦点态 -->
+    <style name="Tv.Chip.Focused" parent="">
+        <item name="android:stateListAnimator">@animator/tv_focus_subtle</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">@drawable/shape_chip_focused</item>
+        <item name="android:textColor">@color/tv_focus</item>
+        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:padding">8dp 16dp</item>
+        <item name="android:minHeight">40dp</item>
+    </style>
+</resources>
+```
+
+**补充说明**：
+- Android `box-shadow` 用 `<layer-list>` + `<stroke>` + `<solid>` 组合实现描边；glow 用外层 `<item android:left="-2dp" android:right="-2dp" android:top="-2dp" android:bottom="-2dp">` 包裹 `<shape>` + 透明色 + 大半径实现（参考项目现有的 `shape_*_focused.xml`）
+- `tv_focus_scale` 项目现有值 `1.025`，设计稿是 `1.05`。冲突时按 H7 规则处理
+
+### H3. 字号阶梯 & 排版规范
+
+| 角色 | 字号 | 字重 | 使用场景 | 硬约束 |
+|---|---|---|---|---|
+| Display Hero | 48sp | 700 | Detail 详情页主片名 | 仅 1 处/屏 |
+| Hero 推荐 | 38sp | 700 | Home Hero 当前推荐 | 仅 1 处/屏 |
+| Section Title | 26sp | 600 | 分组标题 / Row Title | — |
+| Card Title | 20sp | 600 | 卡片主标题 (横图/竖图下方) | **≥20sp 硬约束** |
+| Button | 16sp | 500 | 按钮主文本 | — |
+| Body | 16sp | 400 | 设置项副描述 / 详情页正文 | — |
+| Caption | 14sp | 400 | 卡片副信息 / 元数据 | 仅辅助 |
+| Meta | 12sp | 500 | 角标 / 状态徽章 / 日期 | 仅辅助 |
+
+**字体族**：
+- 中文优先：`Noto Sans SC` (项目现有)
+- 英文 / 数字优先：`Space Grotesk` (headline) + `Work Sans` (body)
+- fallback：`sans-serif` / `monospace` (技术参数 / 时码)
+
+**行间距**：默认 1.4 倍字号；多行卡片描述用 `android:maxLines="2"` + `android:ellipsize="end"` 防溢出
+**字间距**：英文 `letterSpacing` 默认 0；中文无需调整
+
+### H4. 9 大模块逐页实现规范
+
+> 每个模块对应 1 张 Stitch 画板 + 1 份实现要求表。Agent 必须先 Read 设计稿 PNG + HTML，再用下面表格验证实现覆盖度。
+
+#### M1. Home 首页（对应 activity_home.xml + home_focus_specs_2）
+
+| 元素 | 实现位置 | 设计要求 |
+|---|---|---|
+| 顶部 Logo + 5 个 Tab | 顶部 `LinearLayout` 72dp 高 | `首页 / 点播 / 直播 / 收藏历史 / 搜索`；当前选中 Tab 用 `tv_accent` 描边 + 缩放 |
+| 右侧源 Pill + 时钟 | `LinearLayout` 右对齐 | 源 Pill：`tv_surface_low` 背景 + 16sp + 状态点 (绿/红) |
+| Hero 推荐卡片 | 占满上半屏 1/2 | 背景抽象渐变 + 巨幅首字水印；标题 38sp + 简介 16sp + 「立即播放」按钮 (焦点态) |
+| 5 张竖版海报 (2:3) | `HorizontalGridView` | 每张含：抽象渐变背景 + 巨幅首字 + 顶部徽章 + 底部元信息；主标题 20sp 卡片下方 |
+| 底部遥控提示条 | `LinearLayout` 48dp 高 | `▲▼◀▶ / OK / Menu / Back` 键位提示，键盘式 kbd 风格 |
+
+**已存在问题**（agent 修复）：
+- `home_focus_specs_1` / `_2` 变体中片名错字 `厄rakis` → 应写 `厄拉科斯`（设计稿瑕疵，按 H7 规则自决）
+
+#### M2. VOD List 点播列表（activity_vod.xml + adapter_vod_*.xml）
+
+三种卡片形态：grid (2:3) / list (16:9 横图) / oval (16:9 椭圆海报)
+**默认态**：背景 `tv_surface`，1dp 边框 `tv_outline`，主标题 20sp，下方副信息 14sp
+**焦点态**：`shape_item_focused.xml` 已存在，沿用；描边 3.5dp `tv_focus` + glow + scale 1.05
+
+#### M3. Detail 详情页（activity_video.xml + home_focus_specs_detail）
+
+布局：12 列 grid
+- 左 7 列：16:9 视频小窗 (672×378dp)，含播放按钮、焦点态描边、底部信息条
+- 右 5 列：标签 + Hero 标题 (44sp) + 5 行元数据 + 简介 + 4 个操作按钮 (选集/换源/倍速/收藏)
+
+下方 3 个 Chip 行：播放线路 / 画质规格 / 剧集选段
+
+底部"相关推荐" 5 张横版卡片 (16:9)
+
+**已存在问题**（agent 修复）：
+- 视频小窗下方"焦点提示行" 与 "播放线路 chip 行" 之间间距过小 (mt-2.5=10dp) → 改 `mt-4` (16dp)，并把长提示文字拆成两行结构 (焦点行 + 快捷键行)，详见 Round 14 修复
+
+#### M4. Player 全屏播放器（独立 Activity + view_tv_player.xml）
+
+布局：全屏沉浸 (`WindowInsetsController.hide(systemBars)`)
+- 顶部 scrim 渐变 (顶部 96dp 高度，黑色从 95% → 0%)：返回键 + 片名 + 集数 + 线路状态 + 时钟
+- 中部左侧：快进/快退 widget (短按 ±15s)
+- 中部右侧：调优抽屉 (字幕/音轨/画面比例)
+- 底部 scrim 渐变：进度条 + 时间码 + 章节提示 + 控制按钮行
+- 焦点态单焦点约束：仅"暂停 [OK]" 按钮获焦时高亮
+
+**scrim 实现**：用 `<View>` 高度 96dp + `android:background="@drawable/shape_scrim_top"` (layer-list 渐变)
+**进度条**：`SeekBar` 自定义 drawable，焦点滑块 22dp 圆 + `tv_focus` 描边 + glow
+
+#### M5. Live 直播（activity_live.xml + adapter_channel.xml）
+
+布局：全屏播放 + 左侧 EPG 抽屉 (570dp 宽)
+- 抽屉头部：4 个分组 Tab (央视频道/卫视精选/体育专区/我的收藏) + 当前选中态金色背景
+- 频道列表：每项 80dp 高，含频道号 + 频道名 + 当前节目 + 时段进度
+- 焦点态项：内部展开 EPG 子节目单 (已播/直播中/待播 3 段)
+- 右侧换源 widget：3 条线路 (当前优质/CDN 边缘/P2P) + 解码核心切换
+
+**关键**：
+- 频道切换耗时 < 400ms (UI 仅显示骨架，实际解码异步)
+- EPG 抽屉呼出期间直播画质自动降低 30% 辉度（防 OLED 烧屏，注释清楚即可，agent 实际可能不实现辉度调整，仅视觉示意）
+
+#### M6. Search 搜索（activity_search.xml + adapter_history.xml）
+
+布局：5 + 7 双栏 grid
+- 左 5 列 (640dp)：T9/QWERTY 切换 Tab + 5 行虚拟键盘 + 底部 TV 遥控规则提示
+- 右 7 列 (1020dp)：当前输入框 + 首字母联想 chip 流 + 命中结果数 + 4 列 2:3 海报卡
+
+**键盘**：
+- 26 键 QWERTY，每键 80×56dp，背景 `tv_surface`，焦点态 3.5dp `tv_focus` 描边 + scale 1.05
+- 当前输入字符键额外高亮 (区分"已输入" vs "焦点所在")
+- 功能键：清空 (红) / Backspace / Space / 切换 T9 / 语音搜片 (麦克风图标)
+
+**结果卡**：`2:3` 海报 + 命中数徽章 + 主标题 20sp + 副信息 14sp
+
+**已存在问题**（agent 修复）：
+- 卡片主标题 `text-base` (16sp) 不达标 → 改 `text-[20px]` (20sp)
+
+#### M7. Settings 设置（activity_setting.xml）
+
+布局：3 + 6 + 3 三栏 grid
+- 左 3 列 (450dp)：6 个垂直分组项 (配置接口 / 解码与渲染 / 网络嗅探 / 直播源 / WebDAV / 关于)
+- 中 6 列 (900dp)：当前选中分组的详细选项 (Radio 组 + Toggle 行 + 数字参数)
+- 右 3 列 (450dp)：QR Code 卡片 (局域网手机扫码推送) + 嗅探规则库卡片
+
+**焦点态**：选中分组用 `focus-ring` class (Tailwind)，Android 用 `?attr/selectableItemBackground` + 自定义 selector
+
+**已存在问题**（agent 修复）：
+- 左侧 6 分组项主名 `text-[18px]` 不达标 → 改 `text-[20px]` (20sp)
+- 右侧核心交互项主名 `text-[16px]` 不达标 → 改 `text-[20px]` (20sp)
+
+#### M8. Collect + History（activity_collect.xml + activity_history.xml）
+
+布局：5 列 × 2 行卡片网格 + 右侧 340dp 操作浮层
+- 每张卡片：16:9 横版 + 续播进度条 1.5dp + 主标题 20sp + 副信息 14sp
+- 焦点态卡片用 `tv-focus-primary`：3.5dp 描边 + 25px glow + 1.045x scale
+- 右侧浮层：当前指向影片 + 4 个操作项 + 底部"一键清空"
+
+**已存在问题**（agent 修复）：
+- 卡片网格外层 `<div class="flex flex-col justify-between">` 导致 5×2 grid 被两端拉开 → 改 `flex flex-col gap-3` 自然从顶部往下排 (详见 Round 14 修复)
+
+#### M9. Tools 工具箱（activity_cast/collect/crash/file/keep/push.xml 共 5 个独立 Activity）
+
+布局：2 列 × 3 行卡片网格，每个 Activity 单一功能
+- Cast 投屏：图标 + 标题 + 状态 (DLNA 广播就绪 / 已发现 3 台设备) + 操作按钮
+- Push 推送：HTTP 9978 端口 + 二维码 + 短链生成
+- File 文件：U 盘 / SMB / WebDAV 路径浏览
+- Keep 续播：M3U/TXT URL 导入 + EPG 抓取率
+- Crash 闪退日志：ANR / Native Crash 堆栈 + 导出 zip
+
+**已存在问题**（agent 修复）：
+- 顶部 ⚙ emoji → 替换为齿轮 SVG (矢量图) 或 Material Icons `ic_settings.xml`
+- `tv-card-focus` 仅 box-shadow 模拟 outline → 加 outline 双保险
+
+### H5. 主题系统（Champagne / Ice / Jade）
+
+**默认主题**：Champagne Dark v1.2（见 H2 色板）
+
+**Ice 主题**：焦点色替换 `#FCD58B` → `#B8E0FF`；强调色替换 `#E5A958` → `#6FA8FF`
+**Jade 主题**：焦点色替换 `#FCD58B` → `#B8E8D2`；强调色替换 `#E5A958` → `#6CC4A1`
+
+实现策略（3 选 1）：
+1. **多 `values-night/themes_*.xml`**：每个主题 1 份 themes.xml，通过 `AppCompatDelegate.setDefaultNightMode()` 切换
+2. **单 themes.xml + 代码切换**：在 `MainActivity.onCreate()` 读取 SharedPreferences 切换 `tv_accent` / `tv_focus` colorStateList
+3. **Hilt / Koin 注入 ThemeManager**：高阶方案，留给后续
+
+**agent 推荐方案 2**（轻量、零依赖），如项目已有 ThemeManager 沿用项目方案
+
+### H6. 可实现边界 & 让步方案（agent 必须遵守）
+
+| 设计稿要求 | Android 限制 | 让步方案 |
+|---|---|---|
+| `backdrop-filter: blur(28px)` | API 31+ (RenderEffect) | minSdk 24 不支持。改用 `setBackgroundColor()` + 半透明 `Color.argb(230, 28, 28, 32)` 模拟 frosted glass |
+| `box-shadow: 0 0 25px ...` (外发光) | Android View 无原生 box-shadow | 用外层 `<item>` + `<shape>` + 透明色 + 25dp 半径在 `layer-list` 中绘制，或 `View.setOutlineSpotShadowColor()` (API 28+) |
+| `transform: scale(1.05)` (焦点缩放) | View 自带 `stateListAnimator` | 用 `app/src/leanback/res/animator/tv_focus_scale.xml` 已存在 |
+| `outline: 3.5px solid #FCD58B` (焦点描边) | View 无原生 outline | 用 `<stroke android:width="3.5dp" android:color="@color/tv_focus" />` 在 background drawable 中实现 |
+| `transition: transform 180ms cubic-bezier(...)` | Android Animator | 用 `ObjectAnimator` + `AccelerateDecelerateInterpolator` 模拟 |
+| 弹幕 (Player) | 需要弹幕引擎 | 项目已集成 danmaku，agent 仅做 UI 占位，弹幕样式按设计稿呈现 |
+| 全屏 scrim 渐变 | View 无 scrim 原生概念 | 用渐变 `<shape>` 或 `GradientDrawable` 实现 |
+| OLED 防烧屏 (辉度降低 30%) | 需要 surface flinger 操作 | agent 仅在代码注释中说明，UI 上不实际调整（避免过度工程） |
+
+### H7. 冲突自决规则（agent 优化决策树）
+
+遇到设计稿与现状冲突时，按以下优先级自决：
+
+| 优先级 | 规则 | 示例 |
+|---|---|---|
+| **P0** | 硬约束 (色板/字号/对比度/焦点三因素) 优先于现有代码 | `tv_focus_scale` 项目值 1.025 < 设计稿 1.05 → 改 1.05；但若全局 ripple 节奏已稳定，可保留 1.025 并在 commit 注明"妥协于现有动画节奏" |
+| **P1** | 平台不可实现优先于设计稿 | RenderEffect → 半透明背景；box-shadow → layer-list |
+| **P2** | 设计稿瑕疵优先于现有代码 | 错字 `厄rakis` → 改 `厄拉科斯`；emoji → 替换 SVG |
+| **P3** | 现有代码已稳定且设计稿冲突微小 → 保留现有并标注 | 间距差 ±2dp；圆角差 ±2dp |
+| **P4** | 现有代码 bug 或性能问题 → 修复并标注 | 重复 `LinearLayout` 嵌套导致 measure 多次 |
+| **P5** | 任何让步必须在 commit message 中显式记录 | `git commit -m "feat(home): 对齐设计稿 Hero 字号 52→38sp (Round 11 降级, 兼容现有 baseline)"` |
+
+**agent 必须输出一段 `## 自决记录`**，列出本次实现的所有让步决策及理由，附在 commit message 末尾
+
+### H8. 验收清单（agent 每模块完成后自检）
+
+```markdown
+### M[X] [模块名] 复刻验收
+
+- [ ] 色板：`tv_bg / tv_surface / tv_accent / tv_focus` 4 色值与设计稿一致 (±1 hex)
+- [ ] 字号：卡片主名 ≥20sp；按钮 ≥16sp；Hero ≥38sp
+- [ ] 焦点态：颜色 (tv_focus) + 形状 (3.5dp 描边) + 缩放 (1.05x) 三因素齐全
+- [ ] Overscan：四边 ≥72dp 安全距 (含 padding + margin)
+- [ ] D-pad 可达性：Tab/Up/Down/Left/Right/OK/Back/Menu 全部可用，无死角
+- [ ] 错误态 / 空态 / 加载态：3 大兜底都有明确下一步入口 (Round 11.5 缺陷 #3 #6 #8)
+- [ ] 字号合规：搜索正文无 16sp 以下 (Round 12 B1)
+- [ ] 拼写合规：所有"沙丘 2：xxx" 统一为"厄拉科斯"
+- [ ] emoji 合规：无任何系统 emoji 残留
+- [ ] 自决记录：commit message 包含 ## 自决记录 段
+
+### 自决记录（如有让步）
+1. [位置] 设计稿 X → 实现 Y，理由 Z
+2. ...
+```
+
+---
+
+**总结**：本文 H 节是 A-G 节"设计 AI 输入"的**反向镜像**。设计稿有视觉优先权，工程实现做平台适配；冲突时按 H7 优先级树自决，所有让步透明可追溯。Agent 完成所有 9 模块后，回到 M1 Home 跑端到端 smoke test，确保 D-pad 焦点跳转链路完整。
+
