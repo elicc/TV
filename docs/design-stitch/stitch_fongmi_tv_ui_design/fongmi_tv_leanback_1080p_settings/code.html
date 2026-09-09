@@ -1,0 +1,476 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+  <title>FongMi TV - Leanback 1080p Settings (设置与系统调优)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            headline: ['Space Grotesk', 'sans-serif'],
+            body: ['Work Sans', 'sans-serif']
+          },
+          colors: {
+            bgDark: '#0E0E10',
+            surface: '#202024',
+            surfaceHigh: '#2A2A30',
+            surfaceLow: '#151518',
+            accent: '#E5A958',
+            focus: '#FCD58B',
+            textPrimary: '#FFFFFF',
+            textSecondary: '#8E8E93',
+            textMuted: '#5C5C62',
+            borderOutline: '#323238'
+          },
+          boxShadow: {
+            'focus-glow': '0 0 0 3.5px #FCD58B, 0 0 25px rgba(252, 213, 139, 0.45)',
+            'subtle': '0 4px 20px rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0E0E10;
+      color: #FFFFFF;
+      font-family: 'Work Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 1920px;
+      height: 1080px;
+      user-select: none;
+    }
+    .overscan-safe {
+      padding: 48px 72px;
+    }
+    .focus-ring {
+      box-shadow: 0 0 0 3.5px #FCD58B, 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.02);
+      border-color: #FCD58B !important;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #39393E;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-[1080px] bg-bgDark text-white flex flex-col justify-between overscan-safe relative">
+
+  <!-- 1080p TV Top Nav & Header -->
+  <header class="flex items-center justify-between h-[64px] border-b border-borderOutline/40 pb-4">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-3 bg-surface px-4 py-2 rounded-lg border border-borderOutline text-textSecondary text-[16px] font-medium">
+        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        <span class="">BACK 返回</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-textMuted text-[16px]">首页</span>
+        <span class="text-textMuted text-[14px]">/</span>
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <h1 class="font-headline text-[24px] font-bold tracking-wide text-white">系统核心配置与引擎调优</h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right TV System & Status Pill -->
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-2.5 bg-surfaceLow px-4 py-1.5 rounded-full border border-borderOutline/60 text-[14px]">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-textSecondary">当前活跃源：</span>
+        <span class="text-accent font-semibold">饭太硬 (极速4K专线)</span>
+        <span class="bg-accent/20 text-accent text-[11px] px-2 py-0.5 rounded font-mono">Spider v4.8</span>
+      </div>
+      <div class="text-right">
+        <div class="font-headline text-[20px] font-bold leading-none text-white">21:40</div>
+        <div class="text-[12px] text-textMuted tracking-wider">周五 · 4K 60FPS</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main 10-Foot 3-Column TV Settings Layout -->
+  <main class="grid grid-cols-12 gap-8 my-4 flex-1 items-start h-[840px]">
+
+    <!-- Left Column: Category Navigation Tabs (D-pad Vertical Menu) - 3 cols -->
+    <aside class="col-span-3 flex flex-col gap-3 pr-2">
+      <div class="text-[13px] font-bold text-textMuted tracking-wider uppercase px-4 mb-1">
+        设置分组 (D-pad ▲▼ 切换)
+      </div>
+
+      <!-- Tab 1: 点播配置接口 (Selected / Inactive focus) -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface/60 border border-borderOutline/60 transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-surfaceHigh flex items-center justify-center text-accent">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-semibold text-white">配置接口 (API)</div><div class="text-[14px] text-textSecondary">远程主接口、本地配置与历史</div></div>
+        </div>
+        <div class="w-2 h-2 rounded-full bg-accent"></div>
+      </div>
+
+      <!-- Tab 2: 播放与硬件解码 (Focused Active Tab! - D-pad Focus) -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface border-2 border-focus focus-ring text-white transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-focus text-bgDark flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-bold text-white flex items-center gap-2"><span class="">解码与渲染</span><span class="bg-focus/20 text-focus text-[11px] font-bold px-1.5 py-0.5 rounded border border-focus/30">当前选中</span></div><div class="text-[14px] text-zinc-300">硬件加速、音视频透传与渲染器</div></div>
+        </div>
+        <svg class="w-5 h-5 text-focus" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </div>
+
+      <!-- Tab 3: 网络嗅探与规则 -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface/40 hover:bg-surface/60 border border-borderOutline/40 text-textSecondary transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-surfaceHigh/60 flex items-center justify-center text-textSecondary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-semibold text-white/90">网络嗅探 (Sniffer)</div><div class="text-[14px] text-textMuted">视频流探测、UA欺骗与正则排除</div></div>
+        </div>
+      </div>
+
+      <!-- Tab 4: 直播与EPG偏好 -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface/40 hover:bg-surface/60 border border-borderOutline/40 text-textSecondary transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-surfaceHigh/60 flex items-center justify-center text-textSecondary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-semibold text-white/90">直播源配置 (IPTV)</div><div class="text-[14px] text-textMuted">默认超时切台、EPG刷新频率</div></div>
+        </div>
+      </div>
+
+      <!-- Tab 5: 存储与 WebDAV -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface/40 hover:bg-surface/60 border border-borderOutline/40 text-textSecondary transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-surfaceHigh/60 flex items-center justify-center text-textSecondary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-semibold text-white/90">WebDAV / 云盘挂载</div><div class="text-[14px] text-textMuted">阿里云盘、Alist、本地局域网</div></div>
+        </div>
+      </div>
+
+      <!-- Tab 6: 关于与内核 -->
+      <div class="flex items-center justify-between p-4 rounded-xl bg-surface/40 hover:bg-surface/60 border border-borderOutline/40 text-textSecondary transition-all duration-200">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-surfaceHigh/60 flex items-center justify-center text-textSecondary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div><div class="text-[20px] font-semibold text-white/90">关于与固件更新</div><div class="text-[14px] text-textMuted">v1.8.5 Leanback (minSdk 24)</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Column: Detail Options & Interactive Chips (6 cols) -->
+    <section class="col-span-6 flex flex-col gap-4 bg-surfaceLow p-6 rounded-2xl border border-borderOutline/50 h-[830px] overflow-y-auto custom-scrollbar">
+
+      <!-- Group 1: 核心解码策略 (Focused Element Group) -->
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-accent rounded-full"></span>
+            <h2 class="text-[18px] font-bold text-white tracking-wide">视频解码内核 (Video Decoder)</h2>
+          </div>
+          <span class="text-[13px] text-accent font-medium">推荐：MediaCodec 硬解 (降功耗/防丢帧)</span>
+        </div>
+
+        <!-- 3-Way Segmented Radio Group (Television Segment Control) -->
+        <div class="grid grid-cols-3 gap-3 p-1.5 bg-surface rounded-xl border border-borderOutline">
+          <!-- Option 1: MediaCodec 硬解 (Active Highlight / Inner Focus Target) -->
+          <div class="flex flex-col p-3 rounded-lg bg-focus/15 border-2 border-focus text-white relative shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-[20px] text-focus">MediaCodec (硬解)</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-focus"></span>
+            </div>
+            <p class="text-[12px] text-zinc-300 leading-snug">利用 TV 芯片 SoC 硬件单元解码 4K 10bit HEVC，发热极低</p>
+            <div class="mt-2 text-[11px] text-focus font-mono">SOC GPU 渲染 · 0% CPU 占用</div>
+          </div>
+
+          <!-- Option 2: 软解 (FFmpeg) -->
+          <div class="flex flex-col p-3 rounded-lg bg-surfaceHigh/40 border border-borderOutline/60 text-textSecondary opacity-80">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-[20px] text-white/90">FFmpeg (软解)</span>
+              <span class="w-2.5 h-2.5 rounded-full border border-textMuted"></span>
+            </div>
+            <p class="text-[12px] text-textMuted leading-snug">通用兼容所有罕见格式与老旧编码，但高码率可能掉帧</p>
+            <div class="mt-2 text-[11px] text-textMuted font-mono">CPU 多线程 · 功耗偏高</div>
+          </div>
+
+          <!-- Option 3: 硬件直通自动模式 -->
+          <div class="flex flex-col p-3 rounded-lg bg-surfaceHigh/40 border border-borderOutline/60 text-textSecondary opacity-80">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-[20px] text-white/90">智能自适应</span>
+              <span class="w-2.5 h-2.5 rounded-full border border-textMuted"></span>
+            </div>
+            <p class="text-[12px] text-textMuted leading-snug">优先硬解，遇到解码崩溃自动静默降级为 FFmpeg 软解</p>
+            <div class="mt-2 text-[11px] text-textMuted font-mono">容灾首选 · 推荐极客</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 2: 音频直通与全景声 (Audio Passthrough) -->
+      <div class="flex flex-col gap-3 mt-2">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-accent rounded-full"></span>
+          <h2 class="text-[18px] font-bold text-white tracking-wide">音频透传输出 (Audio Passthrough)</h2>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <!-- Toggle 1: HDMI / eARC 源码直通 (Focused Item) -->
+          <div class="flex items-center justify-between p-3.5 rounded-xl bg-surface border border-borderOutline hover:border-textSecondary transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surfaceHigh flex items-center justify-center text-accent">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="text-[20px] font-semibold text-white">HDMI / eARC 杜比与 DTS 源码输出</div>
+                <div class="text-[12px] text-textSecondary">直接将 Dolby TrueHD / Atmos / DTS:X 源码交由家庭影院功放解码</div>
+              </div>
+            </div>
+            <!-- TV Switch Toggle Active -->
+            <div class="w-14 h-8 rounded-full bg-accent flex items-center justify-end px-1 border-2 border-accent">
+              <div class="w-6 h-6 rounded-full bg-bgDark font-bold text-[10px] flex items-center justify-center text-accent">ON</div>
+            </div>
+          </div>
+
+          <!-- Toggle 2: 降混双声道 (Downmix) -->
+          <div class="flex items-center justify-between p-3.5 rounded-xl bg-surface/50 border border-borderOutline/60 text-textSecondary">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surfaceHigh/60 flex items-center justify-center text-textMuted">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="text-[20px] font-semibold text-white/90">电视喇叭夜间人声对白增强 (Clear Voice)</div>
+                <div class="text-[12px] text-textMuted">压缩电影动态范围，避免爆破声过大而人物台词过小</div>
+              </div>
+            </div>
+            <!-- TV Switch Toggle Inactive -->
+            <div class="w-14 h-8 rounded-full bg-surfaceHigh flex items-center justify-start px-1 border border-borderOutline">
+              <div class="w-6 h-6 rounded-full bg-textMuted"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 3: 视频渲染表面与纹理模式 -->
+      <div class="flex flex-col gap-3 mt-2">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-accent rounded-full"></span>
+          <h2 class="text-[18px] font-bold text-white tracking-wide">画面渲染类型 (SurfaceView vs TextureView)</h2>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Item 1: SurfaceView (Active) -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface border-2 border-focus/60">
+            <div>
+              <div class="font-semibold text-white flex items-center gap-2 text-[20px]"><span class="">SurfaceView</span><span class="text-[11px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-mono">推荐</span></div>
+              <div class="text-[12px] text-textSecondary mt-0.5">原生独立合成层，最高帧率与杜比视界支持</div>
+            </div>
+            <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-bgDark stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Item 2: TextureView -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface/50 border border-borderOutline/60 opacity-80">
+            <div>
+              <div class="text-[20px] font-semibold text-white/90">TextureView</div>
+              <div class="text-[12px] text-textMuted mt-0.5">支持复杂动画与窗口半透明重叠，开销稍大</div>
+            </div>
+            <div class="w-5 h-5 rounded-full border border-textMuted"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 4: 快速换源与播放预加载策略 -->
+      <div class="flex flex-col gap-3 mt-2">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-4 bg-accent rounded-full"></span>
+          <h2 class="text-[18px] font-bold text-white tracking-wide">缓冲池与预加载参数 (Buffer Specs)</h2>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-surface p-3 rounded-lg border border-borderOutline">
+            <div class="text-[12px] text-textSecondary">首屏起播缓冲阈值</div>
+            <div class="text-[18px] font-bold text-accent font-mono mt-0.5">150 ms (零秒开)</div>
+          </div>
+          <div class="bg-surface p-3 rounded-lg border border-borderOutline">
+            <div class="text-[12px] text-textSecondary">最大预读缓存池</div>
+            <div class="text-[18px] font-bold text-white font-mono mt-0.5">64 MB</div>
+          </div>
+          <div class="bg-surface p-3 rounded-lg border border-borderOutline">
+            <div class="text-[12px] text-textSecondary">HTTP 超时自动换源</div>
+            <div class="text-[18px] font-bold text-white font-mono mt-0.5">5 秒重试</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Column: Interface Management & Sniffer Quick Drawer (3 cols) -->
+    <aside class="col-span-3 flex flex-col gap-4 h-[830px]">
+
+      <!-- Card 1: 接口地址快速导入与推送 (Remote Web Input / QR Code) -->
+      <div class="bg-surface p-5 rounded-2xl border border-borderOutline flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+            </svg>
+            <span class="text-[16px] font-bold text-white">局域网手机扫码推送</span>
+          </div>
+          <span class="text-[11px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">HTTP 9978</span>
+        </div>
+
+        <!-- TV Mock QR Code & URL Card -->
+        <div class="flex items-center gap-4 bg-surfaceLow p-3 rounded-xl border border-borderOutline/70">
+          <div class="w-20 h-20 bg-white p-1 rounded-lg flex items-center justify-center shrink-0">
+            <!-- Simulated QR Pattern -->
+            <div class="w-full h-full bg-zinc-900 rounded grid grid-cols-4 gap-0.5 p-1">
+              <div class="bg-white rounded-xs"></div><div class="bg-white rounded-xs"></div><div class="bg-zinc-900"></div><div class="bg-white"></div>
+              <div class="bg-white"></div><div class="bg-zinc-900"></div><div class="bg-white"></div><div class="bg-white"></div>
+              <div class="bg-zinc-900"></div><div class="bg-white"></div><div class="bg-zinc-900"></div><div class="bg-zinc-900"></div>
+              <div class="bg-white"></div><div class="bg-zinc-900"></div><div class="bg-white"></div><div class="bg-white"></div>
+            </div>
+          </div>
+          <div class="flex flex-col justify-center overflow-hidden">
+            <span class="text-[12px] text-textSecondary">手机浏览器直接打开：</span>
+            <span class="text-[14px] font-mono text-focus font-bold truncate mt-0.5">http://192.168.1.108:9978</span>
+            <span class="text-[11px] text-textMuted mt-1">无需电视遥控器繁琐输入长链接</span>
+          </div>
+        </div>
+
+        <button class="w-full py-2.5 bg-surfaceHigh hover:bg-borderOutline border border-borderOutline text-white text-[14px] font-semibold rounded-lg flex items-center justify-center gap-2">
+          <span class="">历史接口管理 (已存 6 条)</span>
+          <svg class="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Card 2: 嗅探规则与正则过滤 (Sniffer Engine Status) -->
+      <div class="bg-surface p-5 rounded-2xl border border-borderOutline flex flex-col gap-3 flex-1">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span class="text-[16px] font-bold text-white">视频嗅探规则库</span>
+          </div>
+          <span class="text-[12px] text-accent font-semibold">Pie/WebView 内核</span>
+        </div>
+
+        <div class="flex flex-col gap-2.5">
+          <div class="p-3 bg-surfaceLow rounded-xl border border-borderOutline/70 flex items-center justify-between">
+            <div>
+              <div class="text-[14px] font-semibold text-white">全局嗅探规则 (Regex)</div>
+              <div class="text-[11px] text-textMuted font-mono truncate max-w-[210px] mt-0.5">.m3u8|.mp4|video/tos|flv</div>
+            </div>
+            <span class="text-[11px] bg-surfaceHigh text-textSecondary px-2 py-1 rounded">28 种后缀</span>
+          </div>
+
+          <div class="p-3 bg-surfaceLow rounded-xl border border-borderOutline/70 flex items-center justify-between">
+            <div>
+              <div class="text-[14px] font-semibold text-white">广告分片与死链过滤</div>
+              <div class="text-[11px] text-textSecondary mt-0.5">自动跳过 TS 伪装切片 &amp; 广告倒计时</div>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+          </div>
+
+          <div class="p-3 bg-surfaceLow rounded-xl border border-borderOutline/70 flex items-center justify-between">
+            <div>
+              <div class="text-[14px] font-semibold text-white">自定义 User-Agent 伪装</div>
+              <div class="text-[11px] text-textMuted font-mono mt-0.5 truncate max-w-[210px]">Mozilla/5.0 (Android TV)...</div>
+            </div>
+            <span class="text-[11px] text-accent font-medium">修改</span>
+          </div>
+        </div>
+
+        <!-- TV 10-foot Notice -->
+        <div class="mt-auto p-3.5 rounded-xl bg-accent/10 border border-accent/20 text-accent">
+          <div class="flex items-center gap-2 text-[13px] font-bold mb-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="">D-pad 遥控操作提示</span>
+          </div>
+          <p class="text-[12px] text-textSecondary leading-relaxed">
+            按遥控器 <span class="text-focus font-bold">Menu 键</span> 可随时呼出当前选项的高级极客说明；按 <span class="text-white font-bold">OK 键</span> 立即切换并生效。
+          </p>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- 1080p Bottom TV Remote Control Bar & Accessibility Footer -->
+  <footer class="flex items-center justify-between h-[48px] border-t border-borderOutline/40 pt-2 text-[14px] text-textSecondary">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-surface border border-borderOutline text-white font-mono text-[12px]">▲▼◀▶</span>
+        <span class="">移动选项焦点</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-focus text-bgDark font-bold text-[12px]">OK</span>
+        <span class="text-white">确定切换 / 展开</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-surface border border-borderOutline text-white font-mono text-[12px]">Menu</span>
+        <span class="">呼出配置源码 / 导出备份</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-surface border border-borderOutline text-white font-mono text-[12px]">Back</span>
+        <span class="">保存并返回上级</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-[13px]">
+      <span class="flex items-center gap-1.5 text-textMuted">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        内存占用: 86MB / 2.0GB (minSdk 24 优化)
+      </span>
+      <span class="text-textMuted">|</span>
+      <span class="text-textMuted">FongMi TV v1.8.5 · Leanback Spec</span>
+    </div>
+  </footer>
+
+
+
+
+
+</body></html>

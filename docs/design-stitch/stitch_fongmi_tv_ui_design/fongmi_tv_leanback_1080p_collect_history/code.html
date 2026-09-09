@@ -1,0 +1,493 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+  <title>FongMi TV - Leanback 1080p Collect &amp; History (收藏与历史)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#131315',
+            'surface-dim': '#0e0e10',
+            'surface-container': '#202024',
+            'surface-high': '#2a2a2f',
+            accent: '#e5a958',
+            'focus-gold': '#fcd58b',
+          },
+          fontFamily: {
+            heading: ['"Space Grotesk"', 'sans-serif'],
+            body: ['"Work Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background-color: #0E0E10;
+      color: #E6E6E6;
+      font-family: 'Work Sans', sans-serif;
+      user-select: none;
+    }
+    .font-heading { font-family: 'Space Grotesk', sans-serif; }
+    
+    /* Focus State System: 3.5dp #FCD58B border + 25px glow + 1.05x scale */
+    .tv-focus-primary {
+      outline: 3.5px solid #FCD58B !important;
+      outline-offset: -1px;
+      box-shadow: 0 0 28px rgba(252, 213, 139, 0.45), 0 12px 28px rgba(0,0,0,0.85);
+      transform: scale(1.045);
+      z-index: 30;
+      border-color: transparent !important;
+    }
+    .tv-focus-tab {
+      background-color: #E5A958 !important;
+      color: #0E0E10 !important;
+      box-shadow: 0 0 22px rgba(229, 169, 88, 0.4);
+      transform: scale(1.02);
+    }
+    .tv-focus-subtle {
+      border-color: #FCD58B !important;
+      box-shadow: 0 0 16px rgba(252, 213, 139, 0.3);
+    }
+    .poster-inner-shadow {
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
+    }
+  </style>
+</head>
+<body class="p-[72px] flex flex-col justify-between box-border relative bg-[#0E0E10] text-[#E5E5E7]">
+
+  <!-- Top Ambient Glow -->
+  <div class="absolute top-0 left-1/4 w-1/2 h-44 bg-[#E5A958]/5 blur-[120px] pointer-events-none"></div>
+
+  <!-- 1. HEADER & BREADCRUMBS -->
+  <header class="flex items-center justify-between z-10 w-full mb-3">
+    <div class="flex items-center gap-6">
+      <!-- Back button -->
+      <div class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#202024] border border-white/10 text-sm text-neutral-300 font-medium">
+        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        <span class="">BACK 返回</span>
+      </div>
+
+      <!-- Breadcrumbs with badges -->
+      <nav class="flex items-center gap-3 text-base text-neutral-400">
+        <span class="hover:text-white transition">首页</span>
+        <span class="text-neutral-600">/</span>
+        <div class="flex items-center gap-2.5">
+          <span class="text-white font-heading font-semibold text-xl tracking-wide flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+            </svg>
+            收藏与历史 (Library)
+          </span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#202024] text-[#E5A958] border border-[#E5A958]/30">
+            收藏 23 · 历史 156
+          </span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Clock & System Meta -->
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-2 text-xs text-neutral-400 bg-[#17171A] px-3.5 py-1.5 rounded-full border border-white/5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="">本地同步库已就绪</span>
+        <span class="text-neutral-600">|</span>
+        <span class="text-neutral-300">云备份 21:30</span>
+      </div>
+      <div class="text-right">
+        <div class="font-heading font-bold text-2xl tracking-wider text-white">21:45</div>
+        <div class="text-[11px] text-neutral-400 tracking-wider">周五 · 1080P 60Hz</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. TABS & FILTER BAR -->
+  <section class="z-10 flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+    <!-- Main Tabs -->
+    <div class="flex items-center gap-3">
+      <!-- Active Tab: 我的收藏 (Selected) -->
+      <button class="tv-focus-tab px-6 py-2.5 rounded-lg font-heading font-bold text-base flex items-center gap-2.5 transition-transform duration-200">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
+        </svg>
+        <span class="">我的收藏</span>
+        <span class="px-2 py-0.5 text-xs rounded-full bg-black/20 text-[#0E0E10] font-black">23</span>
+      </button>
+
+      <!-- Tab: 观看历史 -->
+      <button class="px-5 py-2.5 rounded-lg bg-[#202024] text-neutral-300 font-heading font-medium text-base hover:bg-[#2A2A2F] flex items-center gap-2 border border-white/5 transition">
+        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="">观看历史</span>
+        <span class="px-2 py-0.5 text-xs rounded-full bg-white/10 text-neutral-400">156</span>
+      </button>
+
+      <!-- Tab: 稍后再看 -->
+      <button class="px-5 py-2.5 rounded-lg bg-[#202024] text-neutral-400 font-heading font-medium text-base hover:bg-[#2A2A2F] flex items-center gap-2 border border-white/5 transition">
+        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+        <span class="">稍后再看</span>
+        <span class="px-2 py-0.5 text-xs rounded-full bg-white/10 text-neutral-400">8</span>
+      </button>
+    </div>
+
+    <!-- Sub Filters (收藏 Tab 顶部筛选) -->
+    <div class="flex items-center gap-4 text-sm">
+      <div class="flex items-center gap-1.5 bg-[#17171A] p-1 rounded-lg border border-white/5">
+        <span class="px-3 py-1 rounded bg-[#2A2A2F] text-white font-medium text-xs">全部</span>
+        <span class="px-3 py-1 rounded text-neutral-400 hover:text-white text-xs">电影 (12)</span>
+        <span class="px-3 py-1 rounded text-neutral-400 hover:text-white text-xs">剧集 (8)</span>
+        <span class="px-3 py-1 rounded text-neutral-400 hover:text-white text-xs">综艺 (2)</span>
+        <span class="px-3 py-1 rounded text-neutral-400 hover:text-white text-xs">动漫 (1)</span>
+      </div>
+
+      <div class="h-4 w-[1px] bg-white/10"></div>
+
+      <!-- Sort control -->
+      <div class="flex items-center gap-2 text-xs text-neutral-400 bg-[#202024] px-3.5 py-1.5 rounded-lg border border-white/5">
+        <span class="">排序:</span>
+        <span class="text-[#E5A958] font-semibold flex items-center gap-1">
+          最近添加 ↓
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. MAIN WORKSPACE: 5 COLUMNS x 3 ROWS 16:9 GRID + FLOATING OVERLAY PANEL -->
+  <main class="flex-1 flex gap-6 relative overflow-visible">
+
+    <!-- Card Grid Area (5 cols x 3 rows with scroll headroom) -->
+    <div class="flex-1 flex flex-col gap-3">
+      
+      <!-- Date Group Indicator (连续多日日期分组) -->
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-xs font-semibold text-[#E5A958] tracking-wider uppercase font-heading bg-[#E5A958]/10 px-2.5 py-0.5 rounded border border-[#E5A958]/20">
+          ● 近期活跃与在看
+        </span>
+        <span class="text-xs text-neutral-400">昨天 18:42 · 周四更新</span>
+        <span class="h-[1px] flex-1 bg-white/5"></span>
+      </div>
+
+      <!-- Grid: 5 Columns x 2 visible rows (standard 1080p fit) -->
+      <div class="grid grid-cols-5 gap-5 w-full">
+
+        <!-- CARD 1: FOCUSED STATE (单屏单焦点 · 3.5dp #FCD58B + 25px glow + 1.045x scale) -->
+        <div class="tv-focus-primary relative rounded-xl bg-[#202024] p-2.5 transition-all duration-200 cursor-pointer flex flex-col group">
+          <!-- 16:9 Thumbnail -->
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#2D1B08] via-[#1F1610] to-[#120F0D] flex items-center justify-center">
+            <!-- Ambient blurred circle -->
+            <div class="absolute -top-6 -right-6 w-24 h-24 bg-[#E5A958]/30 rounded-full blur-xl"></div>
+            <!-- Semantic abstract monogram -->
+            <span class="font-heading font-black text-6xl text-[#FCD58B]/85 tracking-tighter drop-shadow-md">沙</span>
+            
+            <!-- Quality Badge Top-Right -->
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md border border-[#FCD58B]/40 text-[10px] font-bold text-[#FCD58B]">
+              4K 原盘
+            </div>
+
+            <!-- Focus badge indication -->
+            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] text-[10px] font-black tracking-wider">
+              当前焦点
+            </div>
+
+            <!-- Resume Progress Bar (续播进度条) -->
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-white mb-1">
+                <span class="text-[#FCD58B]">已看 45%</span>
+                <span class="text-neutral-300">01:14:28 / 02:46:32</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-[#E5A958] to-[#FCD58B] rounded-full" style="width: 45%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="mt-2.5 flex flex-col gap-1 px-1">
+            <h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">沙丘 2：厄拉科斯 命运之战</h3>
+            <div class="flex items-center justify-between text-[14px] text-neutral-300"><span class="truncate">科幻 · 冒险 · 饭太硬4K专线</span><span class="text-[#E5A958] text-[11px] font-medium shrink-0 ml-1">续播第1集</span></div>
+          </div>
+        </div>
+
+        <!-- CARD 2: Normal State -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 transition-all duration-200 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#0A1A1E] via-[#0E1519] to-[#0A0D10] flex items-center justify-center">
+            <div class="absolute -bottom-6 -left-6 w-24 h-24 bg-cyan-600/20 rounded-full blur-xl"></div>
+            <span class="font-heading font-black text-6xl text-cyan-200/80 drop-shadow-md">体</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              1080P 杜比
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 78%</span>
+                <span class="text-neutral-400">第 24 集 · 36:12</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-cyan-400 rounded-full" style="width: 78%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">三体 (电视剧版 完整版)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">剧情 · 悬疑 · 30集全</span><span class="text-xs text-neutral-500 shrink-0 ml-1">前天</span></div></div>
+        </div>
+
+        <!-- CARD 3: Normal State -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 transition-all duration-200 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#1C1014] via-[#170E10] to-[#0E0C0D] flex items-center justify-center">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-rose-600/20 rounded-full blur-xl"></div>
+            <span class="font-heading font-black text-6xl text-rose-300/80 drop-shadow-md">狼</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              蓝光 60帧
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="text-emerald-400">已看完 100%</span>
+                <span class="text-neutral-400">01:58:30</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">杀破狼 2：正义审判</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">动作 · 犯罪 · 经典港片</span><span class="text-xs text-neutral-500 shrink-0 ml-1">3天前</span></div></div>
+        </div>
+
+        <!-- CARD 4: Normal State -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 transition-all duration-200 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#1A1608] via-[#14120A] to-[#0E0D08] flex items-center justify-center">
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-amber-500/15 rounded-full blur-xl"></div>
+            <span class="font-heading font-black text-6xl text-amber-200/80 drop-shadow-md">奥</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              4K IMAX
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 12%</span>
+                <span class="text-neutral-400">00:22:15</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-[#E5A958] rounded-full" style="width: 12%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">奥本海默 (Oppenheimer)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">传记 · 历史 · 诺兰执导</span><span class="text-xs text-neutral-500 shrink-0 ml-1">上周</span></div></div>
+        </div>
+
+        <!-- CARD 5: Normal State -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 transition-all duration-200 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#0E1520] via-[#0A1017] to-[#080B0F] flex items-center justify-center">
+            <div class="absolute top-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-xl"></div>
+            <span class="font-heading font-black text-6xl text-blue-200/80 drop-shadow-md">漫</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              1080P 60FPS
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 92%</span>
+                <span class="text-neutral-400">第 12 集 · 完结</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-400 rounded-full" style="width: 92%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">漫长的季节 (The Long Season)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">悬疑 · 犯罪 · 华语口碑</span><span class="text-xs text-neutral-500 shrink-0 ml-1">04-12</span></div></div>
+        </div>
+
+        <!-- ROW 2: Additional Cards to fulfill dense Leanback Library -->
+        <!-- CARD 6 -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#1E110A] via-[#140C07] to-[#0D0805] flex items-center justify-center">
+            <span class="font-heading font-black text-6xl text-orange-200/80 drop-shadow-md">狂</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              4K 杜比视界
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 35%</span>
+                <span class="text-neutral-400">第 14 集 · 21:05</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-orange-400 rounded-full" style="width: 35%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">狂飙 (Knockout) 4K精编版</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">刑侦 · 扫黑 · 全39集</span><span class="text-xs text-neutral-500 shrink-0 ml-1">04-10</span></div></div>
+        </div>
+
+        <!-- CARD 7 -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#121A15] via-[#0D1410] to-[#090D0B] flex items-center justify-center">
+            <span class="font-heading font-black text-6xl text-emerald-200/80 drop-shadow-md">繁</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              4K 60FPS 沪语
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 62%</span>
+                <span class="text-neutral-400">第 19 集 · 30:40</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 62%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">繁花 (Blossoms Shanghai)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">王家卫 · 剧情 · 30集</span><span class="text-xs text-neutral-500 shrink-0 ml-1">04-08</span></div></div>
+        </div>
+
+        <!-- CARD 8 -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#17101C] via-[#120D16] to-[#0C080E] flex items-center justify-center">
+            <span class="font-heading font-black text-6xl text-purple-200/80 drop-shadow-md">寄</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              1080P 原声
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="text-emerald-400">已看完 100%</span>
+                <span class="text-neutral-400">02:11:45</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">寄生虫 (Parasite) 导演黑白版</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">剧情 · 惊悚 · 奉俊昊</span><span class="text-xs text-neutral-500 shrink-0 ml-1">04-03</span></div></div>
+        </div>
+
+        <!-- CARD 9 -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#1A1813] via-[#13120E] to-[#0B0A08] flex items-center justify-center">
+            <span class="font-heading font-black text-6xl text-stone-300/80 drop-shadow-md">星</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              4K 蓝光高码
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="">已看 50%</span>
+                <span class="text-neutral-400">01:29:10</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-[#E5A958] rounded-full" style="width: 50%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">星际穿越 (Interstellar)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">科幻 · 冒险 · 汉斯季默</span><span class="text-xs text-neutral-500 shrink-0 ml-1">03-29</span></div></div>
+        </div>
+
+        <!-- CARD 10 -->
+        <div class="relative rounded-xl bg-[#202024] p-2.5 border border-white/5 flex flex-col">
+          <div class="relative w-full aspect-video rounded-lg overflow-hidden poster-inner-shadow bg-gradient-to-br from-[#0B151C] via-[#081016] to-[#050B0E] flex items-center justify-center">
+            <span class="font-heading font-black text-6xl text-sky-200/80 drop-shadow-md">流</span>
+            <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 border border-white/10 text-[10px] font-medium text-neutral-200">
+              4K 杜比视界
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-4 flex flex-col justify-end">
+              <div class="flex justify-between items-center text-[11px] font-semibold text-neutral-300 mb-1">
+                <span class="text-emerald-400">已看完 100%</span>
+                <span class="text-neutral-400">02:53:00</span>
+              </div>
+              <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex flex-col gap-1 px-1"><h3 class="font-heading font-bold text-[20px] tracking-tight text-white truncate leading-tight">流浪地球 2 (The Wandering Earth II)</h3><div class="flex items-center justify-between text-[14px] text-neutral-400"><span class="truncate">科幻 · 灾难 · 郭帆</span><span class="text-xs text-neutral-500 shrink-0 ml-1">03-21</span></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 4. FLOATING OVERLAY PANEL (右侧浮层操作面板 · Menu 键呼出规范) -->
+    <aside class="w-[340px] bg-[#16161A]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col justify-between z-40">
+      <div>
+        <!-- Panel Header -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-[#E5A958]/20 border border-[#E5A958]/40 flex items-center justify-center text-[#E5A958]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="font-heading font-bold text-sm text-white">快捷操作面板</div>
+              <div class="text-[11px] text-neutral-400">呼自遥控器 [Menu] 菜单键</div>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-white/5 text-[10px] text-neutral-400 border border-white/5">按 Menu 收起</span>
+        </div>
+
+        <!-- Target Info Pill -->
+        <div class="bg-[#202024] p-3 rounded-xl border border-[#E5A958]/30 mb-4">
+          <div class="text-[10px] text-[#E5A958] font-semibold mb-1">当前指向影片 (FOCUSED)</div>
+          <div class="font-heading font-semibold text-[20px] text-white truncate">沙丘 2：厄拉科斯 命运之战</div>
+          <div class="text-[11px] text-neutral-400 mt-0.5 flex justify-between">
+            <span class="">收藏于 昨天 18:42</span>
+            <span class="text-[#FCD58B]">已播 45%</span>
+          </div>
+        </div>
+
+        <!-- Action Items (Vertical List for TV Remote) -->
+        <div class="flex flex-col gap-2"><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition group"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-[#E5A958]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></div><div><div class="text-[20px] font-semibold text-white">从 01:14:28 继续播放</div><div class="text-[12px] text-neutral-400">自动连接极速4K专线</div></div></div><span class="text-[10px] text-[#E5A958] font-bold">OK 键</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">移出当前收藏</div><div class="text-[12px] text-neutral-400">保留本地观看进度记录</div></div></div><span class="text-xs text-neutral-500">▶</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">收藏到分类文件夹</div><div class="text-[12px] text-neutral-400">默认「科幻大片合辑」</div></div></div><span class="text-xs text-neutral-500">▶</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">清除该条历史记录</div><div class="text-[12px] text-neutral-400">重置起播时间点至零</div></div></div><span class="text-xs text-neutral-500">▶</span></button></div>
+      </div>
+
+      <!-- Bottom Bulk Action -->
+      <div class="pt-3 border-t border-white/10 flex flex-col gap-2"><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition group"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-[#E5A958]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></div><div><div class="text-[20px] font-semibold text-white">从 01:14:28 继续播放</div><div class="text-[12px] text-neutral-400">自动连接极速4K专线</div></div></div><span class="text-[10px] text-[#E5A958] font-bold">OK 键</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">移出当前收藏</div><div class="text-[12px] text-neutral-400">保留本地观看进度记录</div></div></div><span class="text-xs text-neutral-500">▶</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">收藏到分类文件夹</div><div class="text-[12px] text-neutral-400">默认「科幻大片合辑」</div></div></div><span class="text-xs text-neutral-500">▶</span></button><button class="w-full flex items-center justify-between p-3 rounded-xl bg-[#202024] hover:bg-[#2A2A2F] border border-white/5 text-left transition"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-neutral-300"><svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div><div class="text-[20px] font-semibold text-neutral-200">清除该条历史记录</div><div class="text-[12px] text-neutral-400">重置起播时间点至零</div></div></div><span class="text-xs text-neutral-500">▶</span></button></div>
+    </aside>
+
+  </main>
+
+  <!-- 5. FOOTER REMOTE SHORTCUT BAR (底部常驻遥控键提示规范) -->
+  <footer class="z-10 flex items-center justify-between pt-3 border-t border-white/10 text-xs text-neutral-400 mt-2">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-neutral-200 font-mono text-[11px] border border-white/10">▲▼◀▶</span>
+        <span class="">浏览影视网格</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] font-bold text-[11px]">OK</span>
+        <span class="text-white font-medium">播放 / 续播</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-neutral-200 font-mono text-[11px] border border-white/10">Menu</span>
+        <span class="">操作面板</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+        <span class="text-neutral-300 font-mono text-[11px]">Red</span>
+        <span class="">快速标记已看</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-neutral-200 text-[11px] border border-white/10">Back</span>
+        <span class="">返回上一级</span>
+      </div>
+    </div>
+
+    <!-- Right TV Specs indicator -->
+    <div class="flex items-center gap-4 text-neutral-400 text-[11px]">
+      <span class="">WCAG AA 对比度 ≥ 4.5:1 (主文本 11.2:1)</span>
+      <span class="text-neutral-600">·</span>
+      <span class="">72px Overscan 电视安全区保障</span>
+      <span class="text-neutral-600">·</span>
+      <span class="text-[#E5A958]">FongMi TV v1.8.5 Leanback</span>
+    </div>
+  </footer>
+
+
+
+
+
+
+
+</body></html>

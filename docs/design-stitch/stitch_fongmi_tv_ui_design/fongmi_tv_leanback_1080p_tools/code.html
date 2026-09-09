@@ -1,0 +1,406 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+  <title>FongMi TV - Leanback 1080p Tools (工具箱与扩展能力)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Space Grotesk"', '"Work Sans"', 'sans-serif'],
+            mono: ['ui-monospace', 'monospace'],
+          },
+          colors: {
+            surface: '#131315',
+            'surface-dim': '#131315',
+            'surface-darker': '#0e0e10',
+            'surface-card': '#1b1b1e',
+            'surface-card-hover': '#242429',
+            'focus-gold': '#FCD58B',
+            'accent-gold': '#e5a958',
+            'accent-amber': '#d99436',
+            'border-subtle': '#2a2a2e',
+            'text-muted': '#8E8E93',
+            'text-dim': '#636366',
+          },
+          boxShadow: {
+            'focus-tv': '0 0 0 3.5px #FCD58B, 0 12px 36px rgba(229, 169, 88, 0.28)',
+            'subtle-card': '0 8px 24px rgba(0,0,0,0.45)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 1920px;
+      height: 1080px;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #0e0e10;
+      color: #f3f3f5;
+      font-family: 'Space Grotesk', 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+    /* TV 10-foot Overscan 安全区 72px */
+    .tv-safe-container {
+      width: 1776px;
+      height: 936px;
+      margin: 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    /* 卡片焦点过渡 */
+    .tv-card-focus {
+      border: 3.5px solid #FCD58B !important;
+      box-shadow: 0 0 0 2px rgba(252, 213, 139, 0.35), 0 16px 40px rgba(229, 169, 88, 0.3) !important;
+      transform: scale(1.025);
+      background: linear-gradient(145deg, #28282f 0%, #1e1e23 100%) !important;
+    }
+  </style>
+</head>
+<body class="bg-[#0e0e10]">
+
+  <!-- 电视 1080p 严格 Overscan 72px 容器 (1920x1080 -> 1776x936) -->
+  <div class="tv-safe-container">
+
+    <!-- 1. 顶部 Header / 面包屑 + 开发者入口与系统状态 -->
+    <header class="flex items-center justify-between h-[68px] border-b border-[#222226] pb-4">
+      <!-- 左侧面包屑与导航返回 -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1e] border border-[#2a2a2e] text-[#c4c4c8] text-sm tracking-wide font-medium">
+          <svg class="w-4 h-4 text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          <span class="">BACK 返回</span>
+        </div>
+
+        <div class="flex items-center gap-2 text-base font-medium">
+          <span class="text-text-muted">首页</span>
+          <span class="text-text-dim">/</span>
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span class="text-white font-bold text-xl tracking-tight">工具箱 (Tools)</span>
+            <span class="ml-1 text-xs px-2.5 py-0.5 rounded-full bg-[#27231c] text-accent-gold border border-[#554020] font-mono">
+              6 大核心模块
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧极客状态与开发者入口 -->
+      <div class="flex items-center gap-5">
+        <!-- 开发者模式入口指引 -->
+        <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-md bg-[#161619] border border-[#26262a] text-xs">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
+          <span class="text-text-muted">开发扩展:</span>
+          <span class="text-[#e2e2e6] font-mono">连按 5 次 [Red] 键</span>
+        </div>
+
+        <!-- 版本与协议状态 -->
+        <div class="flex items-center gap-3 text-sm">
+          <span class="px-2.5 py-1 rounded bg-[#202024] text-text-muted font-mono border border-[#2d2d32]">
+            v1.8.5 Leanback
+          </span>
+          <div class="text-right">
+            <div class="text-white font-mono font-bold text-lg leading-none">21:48</div>
+            <div class="text-text-dim text-[11px] font-mono leading-tight">1080P 60Hz</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. 主体网格 (2 列 × 3 行, 6 个原生工具卡片) -->
+    <main class="grid grid-cols-2 grid-rows-3 gap-6 my-auto h-[716px]">
+
+      <!-- 卡片 1: 投屏 Cast (默认单焦点态 FOCUSED) -->
+      <div class="tv-card-focus relative rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 cursor-pointer overflow-hidden border border-transparent" style="outline-offset: 2px; transform: scale(1.025); outline: rgb(252, 213, 139) solid 3.5px !important; border-color: transparent !important; box-shadow: rgba(252, 213, 139, 0.45) 0px 0px 25px, rgba(0, 0, 0, 0.7) 0px 16px 40px !important;">
+        <!-- 装饰渐变光晕背景 -->
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-accent-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex items-start justify-between relative z-10">
+          <!-- 左侧图标与主要标题 -->
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#282117] border-2 border-focus-gold flex items-center justify-center text-focus-gold shadow-md">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19h18M3 15h18M5 19v-4a2 2 0 012-2h10a2 2 0 012 2v4M4 8l8-5 8 5"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">投屏 Cast</h3>
+                <span class="px-2 py-0.5 rounded bg-focus-gold text-[#111114] text-xs font-bold font-mono">当前焦点</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">DLNA / Chromecast / AirPlay / Miracast 全协议客厅互联</p>
+            </div>
+          </div>
+
+          <!-- 右上快捷徽标 -->
+          <div class="px-2.5 py-1 rounded-md bg-[#2d2a23] border border-[#52442d] text-focus-gold text-xs font-mono font-medium">
+            按 OK 扫描
+          </div>
+        </div>
+
+        <!-- 卡片内容区域：发现的客厅投屏接收端列表 -->
+        <div class="relative z-10 bg-[#121215]/85 rounded-xl p-3.5 border border-[#2e2b26] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="flex h-2.5 w-2.5 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-focus-gold opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-focus-gold"></span>
+            </span>
+            <span class="text-xs text-[#cfcfd4]">已发现 3 台局域网设备：</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-0.5 rounded bg-[#1e1e23] text-white border border-[#34343a]">客厅小米电视 4K</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-[#1e1e23] text-white border border-[#34343a]">极米 H6 投影</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-[#1e1e23] text-text-muted border border-[#34343a]">Apple TV 4K</span>
+            </div>
+          </div>
+          <span class="text-xs text-focus-gold font-mono">DLNA 广播就绪</span>
+        </div>
+      </div>
+
+      <!-- 卡片 2: 推送 Push -->
+      <div class="relative rounded-2xl p-6 flex flex-col justify-between bg-surface-card hover:bg-surface-card-hover border border-border-subtle transition-all duration-200 cursor-pointer overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#201d18] border border-accent-gold/40 flex items-center justify-center text-accent-gold">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                <rect x="3" y="3" width="18" height="18" rx="3" stroke-width="2"></rect>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l3-3 3 3"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">推送 Push</h3>
+                <span class="px-2 py-0.5 rounded bg-[#1f2937] text-cyan-400 text-xs font-mono">HTTP 9978</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">局域网服务二维码 + 短链生成，手机直接传片与发弹幕</p>
+            </div>
+          </div>
+
+          <div class="px-2.5 py-1 rounded-md bg-[#1d1d21] border border-[#2f2f36] text-text-muted text-xs font-mono">
+            OK 展开二维码
+          </div>
+        </div>
+
+        <div class="bg-[#131316] rounded-xl p-3.5 border border-[#25252b] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded bg-[#202026] flex items-center justify-center text-[10px] font-mono text-accent-gold border border-[#383842]">QR</div>
+            <span class="text-xs text-text-muted">手机浏览器扫码或直接访问:</span>
+            <span class="text-xs text-white font-mono bg-[#1b1b22] px-2 py-0.5 rounded border border-[#2b2b35]">http://192.168.1.108:9978</span>
+          </div>
+          <span class="text-xs text-emerald-400 font-medium">● 侦听服务中</span>
+        </div>
+      </div>
+
+      <!-- 卡片 3: 文件 File -->
+      <div class="relative rounded-2xl p-6 flex flex-col justify-between bg-surface-card hover:bg-surface-card-hover border border-border-subtle transition-all duration-200 cursor-pointer overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#201d18] border border-accent-gold/40 flex items-center justify-center text-accent-gold">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 13h8m-4-4v8"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">文件 File</h3>
+                <span class="px-2 py-0.5 rounded bg-[#1c221d] text-emerald-400 text-xs font-mono">3 个挂载点</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">U 盘 / SMB 局域网共享 / WebDAV (Alist) 极速媒体浏览器</p>
+            </div>
+          </div>
+
+          <div class="px-2.5 py-1 rounded-md bg-[#1d1d21] border border-[#2f2f36] text-text-muted text-xs font-mono">
+            OK 浏览盘符
+          </div>
+        </div>
+
+        <div class="bg-[#131316] rounded-xl p-3.5 border border-[#25252b] flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-mono">
+            <span class="text-text-dim">路径:</span>
+            <span class="text-white">/storage/usbotg/4K_Movies/</span>
+            <span class="text-accent-gold text-[11px] bg-[#231e17] px-1.5 py-0.5 rounded border border-[#423420]">NTFS 已挂载</span>
+          </div>
+          <span class="text-xs text-text-muted">16:9 缩略图模式</span>
+        </div>
+      </div>
+
+      <!-- 卡片 4: 直播源 Live Source (Keep) -->
+      <div class="relative rounded-2xl p-6 flex flex-col justify-between bg-surface-card hover:bg-surface-card-hover border border-border-subtle transition-all duration-200 cursor-pointer overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#201d18] border border-accent-gold/40 flex items-center justify-center text-accent-gold">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">直播源 Live Source</h3>
+                <span class="px-2 py-0.5 rounded bg-[#2b2216] text-accent-gold text-xs font-mono">Keep 订阅</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">自建 M3U / TXT URL 导入，IPv6 可用率校验 + EPG 节目单抓取</p>
+            </div>
+          </div>
+
+          <div class="px-2.5 py-1 rounded-md bg-[#1d1d21] border border-[#2f2f36] text-text-muted text-xs font-mono">
+            按 Menu 批量导入
+          </div>
+        </div>
+
+        <div class="bg-[#131316] rounded-xl p-3.5 border border-[#25252b] flex items-center justify-between">
+          <div class="flex items-center gap-4 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="text-text-muted">有效频道:</span>
+              <span class="text-white font-mono font-bold">1,420 台</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-text-dim">EPG 抓取率:</span>
+              <span class="text-accent-gold font-mono">98.4%</span>
+            </div>
+          </div>
+          <span class="text-[11px] text-text-dim font-mono">今日 18:00 刚校验</span>
+        </div>
+      </div>
+
+      <!-- 卡片 5: 闪退日志 Crash -->
+      <div class="relative rounded-2xl p-6 flex flex-col justify-between bg-surface-card hover:bg-surface-card-hover border border-border-subtle transition-all duration-200 cursor-pointer overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#201d18] border border-accent-gold/40 flex items-center justify-center text-accent-gold">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">闪退日志 Crash</h3>
+                <span class="px-2 py-0.5 rounded bg-[#241c1c] text-rose-400 text-xs font-mono">最近 30 天</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">ANR / Native Crash 堆栈捕获，按时间倒序与一键打包反馈</p>
+            </div>
+          </div>
+
+          <div class="px-2.5 py-1 rounded-md bg-[#1d1d21] border border-[#2f2f36] text-text-muted text-xs font-mono">
+            长按 OK 导出 .zip
+          </div>
+        </div>
+
+        <div class="bg-[#131316] rounded-xl p-3.5 border border-[#25252b] flex items-center justify-between">
+          <div><div class="font-mono text-xs text-rose-400 font-medium">[Native] libijkplayer.so</div><div class="text-[11px] font-mono text-text-dim mt-0.5">SIGSEGV (0x000000) · 2天前 23:14</div></div>
+          <span class="text-xs text-accent-gold hover:underline font-mono">导出 logcat.zip</span>
+        </div>
+      </div>
+
+      <!-- 卡片 6: 性能 Profiler -->
+      <div class="relative rounded-2xl p-6 flex flex-col justify-between bg-surface-card hover:bg-surface-card-hover border border-border-subtle transition-all duration-200 cursor-pointer overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-[56px] h-[56px] rounded-xl bg-[#201d18] border border-accent-gold/40 flex items-center justify-center text-accent-gold">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-[22px] font-bold text-white tracking-tight">性能 Profiler</h3>
+                <span class="px-2 py-0.5 rounded bg-[#1c221d] text-emerald-400 text-xs font-mono">实时监测</span>
+              </div>
+              <p class="text-sm text-text-muted mt-1">CPU / 内存 / GPU 负载 / 硬解码掉帧折线图，长按抓取瞬时帧</p>
+            </div>
+          </div>
+
+          <div class="px-2.5 py-1 rounded-md bg-[#241c1c] border border-[#482b2b] text-rose-300 text-xs font-mono flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            长按 Red 抓帧
+          </div>
+        </div>
+
+        <div class="bg-[#131316] rounded-xl p-3.5 border border-[#25252b] flex items-center justify-between">
+          <div class="flex items-center gap-5 text-xs font-mono">
+            <div>
+              <span class="text-text-dim">CPU: </span>
+              <span class="text-emerald-400 font-bold">14%</span>
+            </div>
+            <div>
+              <span class="text-text-dim">RAM: </span>
+              <span class="text-white font-bold">186MB / 2.0GB</span>
+            </div>
+            <div>
+              <span class="text-text-dim">掉帧: </span>
+              <span class="text-emerald-400 font-bold">0 Drop / 60fps</span>
+            </div>
+          </div>
+          <!-- 简易性能柱状波形 -->
+          <div class="flex items-end gap-1 h-5">
+            <div class="w-1.5 h-2 bg-emerald-500 rounded-xs"></div>
+            <div class="w-1.5 h-3 bg-emerald-500 rounded-xs"></div>
+            <div class="w-1.5 h-2.5 bg-emerald-500 rounded-xs"></div>
+            <div class="w-1.5 h-4 bg-accent-gold rounded-xs"></div>
+            <div class="w-1.5 h-3 bg-emerald-500 rounded-xs"></div>
+            <div class="w-1.5 h-2 bg-emerald-500 rounded-xs"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- 3. 底部遥控键提示栏 (10-foot D-pad Navigation Bar) -->
+    <footer class="h-[52px] border-t border-[#222226] pt-3.5 flex items-center justify-between text-xs text-text-muted">
+      <!-- 遥控器键位引导 -->
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#202025] text-white border border-[#323238] font-mono font-bold text-[11px]">▲▼◀▶</span>
+          <span class="">浏览工具卡片</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#2c261c] text-focus-gold border border-[#52442d] font-mono font-bold text-[11px]">OK</span>
+          <span class="">进入功能</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#202025] text-white border border-[#323238] font-mono text-[11px]">Menu</span>
+          <span class="">呼出扩展帮助</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#2a1b1b] text-rose-400 border border-[#482828] font-mono text-[11px]">Red</span>
+          <span class="">长按触发开发者模式 / 抓帧</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#202025] text-white border border-[#323238] font-mono text-[11px]">Back</span>
+          <span class="">返回上一级</span>
+        </div>
+      </div>
+
+      <!-- TV 规范合规注记 -->
+      <div class="flex items-center gap-4 text-[11px] text-text-dim font-mono">
+        <span class="">72px Overscan 安全区</span>
+        <span class="">·</span>
+        <span class="">minSdk 24 (无触摸依赖)</span>
+        <span class="">·</span>
+        <span class="">WCAG AA 对比度 ≥ 4.5:1</span>
+      </div>
+    </footer>
+
+  </div>
+
+
+
+
+</body></html>

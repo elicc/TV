@@ -1,0 +1,417 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=1920, height=1080, initial-scale=1.0" name="viewport">
+<title>FongMi TV - Leanback 1080p Live &amp; EPG (直播与侧拉节目单规范)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+    :root {
+      --bg: #0E0E10;
+      --surface: #202024;
+      --surface-raised: #2A2A30;
+      --accent: #E5A958;
+      --focus: #FCD58B;
+      --text-primary: #F4F4F6;
+      --text-secondary: #9B9BA1;
+      --text-muted: #66666D;
+      --danger: #EF4444;
+      --success: #22C55E;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background-color: #050507;
+      color: var(--text-primary);
+      font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-heading {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    /* 10-foot TV Focus Glow & Scale */
+    .tv-focus {
+      outline: 3.5px solid var(--focus) !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45), 0 8px 24px rgba(0, 0, 0, 0.7);
+      transform: scale(1.05);
+      z-index: 50;
+      transition: all 160ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .tv-focus-pill {
+      outline: 3.5px solid var(--focus) !important;
+      outline-offset: 1px;
+      box-shadow: 0 0 20px rgba(252, 213, 139, 0.5);
+      background-color: var(--focus) !important;
+      color: #0E0E10 !important;
+      transform: scale(1.06);
+      z-index: 40;
+    }
+    .tv-focus-slider {
+      box-shadow: 0 0 16px rgba(252, 213, 139, 0.75);
+    }
+    /* Scrim overlays (Cinema 1080p safe gradients) */
+    .scrim-top {
+      background: linear-gradient(180deg, rgba(14, 14, 16, 0.95) 0%, rgba(14, 14, 16, 0.75) 45%, rgba(14, 14, 16, 0) 100%);
+    }
+    .scrim-bottom {
+      background: linear-gradient(0deg, rgba(14, 14, 16, 0.98) 0%, rgba(14, 14, 16, 0.85) 50%, rgba(14, 14, 16, 0) 100%);
+    }
+    .scrim-panel {
+      background: rgba(20, 20, 24, 0.88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Abstract Cinematic Film Background simulation */
+    .cinema-bg {
+      background: radial-gradient(circle at 75% 35%, rgba(68, 48, 20, 0.35) 0%, rgba(14, 14, 16, 0.9) 65%),
+                  radial-gradient(circle at 20% 80%, rgba(30, 25, 45, 0.4) 0%, rgba(8, 8, 10, 0.98) 80%),
+                  #0a0a0c;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between p-0 m-0"><!-- 1. 全屏体育赛事超高清直播背景模拟 (欧冠半决赛现场) -->
+<div class="absolute inset-0 cinema-bg overflow-hidden pointer-events-none z-0">
+<!-- 球场射灯与环境冷暖光模拟 -->
+<div class="absolute w-[1000px] h-[750px] -right-[100px] -top-[120px] rounded-full bg-gradient-to-br from-emerald-600/10 via-teal-950/20 to-transparent blur-3xl opacity-70"></div>
+<div class="absolute w-[800px] h-[800px] left-[15%] bottom-0 rounded-full bg-gradient-to-tr from-amber-600/15 via-yellow-950/15 to-transparent blur-3xl opacity-60"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/60"></div>
+<!-- 模拟现场实况比分与转播水印 (右上方直播现场感) -->
+<div class="absolute right-[72px] top-[140px] flex flex-col items-end gap-3 pointer-events-none select-none opacity-90">
+<div class="flex items-center gap-3 bg-black/60 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+<div class="flex items-center gap-2 font-heading font-bold text-[18px] text-white">
+<span class="px-2 py-0.5 rounded bg-blue-600/60 text-[13px]">RMA</span>
+<span class="text-[22px] text-[#FCD58B]">2</span>
+<span class="text-white/40">:</span>
+<span class="text-[22px] text-[#FCD58B]">1</span>
+<span class="px-2 py-0.5 rounded bg-red-600/60 text-[13px]">BAY</span>
+</div>
+<span class="w-1 h-3.5 bg-white/20 rounded"></span>
+<span class="font-mono font-bold text-amber-400 text-[16px]">下半场 72:15</span>
+</div>
+<div class="flex items-center gap-2 text-[12px] text-white/50 bg-black/40 px-3 py-1 rounded-full border border-white/5">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+<span class="font-mono text-red-400 font-bold uppercase tracking-wider">4K HDR 直播信号</span>
+</div>
+</div>
+</div>
+<!-- 2. 顶部实时 HUD 浮层 (片名/台标/信号流参数/返回提示) -->
+<header class="relative z-30 w-full pt-[44px] pb-[40px] px-[72px] scrim-top flex items-start justify-between">
+<!-- 左侧：返回键 + 台号 + 频道名 + 赛事与场次信息 -->
+<div class="flex items-center gap-5">
+<div class="flex items-center justify-center w-[46px] h-[46px] rounded-lg bg-white/10 border border-white/15 text-white/90 shadow-lg">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<span class="font-mono text-[22px] font-black text-[#FCD58B] bg-amber-500/20 border border-amber-400/40 px-2.5 py-0.5 rounded-lg">
+          005
+        </span>
+<h1 class="font-heading text-[28px] font-bold tracking-wide text-[#F4F4F6]">
+          CCTV-5+ 4K 体育超高清
+        </h1>
+<span class="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/30 text-red-400 text-[13px] font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE 直播中
+        </span>
+<span class="px-2 py-0.5 rounded bg-white/10 text-white/75 text-[13px] font-mono tracking-wider">
+          4K 50P · HLG HDR · 杜比全景声
+        </span>
+</div>
+<p class="text-[14px] text-[#9B9BA1] mt-1 flex items-center gap-2.5">
+<span class="text-[#F4F4F6] font-medium">正在直播：2023/24 欧洲冠军联赛 半决赛 次回合 (皇家马德里 vs 拜仁慕尼黑)</span>
+<span class="opacity-40">|</span>
+<span class="text-amber-300/90 font-mono">下半场 72:15</span>
+<span class="opacity-40">|</span>
+<span class="">按 [OK] 呼出选台，按 [Menu] 切换信号源</span>
+</p>
+</div>
+</div>
+<!-- 右侧：实时网络与码率指示 + 电视遥控器退出提示 -->
+<div class="flex items-center gap-5">
+<div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-black/50 border border-white/10 text-[14px] text-white/85 shadow-lg backdrop-blur-md">
+<span class="flex items-center gap-1.5 text-emerald-400 font-mono text-[14px] font-semibold">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span> 42.8 Mbps
+      </span>
+<span class="text-white/20">|</span>
+<span class="font-mono text-white/80">缓冲: <span class="text-emerald-400 font-semibold">8.2s (极佳)</span></span>
+<span class="text-white/20">|</span>
+<span class="font-mono text-white/70">59.94 FPS</span>
+<span class="text-white/20">|</span>
+<span class="font-heading text-[18px] font-bold text-white">21:30 周五</span>
+</div>
+<div class="flex items-center gap-2 text-[13px] text-white/70 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 font-mono text-[11px] text-white font-bold">Back</span>
+<span class="">隐藏/退出</span>
+</div>
+</div>
+</header>
+<!-- 3. 主屏幕主体：侧拉频道抽屉 (EPG Drawer) + 右侧直播源快速调优浮层 (Widget) -->
+<main class="relative z-30 flex-1 px-[72px] flex items-stretch justify-between pointer-events-none pb-4">
+<!-- 左侧：全规格侧拉频道与 EPG 节目单抽屉 (560px 宽度) -->
+<aside class="pointer-events-auto w-[570px] rounded-3xl scrim-panel p-5 shadow-2xl border border-white/15 flex flex-col gap-4 overflow-hidden">
+<!-- 抽屉头部：频道分类分组 Tab 条 (支持 D-pad 左右滑动切换) -->
+<div class="flex items-center justify-between pb-3 border-b border-white/10">
+<div class="flex items-center gap-2 overflow-hidden">
+<!-- 当前选中高亮 Tab -->
+<div class="px-3 py-1.5 rounded-lg bg-[#E5A958] text-[#0E0E10] font-bold text-[14px] flex items-center gap-1.5 shadow-md">
+<span class="">央视频道</span>
+<span class="text-[11px] opacity-80 font-mono">(18)</span>
+</div>
+<div class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70 text-[14px] font-medium border border-white/5">
+          卫视精选 (32)
+        </div>
+<div class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70 text-[14px] font-medium border border-white/5">
+          体育专区 (12)
+        </div>
+<div class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70 text-[14px] font-medium border border-white/5">
+          我的收藏 ★
+        </div>
+</div>
+<span class="text-[12px] text-[#E5A958] font-mono whitespace-nowrap pl-2">◀ ▶ 组</span>
+</div>
+<!-- 频道纵向列表与 EPG 节目单展开 (D-pad 上下移动焦点) -->
+<div class="flex-1 flex flex-col gap-2.5 overflow-hidden justify-start">
+<!-- 频道项 1: CCTV-1 -->
+<div class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between opacity-80">
+<div class="flex items-center gap-3">
+<span class="font-mono text-[16px] font-bold text-white/60">001</span>
+<div>
+<div class="text-[16px] font-semibold text-white">CCTV-1 综合 HD</div>
+<div class="text-[13px] text-[#9B9BA1] flex items-center gap-2 mt-0.5">
+<span class="">焦点访谈：新时代新征程</span>
+<span class="text-white/30">·</span>
+<span class="font-mono text-white/50 text-[12px]">21:00-21:35</span>
+</div>
+</div>
+</div>
+<span class="text-[12px] px-2 py-0.5 rounded bg-white/10 text-white/60 font-mono">1080P</span>
+</div>
+<!-- 频道项 2: CCTV-2 -->
+<div class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between opacity-80">
+<div class="flex items-center gap-3">
+<span class="font-mono text-[16px] font-bold text-white/60">002</span>
+<div>
+<div class="text-[16px] font-semibold text-white">CCTV-2 财经 HD</div>
+<div class="text-[13px] text-[#9B9BA1] flex items-center gap-2 mt-0.5">
+<span class="">经济半小时：解码高端智能制造</span>
+</div>
+</div>
+</div>
+<span class="text-[12px] px-2 py-0.5 rounded bg-white/10 text-white/60 font-mono">1080P</span>
+</div>
+<!-- 频道项 3: CCTV-5+ 4K (当前获焦状态: tv-focus 规范，3.5dp #FCD58B 高亮描边与内嵌展开 EPG) -->
+<div class="tv-focus w-full p-4 rounded-2xl bg-[#202024] border border-amber-400/50 flex flex-col gap-3 shadow-2xl relative">
+<!-- 频道主行 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-mono text-[18px] font-black text-[#FCD58B] bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">005</span>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-[18px] font-bold text-white font-heading">CCTV-5+ 4K 体育超高清</span>
+<span class="px-2 py-0.5 rounded bg-amber-400 text-[#0E0E10] font-black text-[11px] uppercase tracking-wider">4K HDR</span>
+</div>
+<div class="text-[13px] text-amber-300 flex items-center gap-2 mt-0.5 font-medium">
+<span class="flex items-center gap-1 text-emerald-400">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> 当前正在播放
+                </span>
+<span class="text-white/30">·</span>
+<span class="">欧冠半决赛：皇家马德里 vs 拜仁</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-[12px] text-amber-400 font-mono font-bold">50 FPS</span>
+<span class="text-[11px] text-white/50">按 [OK] 选定</span>
+</div>
+</div>
+<!-- 获焦项专属：EPG 时段流展开预览 (Expanded Sub-EPG) -->
+<div class="mt-1 bg-black/40 rounded-xl p-3 border border-white/10 flex flex-col gap-2">
+<div class="flex items-center justify-between text-[12px] text-white/50 border-b border-white/5 pb-1.5">
+<span class="font-medium text-amber-300/80">今日赛事节目单 (EPG 回看/预告)</span>
+<span class="font-mono text-[11px]">◀ 回看 | 预约 ▶</span>
+</div>
+<!-- 时段 1: 已播节目 -->
+<div class="flex items-center justify-between text-[12px] text-white/50">
+<div class="flex items-center gap-2 font-mono">
+<span class="">20:00 - 21:00</span>
+<span class="font-sans text-white/60 truncate w-[260px]">实况录像：2024年世界乒乓球锦标赛</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-white/5 text-[11px] text-white/40">已结束</span>
+</div>
+<!-- 时段 2: 正在直播中节目 (附带高亮进度条) -->
+<div class="flex flex-col gap-1.5 bg-amber-500/10 p-2 rounded-lg border border-amber-400/25">
+<div class="flex items-center justify-between text-[13px]">
+<div class="flex items-center gap-2 font-mono font-bold text-[#FCD58B]">
+<span class="">21:00 - 23:15</span>
+<span class="font-sans text-white font-semibold truncate w-[240px]">2023/24 欧洲冠军联赛半决赛 次回合</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-red-500 text-white font-bold text-[11px] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> 直播中
+              </span>
+</div>
+<!-- 进度条与当前位置 -->
+<div class="w-full h-1.5 rounded-full bg-white/20 overflow-hidden relative">
+<div class="absolute left-0 top-0 bottom-0 w-[65%] bg-gradient-to-r from-amber-600 to-[#FCD58B] rounded-full"></div>
+</div>
+<div class="flex justify-between text-[11px] font-mono text-white/50">
+<span class="">已播 75 分钟 (65%)</span>
+<span class="">剩余 60 分钟</span>
+</div>
+</div>
+<!-- 时段 3: 待播节目 -->
+<div class="flex items-center justify-between text-[12px] text-white/50">
+<div class="flex items-center gap-2 font-mono">
+<span class="">23:15 - 00:30</span>
+<span class="font-sans text-white/60 truncate w-[260px]">体育世界：欧冠全景复盘与赛事速递</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-white/5 text-[11px] text-amber-300/80">待播·可预约</span>
+</div>
+</div>
+</div>
+<!-- 频道项 4: CCTV-6 -->
+<div class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between opacity-80">
+<div class="flex items-center gap-3">
+<span class="font-mono text-[16px] font-bold text-white/60">006</span>
+<div>
+<div class="text-[16px] font-semibold text-white">CCTV-6 电影 HD</div>
+<div class="text-[13px] text-[#9B9BA1] flex items-center gap-2 mt-0.5">
+<span class="">经典影院：流浪地球 2 (重制版)</span>
+</div>
+</div>
+</div>
+<span class="text-[12px] px-2 py-0.5 rounded bg-white/10 text-white/60 font-mono">1080P</span>
+</div>
+<!-- 频道项 5: CCTV-8 -->
+<div class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between opacity-80">
+<div class="flex items-center gap-3">
+<span class="font-mono text-[16px] font-bold text-white/60">008</span>
+<div>
+<div class="text-[16px] font-semibold text-white">CCTV-8 电视剧 HD</div>
+<div class="text-[13px] text-[#9B9BA1] flex items-center gap-2 mt-0.5">
+<span class="">黄金强档剧场：追风者 第 14 集</span>
+</div>
+</div>
+</div>
+<span class="text-[12px] px-2 py-0.5 rounded bg-white/10 text-white/60 font-mono">1080P</span>
+</div>
+</div>
+</aside>
+<!-- 中间及右侧操作浮层：TV 设计规范呼出卡与换源调优 Widget -->
+<div class="flex flex-col justify-between items-end gap-5 pl-10">
+<!-- TV 端大屏交互规范批注标签 (Design System Annotations) -->
+<div class="pointer-events-auto flex flex-col gap-3 max-w-[460px]">
+<div class="p-3.5 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-md shadow-xl text-[13px] text-white/80 space-y-2">
+<div class="flex items-center gap-2 text-amber-300 font-semibold font-heading text-[14px]">
+<span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          10-foot EPG 规范与防烧屏策略
+        </div>
+<p class="text-white/70 text-[12px] leading-relaxed">
+          • <strong class="text-white">左右抽屉分栏</strong>：D-pad 左右在分组/节目单间无缝平移，上下快速步进翻台。<br>
+          • <strong class="text-white">零卡顿极速换台</strong>：单次遥控按键切换耗时 &lt; 400ms，预加载首个 GOP 关键帧。<br>
+          • <strong class="text-white">智能背景避让</strong>：节目单呼出期间直播画质自动降低 30% 辉度，防止 OLED 电视静态残影。
+        </p>
+</div>
+</div>
+<!-- 右侧小部件：快速换源与解码调优面板 (按 Menu 或 长按 OK 唤出状态) -->
+<aside class="pointer-events-auto w-[420px] rounded-2xl scrim-panel p-5 shadow-2xl border border-white/15 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-3 border-b border-white/10">
+<div class="flex items-center gap-2">
+<svg class="w-5 h-5 text-[#E5A958]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114 0M8.5 16.5a6 6 0 017 0M12 20h.01M2 8.82a15 15 0 0120 0" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<h3 class="font-heading text-[17px] font-bold text-white tracking-wide">实时直播源与解码设置</h3>
+</div>
+<span class="text-[12px] text-amber-300/80 font-mono">Menu 快速收起</span>
+</div>
+<!-- 线路选择列表 -->
+<div class="space-y-2">
+<div class="text-[13px] text-[#9B9BA1] font-medium flex justify-between">
+<span class="">多路备用流分配</span>
+<span class="text-emerald-400 font-mono text-[12px]">延迟 1.8s</span>
+</div>
+<!-- 线路 1: 当前活动优质源 -->
+<button class="w-full p-3 rounded-xl bg-amber-500/20 border border-amber-400/60 text-left flex items-center justify-between text-[13px] shadow-[0_0_12px_rgba(252,213,139,0.3)]">
+<div class="flex items-center gap-2.5">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+<div>
+<div class="font-bold text-white">线路 1 · IPv6 移动原画直连</div>
+<div class="text-[11px] text-amber-300 font-mono mt-0.5">4K 50P · 42.8 Mbps · 极低丢包</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-amber-400 text-[#0E0E10] font-black text-[11px]">当前优质</span>
+</button>
+<!-- 线路 2 -->
+<button class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-left flex items-center justify-between text-[13px] opacity-80">
+<div class="flex items-center gap-2.5">
+<span class="w-2.5 h-2.5 rounded-full bg-white/40"></span>
+<div>
+<div class="font-medium text-white/90">线路 2 · CDN 全球边缘加速</div>
+<div class="text-[11px] text-white/50 font-mono mt-0.5">1080P 60P · 24.5 Mbps</div>
+</div>
+</div>
+<span class="text-[11px] text-white/40 font-mono">延迟 3.2s</span>
+</button>
+<!-- 线路 3 -->
+<button class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-left flex items-center justify-between text-[13px] opacity-70">
+<div class="flex items-center gap-2.5">
+<span class="w-2.5 h-2.5 rounded-full bg-white/30"></span>
+<div>
+<div class="font-medium text-white/80">线路 3 · 备用多播 P2P 分发</div>
+<div class="text-[11px] text-white/40 font-mono mt-0.5">1080P · 18.0 Mbps</div>
+</div>
+</div>
+<span class="text-[11px] text-white/40 font-mono">延迟 4.5s</span>
+</button>
+</div>
+<!-- 解码模式快捷切换 -->
+<div class="pt-2 border-t border-white/10 flex items-center justify-between text-[13px]">
+<span class="text-white/70">解码核心</span>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-[#FCD58B] border border-amber-400/40 font-semibold text-[12px]">MediaCodec 硬解</span>
+<span class="px-2.5 py-1 rounded-lg bg-white/5 text-white/50 border border-white/10 text-[12px]">软解 (FFmpeg)</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- 4. 全屏底部主控制与遥控器按键导航栏 (Bottom HUD) -->
+<footer class="relative z-30 w-full px-[72px] pb-[44px] pt-[30px] scrim-bottom flex flex-col gap-3.5">
+<!-- 遥控器快捷指令导航与交互状态 (D-pad 10-foot Bar) -->
+<div class="w-full flex items-center justify-between text-[13px] text-white/75 bg-black/40 px-5 py-3 rounded-xl border border-white/10">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/20 font-mono text-white text-[12px] font-bold">▲ ▼</kbd>
+<span class="">快速切台 / 选节目</span>
+</div>
+<div class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/20 font-mono text-white text-[12px] font-bold">◀ ▶</kbd>
+<span class="">切换频道分类 / EPG 回看预告</span>
+</div>
+<div class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] font-mono text-[12px] font-bold">OK</kbd>
+<span class="">确认选台 / 呼出列表</span>
+</div>
+<div class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/20 font-mono text-white text-[12px] font-bold">Menu</kbd>
+<span class="">换源与解码设置</span>
+</div>
+<div class="flex items-center gap-2 text-[#FCD58B]">
+<kbd class="px-2 py-0.5 rounded bg-white/20 font-mono text-white text-[12px] font-bold">长按 OK</kbd>
+<span class="">收藏频道</span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-white/50 text-[12px]">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="">3秒无按键操作将自动沉浸隐藏节目单</span>
+</div>
+</div>
+</footer>
+
+
+</body></html>

@@ -1,0 +1,933 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=1920, initial-scale=1.0" name="viewport">
+<title>FongMi TV - Android TV Leanback Home UI &amp; Focus Design</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans+SC:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<style>
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+      background-color: #0E0E10;
+      color: #F3F3F6;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* 10-foot TV Focus Elevation & Halo Glow */
+    .tv-focus-primary {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 3px;
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45), 0 16px 40px -10px rgba(229, 169, 88, 0.45);
+      z-index: 40;
+    }
+
+    .tv-focus-spec-card {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 4px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45), 0 20px 40px rgba(0, 0, 0, 0.8);
+      transform: scale(1.05);
+      z-index: 30;
+    }
+
+    .tv-focus-nav {
+      outline: 2.5px solid #FCD58B;
+      outline-offset: 2px;
+      background-color: #E5A958 !important;
+      color: #0E0E10 !important;
+      font-weight: 700;
+      transform: scale(1.04);
+      box-shadow: 0 6px 20px rgba(229, 169, 88, 0.35);
+    }
+
+    /* Ice Theme Focus Classes */
+    .tv-focus-ice {
+      outline: 3.5px solid #B8E0FF;
+      outline-offset: 4px;
+      box-shadow: 0 0 25px rgba(184, 224, 255, 0.35), 0 16px 40px -10px rgba(111, 168, 255, 0.45);
+      transform: scale(1.05);
+      z-index: 30;
+    }
+
+    /* Jade Theme Focus Classes */
+    .tv-focus-jade {
+      outline: 3.5px solid #B8E8D2;
+      outline-offset: 4px;
+      box-shadow: 0 0 25px rgba(184, 232, 210, 0.35), 0 16px 40px -10px rgba(108, 196, 161, 0.45);
+      transform: scale(1.05);
+      z-index: 30;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Ambient backdrop gradient for Leanback */
+    .hero-mask {
+      background: linear-gradient(90deg, #0E0E10 0%, rgba(14, 14, 16, 0.94) 38%, rgba(14, 14, 16, 0.65) 68%, rgba(14, 14, 16, 0.2) 100%),
+                  linear-gradient(0deg, #0E0E10 0%, rgba(14, 14, 16, 0.9) 24%, rgba(14, 14, 16, 0) 65%);
+    }
+
+    .glass-pill {
+      background: rgba(32, 32, 36, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-auto min-h-[1080px] bg-[#0E0E10] text-[#F3F3F6] select-none">
+<!-- ==================== TV 1080P STAGE WRAPPER ==================== -->
+<div class="relative w-[1920px] h-[1080px] overflow-hidden bg-[#0E0E10]">
+<!-- Hero Ambient Backdrop (Abstract Dune Cinematic Atmospheric Art) -->
+<div class="absolute top-0 right-0 w-[1420px] h-[780px] z-0 overflow-hidden pointer-events-none">
+<div class="w-full h-full relative overflow-hidden bg-gradient-to-br from-[#543011] via-[#2A1608] to-[#0E0E10] opacity-75">
+<div class="absolute -top-24 -right-24 w-[750px] h-[750px] rounded-full bg-[#E5A958]/15 blur-3xl"></div>
+<div class="absolute top-48 right-72 w-[520px] h-[520px] rounded-full bg-[#9E6E2D]/20 blur-2xl"></div>
+<div class="absolute bottom-10 right-28 text-[320px] font-black text-white/[0.03] select-none font-mono leading-none tracking-tighter">DUNE</div>
+</div>
+<div class="absolute inset-0 hero-mask"></div>
+</div>
+<!-- Top Safe Area Bar (72px Safe Margin) -->
+<header class="relative z-20 px-[72px] pt-[48px] pb-6 flex items-center justify-between">
+<!-- Left: Brand + Category Nav Pills -->
+<div class="flex items-center gap-10">
+<!-- Logo Badge -->
+<div class="flex items-center gap-3 pr-2">
+<div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#E5A958] to-[#9E6E2D] flex items-center justify-center shadow-lg shadow-[#E5A958]/20">
+<svg class="w-6 h-6 text-[#0E0E10]" fill="currentColor" viewBox="0 0 24 24">
+<path d="M4 6.5C4 5.11929 5.11929 4 6.5 4H17.5C18.8807 4 20 5.11929 20 6.5V14.5C20 15.8807 18.8807 17 17.5 17H6.5C5.11929 17 4 15.8807 4 14.5V6.5ZM8 19H16V21H8V19Z"></path>
+<path d="M10 8.5L15 11.5L10 14.5V8.5Z" fill="#0E0E10"></path>
+</svg>
+</div>
+<div>
+<div class="text-[24px] font-black tracking-wider text-white flex items-center gap-2">
+              FONGMI <span class="text-xs px-2 py-0.5 rounded bg-[#E5A958]/20 text-[#E5A958] font-bold tracking-widest border border-[#E5A958]/30">TV</span>
+</div>
+</div>
+</div>
+<!-- Horizontal Nav Pills (TopNavPill) -->
+<nav class="flex items-center gap-3">
+<!-- 首页 (当前选中态) -->
+<div class="px-6 py-2.5 rounded-full text-[20px] font-semibold tracking-wide bg-white/10 text-white border border-white/15 flex items-center gap-2.5 transition-all">
+<div class="w-2 h-2 rounded-full bg-[#E5A958]"></div>
+            首页
+          </div>
+<!-- 点播 -->
+<div class="px-6 py-2.5 rounded-full text-[20px] font-medium text-[#A2A2A8] hover:text-white transition-all">
+            点播
+          </div>
+<!-- 直播 -->
+<div class="px-6 py-2.5 rounded-full text-[20px] font-medium text-[#A2A2A8] hover:text-white transition-all">
+            直播
+          </div>
+<!-- 收藏 / 历史 -->
+<div class="px-6 py-2.5 rounded-full text-[20px] font-medium text-[#A2A2A8] hover:text-white transition-all">
+            收藏历史
+          </div>
+<!-- 搜索 -->
+<div class="px-5 py-2.5 rounded-full text-[20px] font-medium text-[#A2A2A8] flex items-center gap-2 hover:text-white transition-all">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+<path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+            搜索
+          </div>
+</nav>
+</div>
+<!-- Right: Source Provider Chip, Settings & Live Clock -->
+<div class="flex items-center gap-5">
+<!-- Current Active Content Source Chip -->
+<div class="glass-pill px-4 py-2 rounded-full flex items-center gap-2.5 text-[17px] text-[#D1D1D8]">
+<span class="w-2.5 h-2.5 rounded-full bg-[#4ADE80] animate-pulse"></span>
+<span class="text-[#A2A2A8] text-[15px]">接口:</span>
+<span class="font-bold text-white tracking-wide">饭太硬 (极速4K线路)</span>
+<span class="text-xs px-1.5 py-0.5 rounded bg-white/10 text-[#E5A958] font-mono font-medium">Spider</span>
+</div>
+<!-- Settings Icon Pill -->
+<div class="glass-pill w-11 h-11 rounded-full flex items-center justify-center text-[#D1D1D8] hover:text-white transition-all">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<!-- TV System Clock -->
+<div class="text-right pl-2">
+<div class="text-[22px] font-bold text-white tracking-wider leading-none">20:45</div>
+<div class="text-[13px] text-[#8E8E93] font-medium tracking-wide mt-1">周五 · 4月18日</div>
+</div>
+</div>
+</header>
+<!-- Main TV Content Canvas (Safe area: 72px left/right) -->
+<main class="relative z-10 px-[72px] pt-4">
+<!-- HERO RECOMMENDATION SECTION (HeroCard) -->
+<section class="max-w-[1020px] mb-8">
+<!-- Tag & Year Badges -->
+<div class="flex items-center gap-3 mb-3">
+<span class="px-3 py-1 rounded bg-[#E5A958] text-[#0E0E10] text-[15px] font-extrabold tracking-wide uppercase">
+            编辑精选 · 今日推荐
+          </span>
+<span class="text-[17px] text-[#A2A2A8] font-medium">科幻 / 冒险 / 悬疑</span>
+<span class="w-1.5 h-1.5 rounded-full bg-white/30"></span>
+<span class="text-[17px] text-[#A2A2A8] font-medium">2024</span>
+<span class="w-1.5 h-1.5 rounded-full bg-white/30"></span>
+<span class="px-2 py-0.5 rounded text-[13px] bg-white/10 text-white font-mono font-bold border border-white/15">4K 原盘</span>
+<span class="px-2 py-0.5 rounded text-[13px] bg-white/10 text-[#E5A958] font-mono font-bold border border-[#E5A958]/30">Dolby Atmos</span>
+</div>
+<!-- Title (≥44px for 3m readability) -->
+<h1 class="text-[52px] font-extrabold text-white tracking-tight leading-[1.15] mb-3 drop-shadow-md">沙丘 2：厄拉科斯 命运之战</h1>
+<!-- Synopsis (≥22px 1080p target) -->
+<p class="text-[20px] text-[#C6C6CD] leading-relaxed line-clamp-2 max-w-[880px] mb-7 font-normal">
+          保罗·厄崔迪携手契妮与弗雷曼人展开复仇征程，在宇宙霸权与先知预言的旋涡中，直面不可避免的圣战。全片采用 IMAX 特制拍摄，双语杜比全景声全轨道重现。
+        </p>
+<!-- D-pad Focus Interaction Flow (Primary Button is ACTIVE FOCUS) -->
+<div class="flex items-center gap-5">
+<!-- CURRENT D-PAD FOCUSED BUTTON (唯一的当前焦点对象) -->
+<button class="tv-focus-primary px-8 py-4 rounded-2xl bg-[#E5A958] text-[#0E0E10] flex items-center gap-3.5 transition-all">
+<svg class="w-7 h-7 text-[#0E0E10] fill-current" viewBox="0 0 24 24">
+<path d="M8 5.14v14.72a1 1 0 001.5.86l11-7.36a1 1 0 000-1.72l-11-7.36a1 1 0 00-1.5.86z"></path>
+</svg>
+<span class="text-[22px] font-extrabold tracking-wide">立即播放</span>
+<span class="text-[15px] px-2 py-0.5 rounded bg-black/20 text-[#0E0E10] font-bold font-mono">从第 38:15 续播</span>
+</button>
+<!-- Secondary Action: Detail & Cast Info -->
+<button class="glass-pill px-7 py-4 rounded-2xl text-white flex items-center gap-3 text-[20px] font-semibold hover:bg-white/20 transition-all">
+<svg class="w-6 h-6 text-[#D1D1D8]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">影片详情</span>
+</button>
+<!-- Secondary Action: Favorite -->
+<button class="glass-pill w-14 h-14 rounded-2xl flex items-center justify-center text-[#D1D1D8] hover:text-white transition-all">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- HORIZONTAL VOD RAILS (Leanback Row with 5 Semantically Abstract Posters) -->
+<section class="mt-2">
+<!-- Row Header + D-pad Hint -->
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-baseline gap-4">
+<h2 class="text-[26px] font-bold text-white tracking-wide flex items-center gap-3">
+<span class="w-1.5 h-6 rounded-full bg-[#E5A958]"></span>
+              正在热播 · 热门精选
+            </h2>
+<span class="text-[17px] text-[#8E8E93]">按 D-pad 下键浏览更多分类行</span>
+</div>
+<!-- Card View Switch Indicator -->
+<div class="flex items-center gap-2 text-[15px] text-[#A2A2A8]">
+<span class="px-2 py-0.5 rounded bg-white/10 text-white font-medium">竖版海报 Grid (2:3)</span>
+<span class="">· 线路同步完毕</span>
+</div>
+</div>
+<!-- Cards Container (Horizontal Rail, 5 visible cards) -->
+<div class="grid grid-cols-5 gap-6 pt-2 pb-6">
+<!-- CARD 1: 沙丘 2 (暖金沙漠渐变配巨型「沙」字) -->
+<div class="group relative rounded-2xl bg-[#202024] p-2 border border-white/5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#3D2510] via-[#24170D] to-[#120B06] flex flex-col justify-between p-3.5 select-none border border-white/5">
+<div class="absolute -right-6 -bottom-10 text-[130px] font-black text-[#E5A958]/[0.18] leading-none pointer-events-none font-serif">沙</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[13px] text-[#E5A958] font-bold border border-white/10">更新至 4K 原盘</div>
+<div class="w-6 h-6 rounded-full bg-[#E5A958]/20 flex items-center justify-center text-[10px] text-[#E5A958] font-mono font-bold">01</div>
+</div>
+<div class="relative z-10">
+<div class="text-[11px] font-mono tracking-widest text-[#E5A958]/70 uppercase">DUNE: PART TWO</div>
+<div class="text-[22px] font-black text-white/90 tracking-wide mt-0.5 font-serif">沙丘 2</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[11px] text-white/50 font-mono">DENIS VILLENEUVE</span>
+<span class="px-1.5 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] text-[11px] font-extrabold">4K 极速</span>
+</div>
+</div>
+</div>
+<div class="pt-3 px-1 flex flex-col gap-1.5">
+<h3 class="text-[20px] font-bold text-white truncate leading-snug">沙丘 2：厄拉科斯</h3>
+<p class="text-[14px] text-[#8E8E93] truncate leading-normal">2024 · 极速线路 · 科幻巨作</p>
+</div>
+</div>
+<!-- CARD 2: 奥本海默 (深曜石炽焰渐变配「奥」) -->
+<div class="relative rounded-2xl bg-[#202024] p-2 border border-white/5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#2B1006] via-[#1B1214] to-[#0D0D10] flex flex-col justify-between p-3.5 select-none border border-white/5">
+<div class="absolute -right-4 -bottom-8 text-[130px] font-black text-[#F97316]/[0.18] leading-none pointer-events-none font-serif">奥</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[13px] text-[#F97316] font-bold border border-white/10">奥斯卡 7 冠</div>
+<div class="w-6 h-6 rounded-full bg-[#F97316]/20 flex items-center justify-center text-[10px] text-[#F97316] font-mono font-bold">02</div>
+</div>
+<div class="relative z-10">
+<div class="text-[11px] font-mono tracking-widest text-[#F97316]/70 uppercase">OPPENHEIMER</div>
+<div class="text-[22px] font-black text-white/90 tracking-wide mt-0.5 font-serif">奥本海默</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[11px] text-white/50 font-mono">CHRISTOPHER NOLAN</span>
+<span class="px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md text-white text-[11px] font-bold">1080P</span>
+</div>
+</div>
+</div>
+<div class="pt-3 px-1 flex flex-col gap-1.5">
+<h3 class="text-[20px] font-bold text-white truncate leading-snug">奥本海默</h3>
+<p class="text-[14px] text-[#8E8E93] truncate leading-normal">2023 · 阿里网盘 · 传记历史</p>
+</div>
+</div>
+<!-- CARD 3: 间谍过家家 (浅粉暗夜渐变配「谍」) -->
+<div class="relative rounded-2xl bg-[#202024] p-2 border border-white/5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#2E1825] via-[#1E1420] to-[#0E0F14] flex flex-col justify-between p-3.5 select-none border border-white/5">
+<div class="absolute -right-4 -bottom-8 text-[130px] font-black text-[#F472B6]/[0.18] leading-none pointer-events-none font-serif">谍</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[13px] text-[#4ADE80] font-bold border border-white/10">全 25 集完结</div>
+<div class="w-6 h-6 rounded-full bg-[#F472B6]/20 flex items-center justify-center text-[10px] text-[#F472B6] font-mono font-bold">03</div>
+</div>
+<div class="relative z-10">
+<div class="text-[11px] font-mono tracking-widest text-[#F472B6]/70 uppercase">SPY × FAMILY</div>
+<div class="text-[22px] font-black text-white/90 tracking-wide mt-0.5 font-serif">间谍过家家</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[11px] text-white/50 font-mono">SEASON 2 · FORGER</span>
+<span class="px-1.5 py-0.5 rounded bg-[#4ADE80] text-[#0E0E10] text-[11px] font-extrabold">国日双语</span>
+</div>
+</div>
+</div>
+<div class="pt-3 px-1 flex flex-col gap-1.5">
+<h3 class="text-[20px] font-bold text-white truncate leading-snug">间谍过家家 S2</h3>
+<p class="text-[14px] text-[#8E8E93] truncate leading-normal">2024 · BiliBili · 喜剧动画</p>
+</div>
+</div>
+<!-- CARD 4: 星际穿越 (深邃星空绀青配「星」) -->
+<div class="relative rounded-2xl bg-[#202024] p-2 border border-white/5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#0F1E36] via-[#0D1524] to-[#0A0D14] flex flex-col justify-between p-3.5 select-none border border-white/5">
+<div class="absolute -right-4 -bottom-8 text-[130px] font-black text-[#60A5FA]/[0.18] leading-none pointer-events-none font-serif">星</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[13px] text-[#60A5FA] font-bold border border-white/10">IMAX 经典</div>
+<div class="w-6 h-6 rounded-full bg-[#60A5FA]/20 flex items-center justify-center text-[10px] text-[#60A5FA] font-mono font-bold">04</div>
+</div>
+<div class="relative z-10">
+<div class="text-[11px] font-mono tracking-widest text-[#60A5FA]/70 uppercase">INTERSTELLAR</div>
+<div class="text-[22px] font-black text-white/90 tracking-wide mt-0.5 font-serif">星际穿越</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[11px] text-white/50 font-mono">GARGANTUA 4K</span>
+<span class="px-1.5 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] text-[11px] font-extrabold">4K HDR</span>
+</div>
+</div>
+</div>
+<div class="pt-3 px-1 flex flex-col gap-1.5">
+<h3 class="text-[20px] font-bold text-white truncate leading-snug">星际穿越</h3>
+<p class="text-[14px] text-[#8E8E93] truncate leading-normal">2014 · WebDAV · 经典硬科幻</p>
+</div>
+</div>
+<!-- CARD 5: 繁花 (复古暖琥珀黑金配「繁」) -->
+<div class="relative rounded-2xl bg-[#202024] p-2 border border-white/5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#382608] via-[#231707] to-[#0E0C09] flex flex-col justify-between p-3.5 select-none border border-white/5">
+<div class="absolute -right-4 -bottom-8 text-[130px] font-black text-[#F59E0B]/[0.18] leading-none pointer-events-none font-serif">繁</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[13px] text-[#E5A958] font-bold border border-white/10">沪语 30 集全</div>
+<div class="w-6 h-6 rounded-full bg-[#F59E0B]/20 flex items-center justify-center text-[10px] text-[#F59E0B] font-mono font-bold">05</div>
+</div>
+<div class="relative z-10">
+<div class="text-[11px] font-mono tracking-widest text-[#F59E0B]/70 uppercase">BLOSSOMS SHANGHAI</div>
+<div class="text-[22px] font-black text-white/90 tracking-wide mt-0.5 font-serif">繁花</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[11px] text-white/50 font-mono">WONG KAR-WAI</span>
+<span class="px-1.5 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] text-[11px] font-extrabold">杜比视界</span>
+</div>
+</div>
+</div>
+<div class="pt-3 px-1 flex flex-col gap-1.5">
+<h3 class="text-[20px] font-bold text-white truncate leading-snug">繁花 (王家卫导演版)</h3>
+<p class="text-[14px] text-[#8E8E93] truncate leading-normal">2024 · 极光TV · 年代传奇</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Remote Helper Hint (客厅遥控器底部指南条) -->
+<footer class="absolute bottom-6 left-[72px] right-[72px] flex items-center justify-between text-[#8E8E93] text-[15px] border-t border-white/5 pt-3">
+<div class="flex items-center gap-7">
+<span class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs border border-white/15">▲▼◀▶</kbd> 移动焦点
+          </span>
+<span class="flex items-center gap-2">
+<kbd class="px-2.5 py-0.5 rounded bg-white/10 text-white font-mono text-xs border border-white/15">OK</kbd> 打开 / 播放
+          </span>
+<span class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs border border-white/15">Menu</kbd> 快速换源 / 排序
+          </span>
+<span class="flex items-center gap-2">
+<kbd class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs border border-white/15">Back</kbd> 返回上一级
+          </span>
+</div>
+<div class="flex items-center gap-3">
+<span class="inline-block w-2 h-2 rounded-full bg-[#E5A958]"></span>
+<span class="">1080p 60fps Leanback 运行模式 · 无未决渲染异常</span>
+</div>
+</footer>
+</main>
+</div>
+<!-- ==================== TV DESIGN SYSTEM & SPECIFICATION BOARD ==================== -->
+<div class="w-[1920px] bg-[#121216] px-[72px] py-16 border-t-2 border-[#E5A958]/30">
+<!-- Section Header -->
+<div class="flex items-center justify-between mb-12">
+<div>
+<div class="text-[#E5A958] text-[18px] font-bold tracking-widest uppercase mb-1">FongMi TV · Leanback UI Specification</div>
+<h2 class="text-[38px] font-extrabold text-white">Android TV 10-foot 视觉设计规范与关键状态集</h2>
+<p class="text-[18px] text-[#A2A2A8] mt-2 max-w-[1100px]">
+          针对 2.5–3.5 米客厅沙发视距设计，严格保证 WCAG AA 对比度（正文 ≥ 4.5:1、焦点边框 ≥ 3:1），单屏唯一全局焦点控制，遥控器 D-pad 零歧义导航。
+        </p>
+</div>
+<div class="flex gap-4">
+<div class="px-5 py-3 rounded-2xl bg-[#202024] border border-white/10 text-center">
+<div class="text-[13px] text-[#8E8E93]">基准视距</div>
+<div class="text-[20px] font-bold text-[#E5A958]">3.0 米</div>
+</div>
+<div class="px-5 py-3 rounded-2xl bg-[#202024] border border-white/10 text-center">
+<div class="text-[13px] text-[#8E8E93]">最小正文字号</div>
+<div class="text-[20px] font-bold text-white">20-22 px (16sp)</div>
+</div>
+<div class="px-5 py-3 rounded-2xl bg-[#202024] border border-white/10 text-center">
+<div class="text-[13px] text-[#8E8E93]">minSdk 兼容性</div>
+<div class="text-[20px] font-bold text-[#4ADE80]">API 24 (零高端API依赖)</div>
+</div>
+</div>
+</div>
+<!-- 1. D-PAD 焦点态与卡片状态解构 (CRITICAL 状态展示) -->
+<div class="mb-14">
+<div class="flex items-center gap-3 mb-6">
+<span class="w-2 h-6 rounded-full bg-[#E5A958]"></span>
+<h3 class="text-[26px] font-bold text-white">1. 卡片与按键 6 大关键状态 (State Matrix)</h3>
+</div>
+<div class="grid grid-cols-4 gap-8">
+<!-- State 1: 默认态 Default -->
+<div class="rounded-2xl bg-[#202024] p-6 border border-white/5">
+<div class="text-[15px] font-bold text-[#8E8E93] uppercase tracking-wider mb-4 flex items-center justify-between">
+<span class="">01 · 默认未聚焦 (Default)</span>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-white/60">静态层</span>
+</div>
+<div class="rounded-xl bg-[#18181C] p-4 border border-white/5 mb-4">
+<div class="w-full aspect-[16/9] rounded-lg bg-[#26262E] flex items-center justify-center text-[#8E8E93] text-[15px]">
+              视频缩略图 / 海报
+            </div>
+<div class="mt-3">
+<div class="text-[18px] font-bold text-white">普通卡片默认态</div>
+<div class="text-[14px] text-[#8E8E93] mt-1">未选中状态，保持低沉稳重背景</div>
+</div>
+</div>
+<p class="text-[14px] text-[#8E8E93] leading-relaxed">
+            卡片不喧宾夺主，透明度与对比度保持在暗部，给当前焦点留下最大视觉跳跃空间。
+          </p>
+</div>
+<!-- State 2: 焦点态 Focus (三要素强化: 3.5dp描边 + 25px发光 + 1.05x放大) -->
+<div class="rounded-2xl bg-[#202024] p-6 border border-[#E5A958]/30">
+<div class="text-[15px] font-bold text-[#E5A958] uppercase tracking-wider mb-4 flex items-center justify-between">
+<span class="">02 · D-pad 焦点态 (Focused)</span>
+<span class="text-xs px-2 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] font-extrabold">核心特征</span>
+</div>
+<div class="rounded-xl bg-[#2A2A34] p-4 tv-focus-spec-card mb-4 transition-all">
+<div class="w-full aspect-[16/9] rounded-lg bg-[#3A3A48] flex items-center justify-center text-[#FCD58B] font-bold text-[16px] shadow-inner">
+              ▶ 焦点命中高光层
+            </div>
+<div class="mt-3">
+<div class="text-[18px] font-extrabold text-white">焦点卡片 (Focus)</div>
+<div class="text-[14px] text-[#FCD58B] mt-1 font-semibold">3.5dp 描边 · 25px柔光 · 1.05x 缩放</div>
+</div>
+</div>
+<p class="text-[14px] text-[#C6C6CD] leading-relaxed">
+            满足「颜色+形状+缩放」硬约束：3.5dp #FCD58B 描边 + 25px 外发光 + 1.05x 尺寸放大。
+          </p>
+</div>
+<!-- State 3: 空状态 Empty State (线性SVG + ≤14字文案) -->
+<div class="rounded-2xl bg-[#202024] p-6 border border-white/5">
+<div class="text-[15px] font-bold text-[#8E8E93] uppercase tracking-wider mb-4 flex items-center justify-between">
+<span class="">03 · 未配置/空态 (Empty)</span>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-[#E5A958]">容错引导</span>
+</div>
+<div class="rounded-xl bg-[#18181C] p-5 border border-dashed border-white/15 text-center mb-4">
+<div class="w-12 h-12 rounded-full bg-white/5 mx-auto flex items-center justify-center text-[#E5A958] mb-3">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+<path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="text-[17px] font-bold text-white">未检测到配置，请导入接口</div>
+<div class="text-[13px] text-[#8E8E93] mt-1 mb-3">按 OK 键即刻跳转配置页</div>
+<div class="px-4 py-2 rounded-lg bg-[#E5A958] text-[#0E0E10] text-[14px] font-bold inline-block">
+              导入接口配置
+            </div>
+</div>
+<p class="text-[14px] text-[#8E8E93] leading-relaxed">
+            绝不留白屏：文案精简克制，线性矢量图标指示，遥控器 OK 键直接进入配置闭环。
+          </p>
+</div>
+<!-- State 4: 错误态 Error (纯线性SVG + ≤14字精炼提示) -->
+<div class="rounded-2xl bg-[#202024] p-6 border border-white/5">
+<div class="text-[15px] font-bold text-[#8E8E93] uppercase tracking-wider mb-4 flex items-center justify-between">
+<span class="">04 · 线路超时/错误 (Error)</span>
+<span class="text-xs px-2 py-0.5 rounded bg-[#F87171]/20 text-[#F87171]">极简恢复</span>
+</div>
+<div class="rounded-xl bg-[#18181C] p-5 border border-white/5 text-center mb-4">
+<div class="w-12 h-12 rounded-full bg-[#EF4444]/10 mx-auto flex items-center justify-center text-[#EF4444] mb-3">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+<path d="M12 8v4m0 4h.01M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="text-[17px] font-bold text-white">连接超时，请重试或更换片源</div>
+<div class="text-[13px] text-[#8E8E93] mt-1 mb-3">建议按 Menu 键快速换源</div>
+<div class="flex gap-2 justify-center">
+<span class="px-3 py-1.5 rounded bg-white/10 text-white text-[13px] font-semibold">重试</span>
+<span class="px-3 py-1.5 rounded bg-[#E5A958] text-[#0E0E10] text-[13px] font-bold">更换线路</span>
+</div>
+</div>
+<p class="text-[14px] text-[#8E8E93] leading-relaxed">
+            精准指引用户操作：文案不超过 14 字，主备两组遥控器焦点按键，减少客厅停滞等待。
+          </p>
+</div>
+</div>
+</div>
+<!-- 2. TV 设计系统阶梯标定板 (Typography, Spacing, Color tokens & WCAG) -->
+<div class="grid grid-cols-3 gap-8">
+<!-- Color Palette Tokens & WCAG Benchmark -->
+<div class="rounded-2xl bg-[#202024] p-7 border border-white/5">
+<h4 class="text-[20px] font-bold text-white mb-5 flex items-center gap-2.5">
+<span class="w-2 h-2 rounded-full bg-[#E5A958]"></span>
+          客厅色板（Champagne Dark &amp; WCAG）
+        </h4>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0E0E10] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#0E0E10] border border-white/20"></div>
+<div>
+<div class="text-[15px] font-bold text-white">background · 炭黑暖灰</div>
+<div class="text-xs text-[#8E8E93] font-mono">#0E0E10 (OLED 客厅基础底色)</div>
+</div>
+</div>
+<span class="text-xs text-white/50">基底</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#202024] border border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#202024] border border-white/20"></div>
+<div>
+<div class="text-[15px] font-bold text-white">surface · 曜石深灰</div>
+<div class="text-xs text-[#8E8E93] font-mono">#202024 (拉开 3m 视觉阶梯层)</div>
+</div>
+</div>
+<span class="text-xs text-[#4ADE80] font-mono font-semibold">阶梯层分离</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#18181C] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#E5A958]"></div>
+<div>
+<div class="text-[15px] font-bold text-white">accent · 暖金香槟</div>
+<div class="text-xs text-[#8E8E93] font-mono">#E5A958 (品牌主强调、高光标签)</div>
+</div>
+</div>
+<span class="text-xs text-[#E5A958] font-mono">对背景 7.2:1</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#18181C] border border-[#FCD58B]/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#FCD58B] shadow-lg shadow-[#FCD58B]/40"></div>
+<div>
+<div class="text-[15px] font-bold text-white">focus · 亮香槟金</div>
+<div class="text-xs text-[#8E8E93] font-mono">#FCD58B (全局唯一定位光晕与描边)</div>
+</div>
+</div>
+<span class="text-xs text-[#FCD58B] font-mono font-bold">对面板 8.8:1</span>
+</div>
+<div class="mt-3 p-2.5 rounded-lg bg-black/40 border border-white/5 text-xs text-[#A2A2A8] leading-relaxed">
+<span class="text-[#4ADE80] font-bold">WCAG AA 认证：</span> 白色正文 (#FFFFFF) 对 Surface 达 11.2:1；焦点边框 (#FCD58B) 达 8.8:1，远超客厅 3:1 标准。
+</div>
+</div>
+</div>
+<!-- Typography Scale for 3m (1080p) -->
+<div class="rounded-2xl bg-[#202024] p-7 border border-white/5">
+<h4 class="text-[20px] font-bold text-white mb-5 flex items-center gap-2.5">
+<span class="w-2 h-2 rounded-full bg-[#E5A958]"></span>
+          3米视距字号阶梯 (Typography Scale)
+        </h4>
+<div class="space-y-4">
+<div class="border-b border-white/5 pb-2.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[28px] font-black text-white leading-none">52 px / 38sp</span>
+<span class="text-xs text-[#E5A958] font-mono font-bold">Hero 大标题</span>
+</div>
+<div class="text-xs text-[#8E8E93] mt-1">用于 Hero 推荐主片名，3米开外一目了然</div>
+</div>
+<div class="border-b border-white/5 pb-2.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[22px] font-bold text-white leading-none">26 px / 19sp</span>
+<span class="text-xs text-white/60 font-mono">Row Title 分组名</span>
+</div>
+<div class="text-xs text-[#8E8E93] mt-1">分类行大标题，导航一级栏目</div>
+</div>
+<div class="border-b border-white/5 pb-2.5">
+<div class="flex justify-between items-baseline">
+<span class="text-[18px] font-bold text-white leading-none">20-22 px / 16sp</span>
+<span class="text-xs text-[#4ADE80] font-mono font-bold">正文基准 (硬约束门槛)</span>
+</div>
+<div class="text-xs text-[#8E8E93] mt-1">卡片主标题 (20px)、按键正文、简介</div>
+</div>
+<div>
+<div class="flex justify-between items-baseline">
+<span class="text-[14px] font-medium text-[#A2A2A8] leading-none">14-16 px / 11sp</span>
+<span class="text-xs text-white/40 font-mono">次级辅助角标</span>
+</div>
+<div class="text-xs text-[#8E8E93] mt-1">卡片副信息 (14px)、年份与分辨率角标</div>
+</div>
+</div>
+</div>
+<!-- Interaction & Accessibility Checklist -->
+<div class="rounded-2xl bg-[#202024] p-7 border border-white/5">
+<h4 class="text-[20px] font-bold text-white mb-5 flex items-center gap-2.5">
+<span class="w-2 h-2 rounded-full bg-[#E5A958]"></span>
+          客厅 D-pad 可访问性自检清单
+        </h4>
+<ul class="space-y-3.5 text-[15px] text-[#C6C6CD]">
+<li class="flex items-start gap-3">
+<span class="w-5 h-5 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+<span class=""><strong>单屏单焦点：</strong> 任何时刻全局只存在一个处于 Focus 态的对象，严禁双光标冲突。</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-5 h-5 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+<span class=""><strong>三维焦点反馈：</strong> 颜色(#FCD58B) + 轮廓(3.5dp描边) + 空间(1.05x缩放+25px柔光)。</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-5 h-5 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+<span class=""><strong>排版间距防裁切：</strong> 卡片主标题与副信息严格保留 6px (gap-1.5) 独立行距。</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-5 h-5 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+<span class=""><strong>minSdk 24 友好：</strong> 仅使用标准 CSS/Canvas 渲染，不引入高版本 RenderEffect。</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-5 h-5 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+<span class=""><strong>安全边距：</strong> 画面四周统一留足 72px 过扫描（Overscan）安全间距，适配各种电视裁切。</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- ==================== THEME SKIN VARIANTS SPECIFICATION SLICES ==================== -->
+<div class="mt-16 pt-12 border-t border-white/10 space-y-12">
+<!-- Section Title -->
+<div class="flex items-center justify-between">
+<div>
+<div class="text-[#E5A958] text-[16px] font-bold tracking-widest uppercase mb-1">Theme System Extensions</div>
+<h3 class="text-[30px] font-extrabold text-white">3. 多主题皮肤规范扩展切片 (Theme Variant Slices)</h3>
+<p class="text-[17px] text-[#A2A2A8] mt-1">
+        为不同客厅环境光照与显示面板（OLED / MiniLED）调优的 Leanback 色彩皮肤，均满足 D-pad 3.5dp + 25px 光晕规范与 WCAG AA 标准。
+      </p>
+</div>
+<div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[14px] text-[#A2A2A8]">
+      动态换肤架构 · <span class="text-[#4ADE80] font-mono font-bold">Runtime CSS Tokens</span>
+</div>
+</div>
+<!-- SLICE 1: ICE 冷调蓝白变体 -->
+<div class="rounded-3xl p-8 border border-[#6FA8FF]/30 relative overflow-hidden" style="background-color: #0B1220;">
+<!-- Top Header -->
+<div class="flex items-center justify-between pb-6 border-b border-white/10 mb-8">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-7 rounded-full bg-[#6FA8FF]"></span>
+<div>
+<div class="flex items-center gap-3">
+<h4 class="text-[24px] font-extrabold text-white">Ice 主题色板预览</h4>
+<span class="px-2.5 py-0.5 rounded-full bg-[#6FA8FF]/20 text-[#6FA8FF] border border-[#6FA8FF]/40 text-xs font-bold font-mono uppercase tracking-wider">
+              FongMi TV - Leanback 1080p Home (Ice 冰晶蓝主题预览)
+            </span>
+</div>
+<p class="text-[15px] text-[#93A7C2] mt-1">深海军蓝冷调底色，专为防 OLED 高对比眩光优化，冷冽纯粹且焦点层级穿透力极强。</p>
+</div>
+</div>
+<!-- WCAG Badge -->
+<div class="flex items-center gap-3 bg-[#182233] px-4 py-2 rounded-2xl border border-[#6FA8FF]/20">
+<span class="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
+<div class="text-right">
+<div class="text-xs font-bold text-white font-mono">WCAG AA 认证通过</div>
+<div class="text-[12px] text-[#93A7C2]">白色正文 ≥ 11.2:1 · 焦点边框 ≥ 8.8:1</div>
+</div>
+</div>
+</div>
+<!-- Content Grid: Palette Tokens + Mini Preview Row -->
+<div class="grid grid-cols-12 gap-8 items-center">
+<!-- Left: Palette Swatches & Tokens (4 cols) -->
+<div class="col-span-4 bg-[#182233] p-6 rounded-2xl border border-white/5 space-y-3.5">
+<div class="text-[14px] font-bold text-[#6FA8FF] uppercase tracking-wider mb-2">Ice Token Definitions</div>
+<!-- Swatch 1: Background -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0B1220] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#0B1220] border border-[#6FA8FF]/30 shadow-sm"></div>
+<div>
+<div class="text-[15px] font-bold text-white">background</div>
+<div class="text-xs text-[#93A7C2] font-mono">#0B1220 (深海军蓝黑底)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-[#93A7C2] font-mono">Base</span>
+</div>
+<!-- Swatch 2: Surface -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#182233] border border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#182233] border border-white/20"></div>
+<div>
+<div class="text-[15px] font-bold text-white">surface</div>
+<div class="text-xs text-[#93A7C2] font-mono">#182233 (深蓝面板)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-[#93A7C2] font-mono">Surface</span>
+</div>
+<!-- Swatch 3: Accent -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0B1220] border border-[#6FA8FF]/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#6FA8FF]"></div>
+<div>
+<div class="text-[15px] font-bold text-white">accent</div>
+<div class="text-xs text-[#93A7C2] font-mono">#6FA8FF (冰晶蓝主色)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-[#6FA8FF]/20 text-[#6FA8FF] font-mono font-bold">Accent</span>
+</div>
+<!-- Swatch 4: Focus -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0B1220] border border-[#B8E0FF]/40">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#B8E0FF] shadow-lg shadow-[#B8E0FF]/40"></div>
+<div>
+<div class="text-[15px] font-bold text-white">focus</div>
+<div class="text-xs text-[#93A7C2] font-mono">#B8E0FF (亮冰蓝高亮)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-[#B8E0FF]/20 text-[#B8E0FF] font-mono font-bold">Focus</span>
+</div>
+</div>
+<!-- Right: Live Mini-preview Component Row (8 cols) -->
+<div class="col-span-8 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<div class="text-[16px] font-bold text-white flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#6FA8FF]"></span>
+<span class="">冰晶蓝实时交互组件与海报卡片预览</span>
+</div>
+<div class="flex items-center gap-2 text-xs text-[#93A7C2] font-mono">
+<span class="">D-pad 焦点: 3.5dp #B8E0FF + 25px 光晕 + 1.05x</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 items-center">
+<!-- Col 1: Hero Action Button & Control Preview -->
+<div class="bg-[#182233] p-5 rounded-2xl border border-white/5 flex flex-col gap-4">
+<div class="text-xs font-mono uppercase text-[#93A7C2] font-bold tracking-wider">Hero Action Button</div>
+<!-- Ice-themed Hero Button -->
+<button class="w-full py-3.5 px-5 rounded-full bg-[#6FA8FF] text-[#0B1220] font-bold text-[18px] flex items-center justify-center gap-3 shadow-lg shadow-[#6FA8FF]/30 transition-transform">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<path d="M8 5.14v14.72a1 1 0 001.5.86l11-7.36a1 1 0 000-1.72l-11-7.36a1 1 0 00-1.5.86z"></path>
+</svg>
+<span class="">立即播放</span>
+</button>
+<div class="px-3 py-2 rounded-xl bg-[#0B1220] border border-white/5 text-xs text-[#93A7C2] flex items-center justify-between">
+<span class="">状态</span>
+<span class="text-[#6FA8FF] font-bold font-mono">Primary Focus Key</span>
+</div>
+<div class="text-xs text-[#93A7C2] leading-relaxed">
+              替代暖金主调，文字反差极佳（#0B1220 墨黑），强力聚合客厅视线。
+            </div>
+</div>
+<!-- Col 2: Focused Movie Card (Ice Theme) -->
+<div class="tv-focus-ice rounded-2xl bg-[#182233] p-2.5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#1C3252] via-[#13233A] to-[#0B1220] flex flex-col justify-between p-3 select-none border border-[#6FA8FF]/20">
+<div class="absolute -right-6 -bottom-10 text-[115px] font-black text-[#6FA8FF]/[0.18] leading-none pointer-events-none font-serif">沙</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[12px] text-[#6FA8FF] font-bold border border-white/10">更新至 4K 原盘</div>
+<div class="w-5 h-5 rounded-full bg-[#6FA8FF]/20 flex items-center justify-center text-[10px] text-[#6FA8FF] font-mono font-bold">01</div>
+</div>
+<div class="relative z-10">
+<div class="text-[10px] font-mono tracking-widest text-[#6FA8FF]/80 uppercase">DUNE: PART TWO</div>
+<div class="text-[19px] font-black text-white/95 tracking-wide mt-0.5 font-serif">沙丘 2</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[10px] text-white/50 font-mono">DENIS VILLENEUVE</span>
+<span class="px-1.5 py-0.5 rounded bg-[#6FA8FF] text-[#0B1220] text-[10px] font-extrabold">4K 极速</span>
+</div>
+</div>
+</div>
+<div class="pt-2 px-1">
+<h3 class="text-[17px] font-bold text-white truncate">沙丘 2：厄拉科斯 (Focus)</h3>
+<p class="text-[13px] text-[#B8E0FF] font-semibold truncate mt-0.5">3.5dp #B8E0FF · 1.05x 放大</p>
+</div>
+</div>
+<!-- Col 3: Unfocused Normal Card (Ice Theme) -->
+<div class="rounded-2xl bg-[#182233] p-2.5 border border-white/5">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#13233A] via-[#0F1B2C] to-[#0B1220] flex flex-col justify-between p-3 select-none border border-white/5 opacity-85">
+<div class="absolute -right-4 -bottom-8 text-[115px] font-black text-[#60A5FA]/[0.15] leading-none pointer-events-none font-serif">星</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[12px] text-[#60A5FA] font-bold border border-white/10">IMAX 经典</div>
+<div class="w-5 h-5 rounded-full bg-[#60A5FA]/20 flex items-center justify-center text-[10px] text-[#60A5FA] font-mono font-bold">04</div>
+</div>
+<div class="relative z-10">
+<div class="text-[10px] font-mono tracking-widest text-[#60A5FA]/70 uppercase">INTERSTELLAR</div>
+<div class="text-[19px] font-black text-white/90 tracking-wide mt-0.5 font-serif">星际穿越</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[10px] text-white/50 font-mono">GARGANTUA 4K</span>
+<span class="px-1.5 py-0.5 rounded bg-[#6FA8FF]/30 text-[#B8E0FF] text-[10px] font-extrabold">4K HDR</span>
+</div>
+</div>
+</div>
+<div class="pt-2 px-1">
+<h3 class="text-[17px] font-bold text-white truncate">星际穿越 (Default)</h3>
+<p class="text-[13px] text-[#93A7C2] truncate mt-0.5">未聚焦状态 · 2014 WebDAV</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SLICE 2: JADE 青瓷绿变体 -->
+<div class="rounded-3xl p-8 border border-[#6CC4A1]/30 relative overflow-hidden" style="background-color: #0E1612;">
+<!-- Top Header -->
+<div class="flex items-center justify-between pb-6 border-b border-white/10 mb-8">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-7 rounded-full bg-[#6CC4A1]"></span>
+<div>
+<div class="flex items-center gap-3">
+<h4 class="text-[24px] font-extrabold text-white">Jade 主题色板预览</h4>
+<span class="px-2.5 py-0.5 rounded-full bg-[#6CC4A1]/20 text-[#6CC4A1] border border-[#6CC4A1]/40 text-xs font-bold font-mono uppercase tracking-wider">
+              FongMi TV - Leanback 1080p Home (Jade 青瓷绿主题预览)
+            </span>
+</div>
+<p class="text-[15px] text-[#97AF9F]">青瓷深墨绿底色与温润汝窑青主色调，沉静优雅，适合夜间客厅低照度观影。</p>
+</div>
+</div>
+<!-- WCAG Badge -->
+<div class="flex items-center gap-3 bg-[#1A2A24] px-4 py-2 rounded-2xl border border-[#6CC4A1]/20">
+<span class="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
+<div class="text-right">
+<div class="text-xs font-bold text-white font-mono">WCAG AA 认证通过</div>
+<div class="text-[12px] text-[#97AF9F]">白色正文 ≥ 11.5:1 · 焦点边框 ≥ 9.0:1</div>
+</div>
+</div>
+</div>
+<!-- Content Grid: Palette Tokens + Mini Preview Row -->
+<div class="grid grid-cols-12 gap-8 items-center">
+<!-- Left: Palette Swatches & Tokens (4 cols) -->
+<div class="col-span-4 bg-[#1A2A24] p-6 rounded-2xl border border-white/5 space-y-3.5">
+<div class="text-[14px] font-bold text-[#6CC4A1] uppercase tracking-wider mb-2">Jade Token Definitions</div>
+<!-- Swatch 1: Background -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0E1612] border border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#0E1612] border border-[#6CC4A1]/30 shadow-sm"></div>
+<div>
+<div class="text-[15px] font-bold text-white">background</div>
+<div class="text-xs text-[#97AF9F] font-mono">#0E1612 (青瓷深墨绿底)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-[#97AF9F] font-mono">Base</span>
+</div>
+<!-- Swatch 2: Surface -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#1A2A24] border border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#1A2A24] border border-white/20"></div>
+<div>
+<div class="text-[15px] font-bold text-white">surface</div>
+<div class="text-xs text-[#97AF9F] font-mono">#1A2A24 (青瓷面板)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-white/5 text-[#97AF9F] font-mono">Surface</span>
+</div>
+<!-- Swatch 3: Accent -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0E1612] border border-[#6CC4A1]/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#6CC4A1]"></div>
+<div>
+<div class="text-[15px] font-bold text-white">accent</div>
+<div class="text-xs text-[#97AF9F] font-mono">#6CC4A1 (汝窑青主色)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-[#6CC4A1]/20 text-[#6CC4A1] font-mono font-bold">Accent</span>
+</div>
+<!-- Swatch 4: Focus -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-[#0E1612] border border-[#B8E8D2]/40">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#B8E8D2] shadow-lg shadow-[#B8E8D2]/40"></div>
+<div>
+<div class="text-[15px] font-bold text-white">focus</div>
+<div class="text-xs text-[#97AF9F] font-mono">#B8E8D2 (浅青高亮)</div>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-[#B8E8D2]/20 text-[#B8E8D2] font-mono font-bold">Focus</span>
+</div>
+</div>
+<!-- Right: Live Mini-preview Component Row (8 cols) -->
+<div class="col-span-8 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<div class="text-[16px] font-bold text-white flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#6CC4A1]"></span>
+<span class="">青瓷绿实时交互组件与海报卡片预览</span>
+</div>
+<div class="flex items-center gap-2 text-xs text-[#97AF9F] font-mono">
+<span class="">D-pad 焦点: 3.5dp #B8E8D2 + 25px 光晕 + 1.05x</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 items-center">
+<!-- Col 1: Hero Action Button & Control Preview -->
+<div class="bg-[#1A2A24] p-5 rounded-2xl border border-white/5 flex flex-col gap-4">
+<div class="text-xs font-mono uppercase text-[#97AF9F] font-bold tracking-wider">Hero Action Button</div>
+<!-- Jade-themed Hero Button -->
+<button class="w-full py-3.5 px-5 rounded-full bg-[#6CC4A1] text-[#0E1612] font-bold text-[18px] flex items-center justify-center gap-3 shadow-lg shadow-[#6CC4A1]/30 transition-transform">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<path d="M8 5.14v14.72a1 1 0 001.5.86l11-7.36a1 1 0 000-1.72l-11-7.36a1 1 0 00-1.5.86z"></path>
+</svg>
+<span class="">立即播放</span>
+</button>
+<div class="px-3 py-2 rounded-xl bg-[#0E1612] border border-white/5 text-xs text-[#97AF9F] flex items-center justify-between">
+<span class="">状态</span>
+<span class="text-[#6CC4A1] font-bold font-mono">Primary Focus Key</span>
+</div>
+<div class="text-xs text-[#97AF9F] leading-relaxed">
+              汝窑温润青翠色，对比度达 11.5:1，遥控器 OK 键最直觉的首选反馈。
+            </div>
+</div>
+<!-- Col 2: Focused Movie Card (Jade Theme) -->
+<div class="tv-focus-jade rounded-2xl bg-[#1A2A24] p-2.5 transition-all">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#1F3D32] via-[#162C24] to-[#0E1612] flex flex-col justify-between p-3 select-none border border-[#6CC4A1]/20">
+<div class="absolute -right-6 -bottom-10 text-[115px] font-black text-[#6CC4A1]/[0.18] leading-none pointer-events-none font-serif">沙</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[12px] text-[#6CC4A1] font-bold border border-white/10">更新至 4K 原盘</div>
+<div class="w-5 h-5 rounded-full bg-[#6CC4A1]/20 flex items-center justify-center text-[10px] text-[#6CC4A1] font-mono font-bold">01</div>
+</div>
+<div class="relative z-10">
+<div class="text-[10px] font-mono tracking-widest text-[#6CC4A1]/80 uppercase">DUNE: PART TWO</div>
+<div class="text-[19px] font-black text-white/95 tracking-wide mt-0.5 font-serif">沙丘 2</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[10px] text-white/50 font-mono">DENIS VILLENEUVE</span>
+<span class="px-1.5 py-0.5 rounded bg-[#6CC4A1] text-[#0E1612] text-[10px] font-extrabold">4K 极速</span>
+</div>
+</div>
+</div>
+<div class="pt-2 px-1">
+<h3 class="text-[17px] font-bold text-white truncate">沙丘 2：厄拉科斯 (Focus)</h3>
+<p class="text-[13px] text-[#B8E8D2] font-semibold truncate mt-0.5">3.5dp #B8E8D2 · 1.05x 放大</p>
+</div>
+</div>
+<!-- Col 3: Unfocused Normal Card (Jade Theme) -->
+<div class="rounded-2xl bg-[#1A2A24] p-2.5 border border-white/5">
+<div class="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gradient-to-b from-[#182C22] via-[#122019] to-[#0E1612] flex flex-col justify-between p-3 select-none border border-white/5 opacity-85">
+<div class="absolute -right-4 -bottom-8 text-[115px] font-black text-[#5EEAD4]/[0.15] leading-none pointer-events-none font-serif">繁</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[12px] text-[#6CC4A1] font-bold border border-white/10">沪语 30 集全</div>
+<div class="w-5 h-5 rounded-full bg-[#6CC4A1]/20 flex items-center justify-center text-[10px] text-[#6CC4A1] font-mono font-bold">05</div>
+</div>
+<div class="relative z-10">
+<div class="text-[10px] font-mono tracking-widest text-[#6CC4A1]/70 uppercase">BLOSSOMS SHANGHAI</div>
+<div class="text-[19px] font-black text-white/90 tracking-wide mt-0.5 font-serif">繁花</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+<span class="text-[10px] text-white/50 font-mono">WONG KAR-WAI</span>
+<span class="px-1.5 py-0.5 rounded bg-[#6CC4A1]/30 text-[#B8E8D2] text-[10px] font-extrabold">杜比视界</span>
+</div>
+</div>
+</div>
+<div class="pt-2 px-1">
+<h3 class="text-[17px] font-bold text-white truncate">繁花 (Default)</h3>
+<p class="text-[13px] text-[#97AF9F] truncate mt-0.5">未聚焦状态 · 2024 极光TV</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+</body></html>

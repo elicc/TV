@@ -1,0 +1,455 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+  <title>FongMi TV - Leanback 1080p Search &amp; Keyboard (搜索与首字母联想)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background-color: #0E0E10;
+      color: #FFFFFF;
+      font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+    .font-headline {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+    }
+    /* 10-foot TV D-pad Focus state standard: 3.5dp #FCD58B border + 25px glow + 1.05x scale */
+    .tv-focus-primary {
+      outline: 3.5px solid #FCD58B !important;
+      outline-offset: 1px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45), 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+      transform: scale(1.05);
+      z-index: 40;
+      position: relative;
+    }
+    .tv-focus-soft {
+      outline: 2.5px solid #FCD58B !important;
+      box-shadow: 0 0 16px rgba(252, 213, 139, 0.35) !important;
+      transform: scale(1.03);
+      z-index: 30;
+      position: relative;
+    }
+    .tv-card-focus {
+      outline: 3.5px solid #FCD58B !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 30px rgba(252, 213, 139, 0.45), 0 12px 32px rgba(0, 0, 0, 0.8) !important;
+      transform: scale(1.04);
+      z-index: 40;
+      position: relative;
+    }
+    /* Overscan Safe Area 72px */
+    .tv-overscan {
+      padding: 56px 72px 48px 72px;
+    }
+    /* Custom subtle scrollbar suppression */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-[#0E0E10] text-white flex flex-col justify-between tv-overscan relative selection:bg-[#E5A958]/30">
+
+  <!-- Background decorative ambient gradients (TV OLED friendly) -->
+  <div class="absolute inset-0 pointer-events-none opacity-25">
+    <div class="absolute -top-[20%] -left-[10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#E5A958]/20 to-transparent blur-[140px]"></div>
+    <div class="absolute top-[40%] left-[25%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-[#302B22]/30 to-transparent blur-[120px]"></div>
+  </div>
+
+  <!-- TOP HEADER (HUD & Search Input Bar) -->
+  <header class="relative z-20 flex items-center justify-between w-full h-[76px] pb-4 border-b border-[#28282D]">
+    <div class="flex items-center gap-6">
+      <!-- Back Button -->
+      <div class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[#202024] border border-white/10 text-white/80">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        <span class="text-xs font-semibold tracking-wider uppercase font-headline text-white/60">Back 返回</span>
+      </div>
+
+      <!-- Search Title & Breadcrumb -->
+      <div class="flex items-center gap-3">
+        <span class="text-lg text-white/40 font-medium">首页</span>
+        <span class="text-white/30 text-sm">/</span>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+          <svg class="w-6 h-6 text-[#E5A958]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+          </svg>
+          影视聚合全网搜索
+        </h1>
+      </div>
+    </div>
+
+    <!-- Active Query Display Box (Simulated TV Input) -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3 bg-[#18181B] border-2 border-[#E5A958]/50 rounded-2xl px-6 py-2.5 shadow-lg shadow-black/40 min-w-[420px] justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold text-[#E5A958] bg-[#E5A958]/15 px-2 py-0.5 rounded tracking-wide font-headline">拼音首字母</span>
+          <div class="flex items-baseline gap-1 font-headline tracking-widest text-2xl font-bold text-[#FCD58B]">
+            <span class="">SE</span>
+            <span class="w-2.5 h-6 bg-[#FCD58B] animate-pulse inline-block ml-0.5 rounded-sm"></span>
+          </div>
+          <span class="text-sm text-white/40 ml-2 font-normal">匹配: 沙丘 (SQ) · 杀破狼 (SPL) · 三体 (ST)</span>
+        </div>
+        <!-- Clear shortcut pill -->
+        <div class="flex items-center gap-1.5 text-xs text-white/50 bg-[#28282D] px-2.5 py-1 rounded-lg">
+          <span class="font-headline font-bold text-white/80">Menu</span>
+          <span class="">清空</span>
+        </div>
+      </div>
+
+      <!-- Site Source & Mode Badge -->
+      <div class="flex items-center gap-2 text-xs bg-[#202024] border border-white/5 px-4 py-2.5 rounded-xl text-white/70">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="">聚合源: <strong class="text-white font-medium">全网并发 (8站)</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DUAL-PANEL CONTENT (Left: Keyboard + Pinyin Logic | Right: Live Suggestions & Search Results) -->
+  <main class="relative z-10 flex-1 grid grid-cols-12 gap-8 pt-6 pb-2 items-start overflow-hidden">
+    
+    <!-- LEFT PANEL: KEYBOARD SYSTEM (5 Cols, ~640px) -->
+    <section class="col-span-5 flex flex-col gap-5 h-full">
+      
+      <!-- Mode Switcher Tabs: T9 (9键首字母) vs QWERTY (全键盘) vs 纯数字 -->
+      <div class="flex items-center justify-between bg-[#1B1B1E] p-1.5 rounded-2xl border border-white/5">
+        <div class="flex items-center gap-1">
+          <!-- T9 Tab (Inactive) -->
+          <button class="px-5 py-2 rounded-xl text-sm font-semibold transition-colors text-white/60 hover:text-white bg-transparent">
+            T9 九键拼音 (遥控优化)
+          </button>
+          <!-- Full QWERTY Tab (Active / Selected) -->
+          <button class="px-5 py-2 rounded-xl text-sm font-bold bg-[#E5A958] text-[#0E0E10] shadow-md shadow-[#E5A958]/20 flex items-center gap-2">
+            <span class="">全键盘 26键</span>
+            <span class="text-[11px] bg-black/20 px-1.5 py-0.2 rounded font-headline font-medium">默认</span>
+          </button>
+        </div>
+        <div class="pr-3 text-xs text-white/40 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#E5A958]"></span>
+          <span class="">支持多音字模糊联想</span>
+        </div>
+      </div>
+
+      <!-- Virtual Keyboard Box -->
+      <div class="bg-[#18181C] p-5 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-3 relative">
+        
+        <!-- Row 1: Numbers (0-9) -->
+        <div class="grid grid-cols-10 gap-2">
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">1</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">2</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">3</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">4</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">5</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">6</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">7</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">8</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">9</div>
+          <div class="h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-semibold text-lg text-white/70">0</div>
+        </div>
+
+        <!-- Row 2: Q - P (Alphabet) -->
+        <div class="grid grid-cols-10 gap-2">
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">Q</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">W</div>
+          <!-- FOCUSED STATE KEY: 'E' (Currently highlighted by D-pad) -->
+          <div class="h-13 py-2 rounded-xl bg-[#E5A958] text-[#0E0E10] font-headline font-extrabold text-2xl flex items-center justify-center tv-focus-primary">
+            E
+          </div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">R</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">T</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">Y</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">U</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">I</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">O</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">P</div>
+        </div>
+
+        <!-- Row 3: A - L (9 keys, centered) -->
+        <div class="grid grid-cols-9 gap-2 px-3">
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">A</div>
+          <!-- Key 'S' previously typed -->
+          <div class="h-13 py-2 rounded-xl bg-[#2A2720] border border-[#E5A958]/40 flex items-center justify-center font-headline font-bold text-xl text-[#FCD58B]">S</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">D</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">F</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">G</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">H</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">J</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">K</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">L</div>
+        </div>
+
+        <!-- Row 4: Functional + Z - M + Backspace -->
+        <div class="grid grid-cols-9 gap-2">
+          <!-- Clear/Reset -->
+          <div class="h-13 py-2 rounded-xl bg-[#292222] border border-rose-500/20 text-rose-300 flex items-center justify-center text-xs font-semibold">清空</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">Z</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">X</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">C</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">V</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">B</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">N</div>
+          <div class="h-13 py-2 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center font-headline font-bold text-xl text-white/80">M</div>
+          <!-- Delete / Backspace -->
+          <div class="h-13 py-2 rounded-xl bg-[#262428] border border-white/10 flex items-center justify-center text-amber-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Row 5: Space, Mode Toggle, Voice & Direct Jump -->
+        <div class="grid grid-cols-12 gap-2 mt-1">
+          <div class="col-span-3 h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center text-xs text-white/70 font-medium">
+            切换 T9 键盘
+          </div>
+          <div class="col-span-6 h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center text-xs tracking-wider text-white/60 font-headline uppercase">
+            Space 空格
+          </div>
+          <div class="col-span-3 h-12 rounded-xl bg-[#222226] border border-white/5 flex items-center justify-center gap-1 text-xs text-white/70 font-medium">
+            <svg class="w-4 h-4 text-[#E5A958]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15a3 3 0 01-3-3V4.5a3 3 0 116 0v7.5a3 3 0 01-3 3z"></path>
+            </svg>
+            语音搜片
+          </div>
+        </div>
+
+      </div>
+
+      <!-- T9 / Remote Navigation Specs & Quick Rules Note -->
+      <div class="bg-[#141416] p-4 rounded-2xl border border-white/5 flex items-center justify-between text-xs text-white/60">
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 rounded bg-[#E5A958]/20 text-[#E5A958] font-bold font-headline">TV 遥控规则</span>
+          <span class="">连续按两次同键输入数字，按 <strong class="text-white font-medium">▶ 右方向键</strong> 直接跳入右侧候选结果</span>
+        </div>
+        <div class="text-white/40">首字母权重算法: 剧名 &gt; 导演 &gt; 演员</div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL: LIVE SUGGESTIONS & SEARCH RESULTS (7 Cols, ~1020px) -->
+    <section class="col-span-7 flex flex-col gap-5 h-full pl-2">
+      
+      <!-- Top Row: Instant Initial Suggestions (首字母联想关键词流) -->
+      <div class="flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#E5A958] font-headline">智能首字母联想</span>
+            <span class="text-xs text-white/40">(匹配输入 "SE / SQ")</span>
+          </div>
+          <span class="text-xs text-white/40">按 [OK] 直达播放或详情</span>
+        </div>
+
+        <!-- Horizontal Chips -->
+        <div class="flex items-center gap-3 overflow-x-auto pb-1">
+          <!-- Suggestion 1: Focused / Active Chip -->
+          <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#262117] border-2 border-[#E5A958] text-[#FCD58B] shadow-lg shadow-[#E5A958]/20 flex-shrink-0">
+            <span class="font-bold text-sm">沙丘 2</span>
+            <span class="text-[11px] bg-[#E5A958]/25 text-[#FCD58B] px-1.5 py-0.2 rounded font-headline font-semibold">SQ2 · 电影</span>
+            <span class="text-xs text-white/50">4K HDR</span>
+          </div>
+
+          <!-- Suggestion 2 -->
+          <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#202024] border border-white/5 text-white/80 hover:bg-[#28282D] flex-shrink-0">
+            <span class="font-medium text-sm">沙丘 (第一部)</span>
+            <span class="text-[11px] bg-white/10 text-white/60 px-1.5 py-0.2 rounded font-headline">SQ1</span>
+          </div>
+
+          <!-- Suggestion 3 -->
+          <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#202024] border border-white/5 text-white/80 hover:bg-[#28282D] flex-shrink-0">
+            <span class="font-medium text-sm">三体 (电视剧版)</span>
+            <span class="text-[11px] bg-white/10 text-white/60 px-1.5 py-0.2 rounded font-headline">ST</span>
+          </div>
+
+          <!-- Suggestion 4 -->
+          <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#202024] border border-white/5 text-white/80 hover:bg-[#28282D] flex-shrink-0">
+            <span class="font-medium text-sm">十二怒汉</span>
+            <span class="text-[11px] bg-white/10 text-white/60 px-1.5 py-0.2 rounded font-headline">SENH</span>
+          </div>
+
+          <!-- Suggestion 5 -->
+          <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#202024] border border-white/5 text-white/80 hover:bg-[#28282D] flex-shrink-0">
+            <span class="font-medium text-sm">色，戒</span>
+            <span class="text-[11px] bg-white/10 text-white/60 px-1.5 py-0.2 rounded font-headline">SJ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Result Grid Header -->
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-3">
+          <h2 class="text-lg font-bold text-white tracking-wide">匹配影视结果</h2>
+          <span class="text-xs bg-[#242428] text-[#E5A958] px-2.5 py-0.5 rounded-full font-headline font-bold">14 部命中</span>
+        </div>
+
+        <!-- Filter tabs: 全部 / 电影 / 电视剧 / 动漫 / 综艺 -->
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-3 py-1 rounded-lg bg-[#E5A958]/20 text-[#E5A958] font-bold">全部 (14)</span>
+          <span class="px-3 py-1 rounded-lg bg-[#1B1B1F] text-white/60">电影 (8)</span>
+          <span class="px-3 py-1 rounded-lg bg-[#1B1B1F] text-white/60">剧集 (5)</span>
+          <span class="px-3 py-1 rounded-lg bg-[#1B1B1F] text-white/60">动漫 (1)</span>
+        </div>
+      </div>
+
+      <!-- Results Grid (2:3 Poster Cards, 4 Columns Layout) -->
+      <div class="grid grid-cols-4 gap-5 overflow-hidden">
+        
+        <!-- CARD 1 (Highlight Match: 沙丘 2, Target Card) -->
+        <div class="flex flex-col gap-2.5 group">
+          <!-- Poster container with letterbox 2:3 -->
+          <div class="aspect-[2/3] w-full rounded-2xl bg-gradient-to-b from-[#2B2317] via-[#1A1612] to-[#0E0E10] border border-[#E5A958]/40 p-4 flex flex-col justify-between relative overflow-hidden shadow-lg">
+            <!-- Top Badges -->
+            <div class="flex items-center justify-between z-10">
+              <span class="text-[11px] font-bold bg-[#E5A958] text-[#0E0E10] px-2 py-0.5 rounded shadow">首选最佳匹配</span>
+              <span class="text-[11px] font-bold bg-black/60 text-amber-300 border border-amber-400/30 px-1.5 py-0.2 rounded font-headline">4K 原盘</span>
+            </div>
+            <!-- Center Giant Typography Abstract Poster (Strict 0 copyright image violation rule) -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-25">
+              <span class="text-8xl font-black font-headline tracking-tighter text-[#E5A958]">沙</span>
+            </div>
+            <!-- Bottom Specs in card -->
+            <div class="z-10 bg-black/60 backdrop-blur-sm p-2 rounded-xl border border-white/5">
+              <div class="flex items-center justify-between text-[11px] text-white/70">
+                <span class="">饭太硬 4K专线</span>
+                <span class="text-emerald-400 font-medium">9 线路可用</span>
+              </div>
+            </div>
+          </div>
+          <!-- Card Meta Details (Strict 20px bold + 14px secondary, zero overlap guarantee) -->
+          <div class="flex flex-col gap-1.5 px-0.5">
+            <h3 class="text-xl font-bold text-white truncate tracking-tight flex items-center gap-1.5"><span class="text-[#E5A958]">沙丘 2</span>: 厄拉科斯 命运之战</h3>
+            <div class="text-sm text-[#8E8E93] flex items-center gap-2"><span class="font-headline font-semibold text-white/80">2024</span><span class="">•</span><span class="">科幻 / 动作</span><span class="">•</span><span class="">首字母: SQ2</span></div>
+          </div>
+        </div>
+
+        <!-- CARD 2 (三体) -->
+        <div class="flex flex-col gap-2.5">
+          <div class="aspect-[2/3] w-full rounded-2xl bg-gradient-to-b from-[#1E2522] via-[#131A16] to-[#0E0E10] border border-white/10 p-4 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex items-center justify-between z-10">
+              <span class="text-[11px] font-medium bg-[#1F2C24] text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">全30集完结</span>
+              <span class="text-[11px] font-bold bg-black/60 text-white/80 px-1.5 py-0.2 rounded font-headline">1080P</span>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-20">
+              <span class="text-8xl font-black font-headline tracking-tighter text-emerald-400">体</span>
+            </div>
+            <div class="z-10 bg-black/60 backdrop-blur-sm p-2 rounded-xl border border-white/5">
+              <div class="flex items-center justify-between text-[11px] text-white/70">
+                <span class="">摸鱼影视 (杜比)</span>
+                <span class="text-white/50">已播至 100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5 px-0.5">
+            <h3 class="text-xl font-bold text-white truncate tracking-tight">三体 (剧版)</h3>
+            <div class="text-sm text-[#8E8E93] flex items-center gap-2"><span class="font-headline font-semibold text-white/80">2023</span><span class="">•</span><span class="">科幻 / 剧情</span><span class="">•</span><span class="">首字母: ST</span></div>
+          </div>
+        </div>
+
+        <!-- CARD 3 (杀破狼) -->
+        <div class="flex flex-col gap-2.5">
+          <div class="aspect-[2/3] w-full rounded-2xl bg-gradient-to-b from-[#261E22] via-[#1A1418] to-[#0E0E10] border border-white/10 p-4 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex items-center justify-between z-10">
+              <span class="text-[11px] font-medium bg-white/10 text-white/70 px-2 py-0.5 rounded">经典港片</span>
+              <span class="text-[11px] font-bold bg-black/60 text-white/80 px-1.5 py-0.2 rounded font-headline">蓝光 60帧</span>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-20">
+              <span class="text-8xl font-black font-headline tracking-tighter text-rose-400">狼</span>
+            </div>
+            <div class="z-10 bg-black/60 backdrop-blur-sm p-2 rounded-xl border border-white/5">
+              <div class="flex items-center justify-between text-[11px] text-white/70">
+                <span class="">量子切片源</span>
+                <span class="text-white/50">国粤双语</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5 px-0.5">
+            <h3 class="text-xl font-bold text-white truncate tracking-tight">杀破狼 2</h3>
+            <div class="text-sm text-[#8E8E93] flex items-center gap-2"><span class="font-headline font-semibold text-white/80">2015</span><span class="">•</span><span class="">动作 / 悬疑</span><span class="">•</span><span class="">首字母: SPL2</span></div>
+          </div>
+        </div>
+
+        <!-- CARD 4 (搜索历史 / 快捷热榜混合栏) -->
+        <div class="flex flex-col gap-2.5">
+          <div class="aspect-[2/3] w-full rounded-2xl bg-[#17171B] border border-white/10 p-4 flex flex-col justify-between relative">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-[#E5A958] flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                最近搜索
+              </span>
+              <span class="text-[11px] text-white/40 cursor-pointer">清除</span>
+            </div>
+
+            <!-- History quick chips -->
+            <div class="flex flex-col gap-2 my-auto">
+              <div class="text-sm text-[#8E8E93]">按遥控器快速载入历史词</div>
+              <div class="text-sm text-[#8E8E93]">按遥控器快速载入历史词</div>
+              <div class="text-sm text-[#8E8E93]">按遥控器快速载入历史词</div>
+            </div>
+
+            <!-- TV Hot Search Indicator -->
+            <div class="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-[#E5A958]">
+              <span class="">今日搜索热榜 Top 10</span>
+              <span class="">▶ 展开</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5 px-0.5">
+            <h3 class="text-xl font-bold text-white/70 truncate tracking-tight">快捷搜片记录</h3>
+            <div class="text-sm text-[#8E8E93]">按遥控器快速载入历史词</div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER CONTROLS BAR (Remote D-pad Mapping & Accessibility Notes) -->
+  <footer class="relative z-20 flex items-center justify-between w-full h-[52px] pt-3 border-t border-[#242428] text-xs text-white/60">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-[#E5A958] font-bold font-headline">▲▼◀▶</span>
+        <span class="">移动键盘焦点 / 翻页</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] font-bold font-headline">OK</span>
+        <span class="">输入字符 / 选定影视结果</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-white/80 font-bold font-headline">▶ 长按 / 双击</span>
+        <span class="">直接跳过键盘跨区进结果栏</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#202024] text-white/80 font-bold font-headline">Menu</span>
+        <span class="">切换 T9 9键 / 26键全键盘 / 清空搜索</span>
+      </div>
+    </div>
+
+    <!-- System & Latency Info -->
+    <div class="flex items-center gap-4 text-white/40 font-headline">
+      <span class="">首字母检索响应: <strong class="text-emerald-400">12ms</strong> (本地内存倒排索引)</span>
+      <span class="">•</span>
+      <span class="">FongMi TV v1.8.5</span>
+    </div>
+  </footer>
+
+
+
+
+
+</body></html>

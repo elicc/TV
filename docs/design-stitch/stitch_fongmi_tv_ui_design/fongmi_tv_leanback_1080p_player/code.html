@@ -1,0 +1,396 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+  <title>FongMi TV - Leanback 1080p Player (全屏播放器与浮层规范)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0E0E10;
+      --surface: #202024;
+      --surface-raised: #2A2A30;
+      --accent: #E5A958;
+      --focus: #FCD58B;
+      --text-primary: #F4F4F6;
+      --text-secondary: #9B9BA1;
+      --text-muted: #66666D;
+      --danger: #EF4444;
+      --success: #22C55E;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background-color: #050507;
+      color: var(--text-primary);
+      font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-heading {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    /* 10-foot TV Focus Glow & Scale */
+    .tv-focus {
+      outline: 3.5px solid var(--focus) !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45), 0 8px 24px rgba(0, 0, 0, 0.7);
+      transform: scale(1.05);
+      z-index: 50;
+      transition: all 160ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .tv-focus-pill {
+      outline: 3.5px solid var(--focus) !important;
+      outline-offset: 1px;
+      box-shadow: 0 0 20px rgba(252, 213, 139, 0.5);
+      background-color: var(--focus) !important;
+      color: #0E0E10 !important;
+      transform: scale(1.06);
+      z-index: 40;
+    }
+    .tv-focus-slider {
+      box-shadow: 0 0 16px rgba(252, 213, 139, 0.75);
+    }
+    /* Scrim overlays (Cinema 1080p safe gradients) */
+    .scrim-top {
+      background: linear-gradient(180deg, rgba(14, 14, 16, 0.95) 0%, rgba(14, 14, 16, 0.75) 45%, rgba(14, 14, 16, 0) 100%);
+    }
+    .scrim-bottom {
+      background: linear-gradient(0deg, rgba(14, 14, 16, 0.98) 0%, rgba(14, 14, 16, 0.85) 50%, rgba(14, 14, 16, 0) 100%);
+    }
+    .scrim-panel {
+      background: rgba(20, 20, 24, 0.88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Abstract Cinematic Film Background simulation */
+    .cinema-bg {
+      background: radial-gradient(circle at 75% 35%, rgba(68, 48, 20, 0.35) 0%, rgba(14, 14, 16, 0.9) 65%),
+                  radial-gradient(circle at 20% 80%, rgba(30, 25, 45, 0.4) 0%, rgba(8, 8, 10, 0.98) 80%),
+                  #0a0a0c;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between p-0 m-0">
+
+  <!-- 1. 背景模拟电影全屏播放帧 (抽象画质渲染，无真实版权剧照) -->
+  <div class="absolute inset-0 cinema-bg overflow-hidden pointer-events-none z-0">
+    <!-- 抽象动态光影粒子/光晕 -->
+    <div class="absolute w-[900px] h-[900px] -right-[150px] -top-[200px] rounded-full bg-gradient-to-br from-amber-600/15 via-orange-950/10 to-transparent blur-3xl opacity-60"></div>
+    <div class="absolute w-[700px] h-[700px] left-[5%] bottom-[10%] rounded-full bg-gradient-to-tr from-stone-800/20 via-yellow-900/10 to-transparent blur-3xl opacity-50"></div>
+    
+    <!-- 巨幅艺术字浅层印记 (沙丘厄拉科斯沙漠意象) -->
+    <div class="absolute right-[8%] top-[26%] opacity-[0.035] select-none pointer-events-none">
+      <span class="font-heading text-[320px] font-black tracking-tighter text-amber-100">DUNE</span>
+    </div>
+
+    <!-- 弹幕层演示 (Danmaku 10-foot TV 规整渲染) -->
+    <div class="absolute inset-x-0 top-[130px] h-[340px] pointer-events-none overflow-hidden opacity-85 z-10">
+      <!-- 弹幕行 1 -->
+      <div class="absolute right-[180px] top-[24px] text-[20px] font-medium text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-black/30 px-3 py-1 rounded-full border border-white/10">汉斯·季默配乐真的封神！低音炮在震了 <svg class="inline-block w-4 h-4 ml-1 text-[#FCD58B]" fill="none" stroke="#FCD58B" stroke-width="1.5" viewBox="0 0 24 24"><path d="M5 9V15H9L13 19V5L9 9H5ZM16.5 12C16.5 10.23 15.5 8.71 14 7.97V16.02C15.5 15.29 16.5 13.76 16.5 12Z"></path></svg></div>
+      <div class="absolute right-[780px] top-[24px] text-[20px] font-semibold text-[#FCD58B] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-black/40 px-3 py-1 rounded-full border border-amber-400/20">
+        4K 原盘 HDR10+ 色彩过渡极度丝滑
+      </div>
+      <!-- 弹幕行 2 -->
+      <div class="absolute right-[460px] top-[80px] text-[18px] text-white/75 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+        沙虫出场这一段名场面，准备好爆米花
+      </div>
+      <!-- 弹幕行 3 -->
+      <div class="absolute right-[300px] top-[140px] text-[20px] text-white/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">遥控器按 [菜单] 键唤起音轨与外挂字幕设置</div>
+      <div class="absolute right-[920px] top-[140px] text-[18px] text-emerald-400/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-emerald-950/40 px-2.5 py-0.5 rounded border border-emerald-500/20">
+        ● MediaCodec 硬解 60fps 极速无丢帧
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 全屏顶部浮层 (跑马灯片名 + 时钟 + 线路状态 + 退出指引) -->
+  <header class="relative z-30 w-full pt-[44px] pb-[70px] px-[72px] scrim-top flex items-start justify-between">
+    <!-- 左侧：返回按键 + 正在播放片名与集数 + 实时规格 -->
+    <div class="flex items-center gap-5">
+      <div class="flex items-center justify-center w-[46px] h-[46px] rounded-lg bg-white/10 border border-white/15 text-white/90">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="font-heading text-[28px] font-bold tracking-wide text-[#F4F4F6]">沙丘 2：厄拉科斯 命运之战</h1>
+          <span class="px-2.5 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-[#E5A958] text-[14px] font-semibold">
+            第 01 集 正片
+          </span>
+          <span class="px-2 py-0.5 rounded bg-white/10 text-white/70 text-[13px] tracking-wider font-mono">
+            4K 原盘 · HEVC 10bit
+          </span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[13px] font-mono flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 杜比全景声 7.1
+          </span>
+        </div>
+        <p class="text-[14px] text-[#9B9BA1] mt-1 flex items-center gap-2">
+          <span class="">线路：饭太硬 (极速4K专线)</span>
+          <span class="opacity-40">|</span>
+          <span class="">解码：硬解 (MediaCodec)</span>
+          <span class="opacity-40">|</span>
+          <span class="">倍速：1.0x</span>
+          <span class="opacity-40">|</span>
+          <span class="">按 [下键] 快速选集 / [菜单键] 呼出高级设置</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- 右侧：当前时钟 + 电池/网络指标 + 遥控器提示 -->
+    <div class="flex items-center gap-6">
+      <!-- 快捷状态指示胶囊 -->
+      <div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-black/40 border border-white/10 text-[14px] text-white/80">
+        <span class="flex items-center gap-1.5 text-emerald-400 font-mono text-[13px]">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 58 Mbps
+        </span>
+        <span class="text-white/20">|</span>
+        <span class="font-mono text-white/90">缓冲: 94s (已满)</span>
+        <span class="text-white/20">|</span>
+        <span class="font-heading text-[18px] font-bold text-white">21:14</span>
+      </div>
+
+      <!-- 电视遥控器按键提示徽章 -->
+      <div class="flex items-center gap-2 text-[13px] text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+        <span class="px-1.5 py-0.5 rounded bg-white/20 font-mono text-[11px] text-white">Back</span>
+        <span class="">退出全屏</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. 页面中部交互组件区：居中卡 / 暂停徽标 / 侧拉参数抽屉 (展示 D-pad Widget 状态) -->
+  <main class="relative z-30 flex-1 px-[72px] flex items-center justify-between pointer-events-none">
+    
+    <!-- 中左：居中快进/音量/提示 Widget (示意 10-foot 状态反馈) -->
+    <div class="pointer-events-auto flex flex-col gap-4">
+      <!-- 状态卡片 1：快进快退反馈 Widget (按左右键触发) -->
+      <div class="w-[320px] p-4 rounded-2xl scrim-panel flex items-center gap-4 shadow-2xl border border-white/10">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-[#E5A958]">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-[20px] font-bold font-mono text-white">+15s</span>
+            <span class="text-[13px] text-[#9B9BA1] font-mono">00:38:30</span>
+          </div>
+          <p class="text-[12px] text-[#9B9BA1]">短按 ±15s / 长按平滑快进</p>
+        </div>
+      </div>
+
+      <!-- 状态卡片 2：缓冲 / 换源状态胶囊 (可容错展示) -->
+      <div class="w-[320px] px-4 py-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between text-[13px]">
+        <span class="text-white/70 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> 智能防卡顿：备用切源就绪
+        </span>
+        <span class="text-[#E5A958] font-mono">Auto</span>
+      </div>
+    </div>
+
+    <!-- 中部偏右：快捷侧拉抽屉规范演示 (按 [菜单/Menu] 唤出字幕与音轨) -->
+    <aside class="pointer-events-auto w-[380px] rounded-2xl scrim-panel p-5 shadow-2xl border border-white/15 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#E5A958]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+          </svg>
+          <span class="font-heading text-[18px] font-bold text-white tracking-wide">播放快速调优</span>
+        </div>
+        <span class="text-[12px] text-white/50 font-mono">Menu 键收起</span>
+      </div>
+
+      <!-- 选项 1：外挂/内嵌字幕切换 (焦点选中态示范) -->
+      <div class="space-y-1.5">
+        <label class="text-[13px] text-[#9B9BA1] font-medium flex justify-between">
+          <span class="">字幕音轨选择</span>
+          <span class="text-amber-300 text-[12px]">已同步原盘双语</span>
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <button class="py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-[14px] text-white/80 text-left truncate">
+            01. 英语原声 (默认)
+          </button>
+          <!-- 获得焦点态的子项 -->
+          <button class="py-2 px-3 rounded-lg bg-[#E5A958] text-[#0E0E10] font-semibold text-[14px] text-left truncate outline outline-2 outline-[#FCD58B] shadow-[0_0_12px_rgba(252,213,139,0.5)]">
+            ✓ 02. 中英双语特效
+          </button>
+        </div>
+      </div>
+
+      <!-- 选项 2：画面比例调整 -->
+      <div class="space-y-1.5">
+        <label class="text-[13px] text-[#9B9BA1] font-medium">画面填充模式</label>
+        <div class="flex items-center gap-2">
+          <span class="flex-1 py-1.5 text-center text-[13px] rounded-lg bg-white/5 border border-white/10 text-white/70">原始 16:9</span>
+          <span class="flex-1 py-1.5 text-center text-[13px] rounded-lg bg-[#202024] border border-amber-400/40 text-[#E5A958] font-medium">智能去黑边</span>
+          <span class="flex-1 py-1.5 text-center text-[13px] rounded-lg bg-white/5 border border-white/10 text-white/70">全屏拉伸</span>
+        </div>
+      </div>
+
+      <!-- 选项 3：音画同步与字号 -->
+      <div class="flex items-center justify-between pt-1 text-[13px] text-white/80">
+        <span class="">字幕时间轴补偿</span>
+        <div class="flex items-center gap-2 font-mono">
+          <span class="px-2 py-1 rounded bg-white/10">-0.25s</span>
+          <span class="text-amber-400 font-bold">0.0s</span>
+          <span class="px-2 py-1 rounded bg-white/10">+0.25s</span>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- 4. 全屏底部主控制台 (PlayerController - 满足 10-foot D-pad 核心交互区) -->
+  <footer class="relative z-30 w-full px-[72px] pb-[44px] pt-[70px] scrim-bottom flex flex-col gap-4">
+    
+    <!-- 进度条与播放进度指示 (Progress & Time Scrub) -->
+    <div class="w-full flex flex-col gap-2">
+      <!-- 进度滑块行 -->
+      <div class="relative w-full h-[18px] flex items-center cursor-pointer">
+        <!-- 进度条底轨 -->
+        <div class="w-full h-[6px] rounded-full bg-white/20 relative overflow-hidden">
+          <!-- 缓冲段 (70%) -->
+          <div class="absolute left-0 top-0 bottom-0 w-[72%] bg-white/35 rounded-full"></div>
+          <!-- 已播放段 (26%) -->
+          <div class="absolute left-0 top-0 bottom-0 w-[26%] bg-gradient-to-r from-amber-600 to-[#E5A958] rounded-full"></div>
+        </div>
+
+        <!-- 焦点滑块针 (当前焦点停在进度条时的样式：高亮发光 + 放大游标) -->
+        <div class="absolute left-[26%] -translate-x-1/2 w-[22px] h-[22px] rounded-full bg-[#FCD58B] border-2 border-[#0E0E10] tv-focus-slider flex items-center justify-center">
+          <div class="w-2 h-2 rounded-full bg-[#0E0E10]"></div>
+        </div>
+      </div>
+
+      <!-- 时间刻度与章节提示 -->
+      <div class="flex items-center justify-between text-[16px] font-mono">
+        <div class="flex items-center gap-3">
+          <span class="font-bold text-[#FCD58B] text-[20px]">00:38:15</span>
+          <span class="text-white/40 text-[18px]">/</span>
+          <span class="text-white/70 text-[18px]">02:46:32</span>
+          <span class="ml-4 text-[13px] text-amber-300/80 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/20 font-sans">
+            章节 03：帝国军团沙丘降临
+          </span>
+        </div>
+
+        <div class="flex items-center gap-4 text-[13px] text-[#9B9BA1] font-sans">
+          <span class="">剩余 02:08:17</span>
+          <span class="text-white/20">|</span>
+          <span class="text-emerald-400">● 60 FPS 稳定</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部控制按键行 (PlayerController Action Bar) -->
+    <div class="flex items-center justify-between pt-2">
+      
+      <!-- 左侧主操作序列 (播放/暂停、前后集、快进快退) -->
+      <div class="flex items-center gap-3">
+        <!-- 播放/暂停键 (当前全局单焦点示范：tv-focus 3.5dp #FCD58B + 柔光 + 1.05x 放大) -->
+        <button class="tv-focus flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#E5A958] text-[#0E0E10] font-bold text-[18px] tracking-wide">
+          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+          </svg>
+          <span class="">暂停 [OK]</span>
+        </button>
+
+        <!-- 上一集 -->
+        <button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 hover:border-white/30 text-[16px] font-medium">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path>
+          </svg>
+          <span class="">上一集</span>
+        </button>
+
+        <!-- 下一集 -->
+        <button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 hover:border-white/30 text-[16px] font-medium">
+          <span class="">下一集</span>
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"></path>
+          </svg>
+        </button>
+
+        <!-- 选集呼出 (Drawer) -->
+        <button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 hover:border-white/30 text-[16px] font-medium">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+          <span class="">选集 (1/28)</span>
+        </button>
+      </div>
+
+      <!-- 右侧辅助控制 (弹幕、音轨、字幕、倍速、解码、画质、设置) -->
+      <div class="flex items-center gap-2.5">
+        <!-- 弹幕开关 -->
+        <button class="flex items-center gap-1.5 px-3.5 py-3 rounded-xl bg-[#202024] border border-amber-500/30 text-[#E5A958] text-[15px] font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="">弹幕 开</span>
+        </button>
+
+        <!-- 倍速切换 -->
+        <button class="px-3.5 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 text-[15px] font-mono font-medium">
+          1.0x
+        </button>
+
+        <!-- 画质规格 -->
+        <button class="px-3.5 py-3 rounded-xl bg-[#202024] border border-amber-400/40 text-[#E5A958] text-[15px] font-medium">
+          4K 原盘
+        </button>
+
+        <!-- 音轨选择 -->
+        <button class="px-3.5 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 text-[15px] font-medium flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+          </svg>
+          <span class="">杜比 7.1</span>
+        </button>
+
+        <!-- 字幕选择 -->
+        <button class="px-3.5 py-3 rounded-xl bg-[#202024] border border-white/10 text-white/90 text-[15px] font-medium">
+          双语字幕
+        </button>
+
+        <!-- 播放设置/菜单 -->
+        <button class="p-3 rounded-xl bg-[#202024] border border-white/10 text-white/90">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 遥控器常驻按键指引底条 (不遮挡进度，独立流排布) -->
+    <div class="flex items-center justify-between pt-1 border-t border-white/5 text-[12px] text-white/50">
+      <div class="flex items-center gap-5">
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono text-white/80">◀ ▶</kbd> 快进 / 倒退
+        </span>
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono text-white/80">▲ ▼</kbd> 呼出选集 / 切换音画轨
+        </span>
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono text-white/80">OK</kbd> 暂停 / 确定
+        </span>
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono text-white/80">Menu</kbd> 快速设置面板
+        </span>
+      </div>
+      <div>
+        <span class="">3秒无按键自动沉浸隐藏</span>
+      </div>
+    </div>
+
+  </footer>
+
+
+
+
+
+
+</body></html>
