@@ -4,8 +4,8 @@
 
     <gradient
         android:angle="0"
-        android:endColor="@color/black_50"
-        android:startColor="@color/black_90"
+        android:endColor="?attr/tvColorScrim"
+        android:startColor="?attr/tvColorScrimStrong"
         android:type="linear" />
 
 </shape>

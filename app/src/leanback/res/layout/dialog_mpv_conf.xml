@@ -24,7 +24,9 @@
         android:inputType="textMultiLine|textNoSuggestions"
         android:maxLines="5"
         android:minLines="5"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textColorHint="?attr/tvColorTextSecondary" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/bottom"
@@ -46,7 +48,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:text="@string/dialog_positive"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextPrimary"
             android:textSize="14sp" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -60,7 +62,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:text="@string/dialog_negative"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextPrimary"
             android:textSize="14sp" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>

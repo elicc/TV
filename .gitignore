@@ -7,4 +7,5 @@
 *.properties
 lib-*.aar
 /Release
-/docs
+
+.gpt-imagegen

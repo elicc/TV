@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:background="?attr/tvColorBackground"
     tools:ignore="NestedWeights">
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -28,7 +29,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_tunnel"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -36,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Off" />
 
@@ -57,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_audio_pass_through"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -65,7 +66,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Off" />
 
@@ -86,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_audio_decode"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -94,7 +95,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Off" />
 
@@ -115,7 +116,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_video_decode"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -123,7 +124,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Off" />
 
@@ -144,7 +145,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_aac_track"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -152,7 +153,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Off" />
 
@@ -173,7 +174,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:text="@string/player_dolby_vision_output"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -181,7 +182,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/white"
+                android:textColor="?attr/tvColorTextSecondary"
                 android:textSize="18sp"
                 tools:text="Auto" />
 

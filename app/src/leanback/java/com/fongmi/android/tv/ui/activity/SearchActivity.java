@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
@@ -33,6 +34,7 @@ import com.github.catvod.net.OkHttp;
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.net.HttpHeaders;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.IOException;
 import java.util.Map;
@@ -45,6 +47,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private ActivitySearchBinding mBinding;
     private RecordAdapter mRecordAdapter;
     private WordAdapter mWordAdapter;
+    private AlertDialog historyDialog;
 
     public static void start(Activity activity) {
         activity.startActivity(new Intent(activity, SearchActivity.class));
@@ -71,6 +74,11 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     }
 
     @Override
+    protected boolean customWall() {
+        return false;
+    }
+
+    @Override
     protected void initView(Bundle savedInstanceState) {
         CustomKeyboard.init(this, mBinding);
         setRecyclerView();
@@ -80,6 +88,8 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     protected void initEvent() {
+        mBinding.manageRecords.setOnClickListener(this::manageRecords);
+        mBinding.clearRecords.setOnClickListener(this::clearRecords);
         mBinding.keyword.setOnEditorActionListener((textView, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) onSearch();
             return true;
@@ -161,8 +171,54 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     public void onDataChanged(int size) {
+        boolean restoreFocus = size == 0 && mBinding.recordLayout.hasFocus();
         mBinding.recordLayout.setVisibility(size == 0 ? View.GONE : View.VISIBLE);
-        if (size == 0) focusFirst(mBinding.wordRecycler);
+        if (restoreFocus) mBinding.keyword.post(() -> mBinding.keyword.requestFocus());
+    }
+
+    private void manageRecords(View view) {
+        String[] records = mRecordAdapter.getRecords();
+        if (records.length == 0) return;
+        historyDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tv_search_manage)
+                .setItems(records, (dialog, which) -> confirmRemoveRecord(records[which], view))
+                .setNegativeButton(R.string.dialog_negative, null)
+                .setOnDismissListener(dialog -> restoreHistoryFocus(view))
+                .show();
+    }
+
+    @Override
+    public void onItemLongClick(String text) {
+        confirmRemoveRecord(text, getCurrentFocus());
+    }
+
+    private void confirmRemoveRecord(String text, View returnFocus) {
+        historyDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tv_search_delete)
+                .setMessage(getString(R.string.tv_search_delete_message, text))
+                .setPositiveButton(R.string.tv_search_delete, (dialog, which) -> mRecordAdapter.remove(text))
+                .setNegativeButton(R.string.dialog_negative, null)
+                .setOnDismissListener(dialog -> restoreHistoryFocus(returnFocus))
+                .show();
+    }
+
+    private void clearRecords(View view) {
+        historyDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tv_search_clear)
+                .setMessage(R.string.tv_search_clear_message)
+                .setPositiveButton(R.string.tv_search_clear, (dialog, which) -> mRecordAdapter.clear())
+                .setNegativeButton(R.string.dialog_negative, null)
+                .setOnDismissListener(dialog -> restoreHistoryFocus(view))
+                .show();
+    }
+
+    private void restoreHistoryFocus(View previous) {
+        mBinding.recordRecycler.post(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            if (previous != null && previous.isShown() && previous.requestFocus()) return;
+            if (mRecordAdapter.getItemCount() > 0 && focusFirst(mBinding.recordRecycler)) return;
+            mBinding.keyword.requestFocus();
+        });
     }
 
     @Override
@@ -194,6 +250,10 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private boolean findFocus(KeyEvent event) {
         View current = getCurrentFocus();
         if (current == mBinding.keyword) return handleKeywordKey(event);
+        if (current == mBinding.manageRecords || current == mBinding.clearRecords) {
+            if (KeyUtil.isDownKey(event)) return focusFirst(mBinding.recordRecycler);
+            if (KeyUtil.isUpKey(event)) return true;
+        }
         View inKeyboard = mBinding.keyboard.findContainingItemView(current);
         View inWord = mBinding.wordRecycler.findContainingItemView(current);
         View inRecord = mBinding.recordRecycler.findContainingItemView(current);
@@ -286,7 +346,10 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     private boolean handleRecordKey(KeyEvent event, View item) {
         if (KeyUtil.isRightKey(event)) return isLastInRow(mBinding.recordRecycler, item);
-        if (KeyUtil.isUpKey(event)) return isFirstRow(mBinding.recordRecycler, item);
+        if (KeyUtil.isUpKey(event) && isFirstRow(mBinding.recordRecycler, item)) {
+            mBinding.manageRecords.requestFocus();
+            return true;
+        }
         if (KeyUtil.isDownKey(event) && isLastRow(mBinding.recordRecycler, item)) return focusFirst(mBinding.wordRecycler);
         return false;
     }
@@ -313,6 +376,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     protected void onDestroy() {
+        if (historyDialog != null) historyDialog.dismiss();
         super.onDestroy();
         mBinding.mic.destroy();
     }

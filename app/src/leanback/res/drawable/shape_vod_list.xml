@@ -2,8 +2,8 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <corners android:radius="8dp" />
+    <corners android:radius="@dimen/tv_radius_card" />
 
-    <solid android:color="@color/black_20" />
+    <solid android:color="?attr/tvColorSurface" />
 
 </shape>

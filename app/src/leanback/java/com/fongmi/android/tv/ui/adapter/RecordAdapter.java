@@ -31,6 +31,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
         void onItemClick(String text);
 
         void onDataChanged(int size);
+
+        void onItemLongClick(String text);
     }
 
     private List<String> getItems() {
@@ -48,6 +50,27 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
         checkToAdd(item);
         notifyDataSetChanged();
         listener.onDataChanged(getItemCount());
+    }
+
+    public String[] getRecords() {
+        return mItems.toArray(new String[0]);
+    }
+
+    public void remove(String text) {
+        int position = mItems.indexOf(text);
+        if (position < 0) return;
+        mItems.remove(position);
+        Setting.putKeyword(App.gson().toJson(mItems));
+        notifyItemRemoved(position);
+        listener.onDataChanged(getItemCount());
+    }
+
+    public void clear() {
+        int count = mItems.size();
+        mItems.clear();
+        Setting.putKeyword(App.gson().toJson(mItems));
+        notifyItemRangeRemoved(0, count);
+        listener.onDataChanged(0);
     }
 
     @Override
@@ -80,10 +103,9 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
 
         @Override
         public boolean onLongClick(View v) {
-            mItems.remove(getLayoutPosition());
-            notifyItemRemoved(getLayoutPosition());
-            listener.onDataChanged(getItemCount());
-            Setting.putKeyword(App.gson().toJson(mItems));
+            int position = getBindingAdapterPosition();
+            if (position == RecyclerView.NO_POSITION) return false;
+            listener.onItemLongClick(mItems.get(position));
             return true;
         }
     }

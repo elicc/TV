@@ -2,9 +2,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <solid android:color="@color/black_30" />
+    <solid android:color="?attr/tvColorSelected" />
 
-    <corners android:radius="4dp" />
+    <corners android:radius="@dimen/tv_radius_control" />
 
     <padding
         android:bottom="8dp"
@@ -13,7 +13,7 @@
         android:top="8dp" />
 
     <stroke
-        android:width="1.5dp"
-        android:color="@color/white" />
+        android:width="1dp"
+        android:color="?attr/tvColorAccent" />
 
 </shape>

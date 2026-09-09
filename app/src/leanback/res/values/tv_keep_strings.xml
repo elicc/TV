@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_keep_title">Favorites</string>
+    <string name="tv_keep_manage">Manage favorites</string>
+    <string name="tv_keep_done">Done</string>
+    <string name="tv_keep_remove">Remove favorite</string>
+    <string name="tv_keep_remove_message">Remove “%1$s” from favorites? You can add it again from the detail page.</string>
+</resources>

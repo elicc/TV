@@ -1,0 +1,39 @@
+<resources>
+    <!-- Skins inherit every semantic role. IDs are persisted; never reorder them. -->
+    <style name="Theme.Tv.Champagne" parent="Theme.App" />
+    <style name="Theme.Tv.Ice" parent="Theme.App">
+        <item name="tvColorAccent">@color/tv_accent_ice</item>
+        <item name="tvColorFocus">@color/tv_focus_ice</item>
+        <item name="tvColorSelected">@color/tv_selected_ice</item>
+    </style>
+    <style name="Theme.Tv.Jade" parent="Theme.App">
+        <item name="tvColorAccent">@color/tv_accent_jade</item>
+        <item name="tvColorFocus">@color/tv_focus_jade</item>
+        <item name="tvColorSelected">@color/tv_selected_jade</item>
+    </style>
+    <style name="TextAppearance.Tv.Meta" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextSecondary</item>
+        <item name="android:textSize">@dimen/tv_text_meta</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+    <style name="TextAppearance.Tv.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+    <style name="TextAppearance.Tv.Navigation" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">@dimen/tv_text_navigation</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+    <style name="TextAppearance.Tv.Title" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">@dimen/tv_text_title</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+    <style name="TextAppearance.Tv.Hero" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">@dimen/tv_text_hero</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+</resources>

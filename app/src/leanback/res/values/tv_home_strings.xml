@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_home">Home</string>
+    <string name="tv_more">More</string>
+    <string name="tv_source">Switch source</string>
+    <string name="tv_source_label">From %1$s</string>
+    <string name="tv_details">View details</string>
+    <string name="tv_browse">Browse library</string>
+    <string name="tv_configure">Add configuration</string>
+    <string name="tv_local">Open local file</string>
+    <string name="tv_loading_title">Loading source</string>
+    <string name="tv_empty_title">Start with your source</string>
+    <string name="tv_empty_body">No content to show. Browse the library, retry, check your configuration, or open a local file.</string>
+    <string name="tv_config_body">Add a content source, or use More to open local files and receive pushed content.</string>
+    <string name="tv_retry">Reload</string>
+    <string name="tv_live_unavailable">No live source configured. Add a live configuration in Settings first.</string>
+    <string name="tv_manage_history">Manage watch history</string>
+    <string name="tv_clear_history">Clear watch history for this configuration</string>
+    <string name="tv_clear_history_confirm">This cannot be undone. Clear watch history?</string>
+    <string name="tv_continue">Continue %1$s</string>
+    <string name="tv_keep_empty_title">No saved films yet</string>
+    <string name="tv_keep_empty_body">Save a film from its details page to find it here.</string>
+    <string name="tv_find_films">Find films</string>
+    <string name="tv_config_error_title">Configuration could not load</string>
+    <string name="tv_content_error_title">Content could not load</string>
+    <string name="tv_no_content_title">No recommendations yet</string>
+    <string name="tv_reload_config">Reload configuration</string>
+    <string name="tv_config_error_body">Unable to load this configuration. Retry, or check the source address in Settings.</string>
+    <string name="tv_content_error_body">Unable to load recommendations. Retry, or browse the library and switch sources.</string>
+</resources>

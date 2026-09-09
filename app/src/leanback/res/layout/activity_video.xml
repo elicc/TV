@@ -6,6 +6,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.fongmi.android.tv.ui.custom.FilmAtmosphereView
+        android:id="@+id/atmosphere"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
+
     <FrameLayout
         android:id="@+id/video"
         android:layout_width="400dp"
@@ -16,6 +23,7 @@
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:foreground="@drawable/selector_video"
+        android:contentDescription="@string/tv_playback_fullscreen_hint"
         android:nextFocusLeft="@id/video"
         android:nextFocusRight="@id/content"
         android:nextFocusUp="@id/video"
@@ -57,9 +65,10 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:layout_toEndOf="@+id/video"
+        android:ellipsize="end"
         android:singleLine="true"
-        android:textColor="@color/white"
-        android:textSize="24sp"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="28sp"
         tools:text="慶餘年第二季" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -68,10 +77,11 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/name"
         android:layout_alignStart="@+id/name"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
+        android:ellipsize="end"
         android:singleLine="true"
-        android:textColor="@color/white"
+        android:textColor="?attr/tvColorTextSecondary"
         android:textSize="16sp"
         tools:text="更新到第二季" />
 
@@ -81,7 +91,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/remark"
         android:layout_alignStart="@+id/remark"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:orientation="horizontal">
 
@@ -90,8 +100,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextSecondary"
             android:textSize="16sp"
             tools:text="站源：泥巴" />
 
@@ -100,8 +111,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextSecondary"
             android:textSize="16sp"
             tools:text="年份：2022" />
 
@@ -110,8 +122,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextSecondary"
             android:textSize="16sp"
             tools:text="地區：台灣" />
 
@@ -119,8 +132,9 @@
             android:id="@+id/type"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="@color/white"
+            android:textColor="?attr/tvColorTextSecondary"
             android:textSize="16sp"
             tools:text="類型：科幻" />
 
@@ -132,11 +146,12 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/row1"
         android:layout_alignStart="@+id/name"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:nextFocusDown="@id/actor"
+        android:ellipsize="end"
         android:singleLine="true"
-        android:textColor="@color/white"
+        android:textColor="?attr/tvColorTextSecondary"
         android:textSize="16sp"
         tools:text="導演：FongMi" />
 
@@ -146,76 +161,107 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/director"
         android:layout_alignStart="@+id/name"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:ellipsize="end"
         android:maxLines="2"
         android:nextFocusDown="@id/content"
-        android:textColor="@color/white"
+        android:textColor="?attr/tvColorTextSecondary"
         android:textSize="16sp"
         tools:text="演員：FongMi" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/row2"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginEnd="24dp"
         android:layout_height="wrap_content"
         android:layout_alignStart="@+id/name"
         android:layout_alignBottom="@+id/video"
         android:orientation="horizontal">
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/content"
-            android:layout_width="wrap_content"
+            android:id="@+id/fullscreen"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_chip"
+            android:minHeight="40dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:gravity="center"
+            android:nextFocusLeft="@id/video"
+            android:nextFocusUp="@id/actor"
+            android:nextFocusDown="@id/flag"
+            android:singleLine="true"
+            android:text="@string/tv_playback_fullscreen"
+            android:textColor="?attr/tvColorAccent"
+            android:textSize="18sp" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/selector_item"
-            android:drawablePadding="6dp"
+            android:minHeight="40dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:nextFocusUp="@id/actor"
             android:nextFocusDown="@id/flag"
+            android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/detail_desc"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_detail_desc" />
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="16sp" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/keep"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/selector_item"
-            android:drawablePadding="6dp"
+            android:minHeight="40dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:nextFocusUp="@id/actor"
             android:nextFocusDown="@id/flag"
+            android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/keep"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_detail_keep_off" />
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="16sp" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/change"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:background="@drawable/selector_item"
-            android:drawablePadding="6dp"
+            android:minHeight="40dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:nextFocusRight="@id/change"
             android:nextFocusUp="@id/actor"
             android:nextFocusDown="@id/flag"
+            android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/play_change"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:drawableStartCompat="@drawable/ic_detail_change" />
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="16sp" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

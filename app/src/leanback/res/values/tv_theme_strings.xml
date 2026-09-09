@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_skin_champagne">Obsidian · Champagne</string>
+    <string name="tv_skin_ice">Obsidian · Glacier</string>
+    <string name="tv_skin_jade">Obsidian · Jade</string>
+    <string name="tv_setting_skin_hint">Theme changes apply to existing playback pages when reopened, without interrupting playback.</string>
+</resources>

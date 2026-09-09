@@ -1,0 +1,36 @@
+{
+  "svg_parse": 5,
+  "png_dimensions": "5 x 1920x1080",
+  "local_links": "pass",
+  "python_syntax": "pass",
+  "contrast": {
+    "primary_on_panel": 13.98,
+    "secondary_on_panel": 7.49,
+    "button_text_on_gold": 9.99
+  },
+  "android_tests": "not run; no app code modified",
+  "browser_recovery": "agent-browser EAGAIN and standalone headless Chrome timeout; final PNGs successfully exported with preinstalled rsvg-convert",
+  "visual_review": "All five final PNGs inspected: corrected overlaps, active navigation, stable navigation contrast; static concepts only",
+  "files": {
+    "01-home": {
+      "svg_sha256": "1878bd84bbdb89b22c5019dfe8dd1dd19c7ed799254eb33b2b3cbf2ac5265a80",
+      "png_sha256": "652795310cfbe33070928f51779bc45e1735eea16006858fafbf2e38a3b50b06"
+    },
+    "02-poster-fallback": {
+      "svg_sha256": "0b8432d221277ea8d953a23178eb2a75d0878ccc59325296585fcc0a7969b20a",
+      "png_sha256": "f7ee2283ab0eafd16e0e56cdac137571c27449cb94024f1762828c3e5c2b242e"
+    },
+    "03-browse": {
+      "svg_sha256": "247b2274303b6b8f3bff7236045227648cf678cc466baaf955247b66cd8a9e52",
+      "png_sha256": "48d684002cf5ee8d90af62f4eea79ad36f89902a38721cffa56cf319b3ee6470"
+    },
+    "04-detail": {
+      "svg_sha256": "6e6225eb7cba38072188b93fa19e189809948b835dce3f827949dd6e0773883c",
+      "png_sha256": "703a4fbf1dd3d982dc105653cab914d3c279784e9c5f11ca73dacb222dc67338"
+    },
+    "05-player": {
+      "svg_sha256": "5e8f068296e9828e86c8fa049bd2ed238d7631b50e6af7cefa85d09f2afc6e85",
+      "png_sha256": "85fe87c4afa391fc820800648b981c6f88cdb6736f7158b3647d3083e4a403c5"
+    }
+  }
+}

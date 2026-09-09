@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_skin_champagne">曜石 · 香槟金</string>
+    <string name="tv_skin_ice">曜石 · 冰川蓝</string>
+    <string name="tv_skin_jade">曜石 · 翡翠绿</string>
+    <string name="tv_setting_skin_hint">已打开的播放页面将在重新进入后应用新主题，不会中断当前播放。</string>
+</resources>

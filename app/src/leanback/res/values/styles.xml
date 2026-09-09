@@ -1,7 +1,49 @@
 <resources>
 
     <style name="Theme.Base" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/white</item>
+        <item name="tvColorBackground">@color/tv_background</item>
+        <item name="tvColorSurface">@color/tv_surface</item>
+        <item name="tvColorSurfaceRaised">@color/tv_surface_raised</item>
+        <item name="tvColorTextPrimary">@color/tv_text_primary</item>
+        <item name="tvColorTextSecondary">@color/tv_text_secondary</item>
+        <item name="tvColorTextDisabled">@color/tv_text_disabled</item>
+        <item name="tvColorAccent">@color/tv_accent_champagne</item>
+        <item name="tvColorOnAccent">@color/tv_on_accent</item>
+        <item name="tvColorFocus">@color/tv_focus</item>
+        <item name="tvColorSelected">@color/tv_selected_champagne</item>
+        <item name="tvColorOutline">@color/tv_outline</item>
+        <item name="tvColorScrim">@color/tv_scrim</item>
+        <item name="tvColorScrimStrong">@color/tv_scrim_strong</item>
+        <item name="tvColorError">@color/tv_error</item>
+        <item name="tvColorWarning">@color/tv_warning</item>
+        <item name="colorPrimary">?attr/tvColorAccent</item>
+        <item name="colorOnPrimary">?attr/tvColorOnAccent</item>
+        <item name="colorPrimaryContainer">?attr/tvColorSelected</item>
+        <item name="colorOnPrimaryContainer">?attr/tvColorTextPrimary</item>
+        <item name="colorSecondary">?attr/tvColorAccent</item>
+        <item name="colorOnSecondary">?attr/tvColorOnAccent</item>
+        <item name="colorSecondaryContainer">?attr/tvColorSelected</item>
+        <item name="colorOnSecondaryContainer">?attr/tvColorTextPrimary</item>
+        <item name="colorTertiary">?attr/tvColorAccent</item>
+        <item name="colorOnTertiary">?attr/tvColorOnAccent</item>
+        <item name="colorSurface">?attr/tvColorSurface</item>
+        <item name="colorSurfaceVariant">?attr/tvColorSurfaceRaised</item>
+        <item name="colorSurfaceContainer">?attr/tvColorSurface</item>
+        <item name="colorSurfaceContainerHigh">?attr/tvColorSurfaceRaised</item>
+        <item name="colorSurfaceContainerHighest">?attr/tvColorSurfaceRaised</item>
+        <item name="colorSurfaceContainerLow">?attr/tvColorSurface</item>
+        <item name="colorSurfaceContainerLowest">?attr/tvColorBackground</item>
+        <item name="colorOnSurface">?attr/tvColorTextPrimary</item>
+        <item name="colorOnSurfaceVariant">?attr/tvColorTextSecondary</item>
+        <item name="colorOutline">?attr/tvColorOutline</item>
+        <item name="colorError">?attr/tvColorError</item>
+        <item name="colorControlActivated">?attr/tvColorAccent</item>
+        <item name="colorControlNormal">?attr/tvColorTextSecondary</item>
+        <item name="android:colorBackground">?attr/tvColorBackground</item>
+        <item name="android:windowBackground">?attr/tvColorBackground</item>
+        <item name="android:textColorPrimary">?attr/tvColorTextPrimary</item>
+        <item name="android:textColorSecondary">?attr/tvColorTextSecondary</item>
+        <item name="android:colorAccent">?attr/tvColorAccent</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
@@ -10,14 +52,14 @@
 
     <style name="Theme.Splash" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.App</item>
-        <item name="windowSplashScreenBackground">#141218</item>
+        <item name="windowSplashScreenBackground">@color/tv_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
 
     <style name="Theme.App" parent="Theme.Base" />
 
     <style name="Theme.Crash" parent="Theme.Base">
-        <item name="android:windowBackground">@color/grey_800</item>
+        <item name="android:windowBackground">?attr/tvColorBackground</item>
         <item name="android:windowDisablePreview">true</item>
     </style>
 
@@ -41,8 +83,9 @@
         <item name="android:background">@drawable/selector_chip</item>
         <item name="android:focusable">true</item>
         <item name="android:focusableInTouchMode">true</item>
+        <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
         <item name="android:nextFocusUp">@id/exo_progress</item>
-        <item name="android:textColor">@color/text</item>
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
         <item name="android:textSize">14sp</item>
     </style>
 

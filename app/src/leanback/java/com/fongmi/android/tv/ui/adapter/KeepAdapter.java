@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.adapter;
 
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +46,7 @@ public class KeepAdapter extends BaseDiffAdapter<Keep, KeepAdapter.ViewHolder> {
     }
 
     public void setDelete(boolean delete) {
+        if (this.delete == delete) return;
         this.delete = delete;
         notifyItemRangeChanged(0, getItemCount());
     }
@@ -78,6 +80,15 @@ public class KeepAdapter extends BaseDiffAdapter<Keep, KeepAdapter.ViewHolder> {
         ImgUtil.load(item.getVodName(), item.getVodPic(), holder.binding.image);
     }
 
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        holder.itemView.animate().cancel();
+        holder.itemView.setScaleX(1f);
+        holder.itemView.setScaleY(1f);
+        holder.itemView.setTranslationZ(0f);
+        super.onViewRecycled(holder);
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private final AdapterVodBinding binding;
@@ -90,15 +101,16 @@ public class KeepAdapter extends BaseDiffAdapter<Keep, KeepAdapter.ViewHolder> {
 
         private void setFocusListener() {
             itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) {
-                    v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(150).start();
-                    v.setTranslationZ(10f);
-                    v.setSelected(true);
+                float scale = hasFocus ? 1.04f : 1f;
+                v.animate().cancel();
+                if (Settings.Global.getFloat(v.getContext().getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f) {
+                    v.setScaleX(scale);
+                    v.setScaleY(scale);
                 } else {
-                    v.animate().scaleX(1f).scaleY(1f).setDuration(150).start();
-                    v.setTranslationZ(0f);
-                    v.setSelected(false);
+                    // ViewPropertyAnimator already applies the system duration scale.
+                    v.animate().scaleX(scale).scaleY(scale).setDuration(150).start();
                 }
+                v.setTranslationZ(hasFocus ? ResUtil.dp2px(4) : 0f);
             });
         }
     }

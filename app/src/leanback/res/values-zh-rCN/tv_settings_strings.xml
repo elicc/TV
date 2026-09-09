@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_setting_title">设置</string>
+    <string name="tv_setting_content">内容与网络</string>
+    <string name="tv_setting_appearance">外观</string>
+    <string name="tv_setting_playback">播放</string>
+    <string name="tv_setting_data">隐私与数据</string>
+    <string name="tv_setting_about">关于</string>
+    <string name="tv_setting_skin">主题配色</string>
+    <string name="tv_setting_atmosphere">影片氛围</string>
+    <string name="tv_setting_atmosphere_hint">在首页和详情使用同片模糊背景，不修改已保存的壁纸。</string>
+    <string name="tv_setting_clear_cache">清理缓存</string>
+    <string name="tv_setting_vod_home">选择点播源</string>
+    <string name="tv_setting_live_home">选择直播源</string>
+    <string name="tv_setting_vod_history">点播配置历史</string>
+    <string name="tv_setting_live_history">直播配置历史</string>
+    <string name="tv_setting_wall_default">切换内置壁纸</string>
+    <string name="tv_setting_wall_refresh">刷新壁纸，长按查看配置历史</string>
+    <string name="tv_search_manage">管理</string>
+    <string name="tv_search_clear">清空全部</string>
+    <string name="tv_search_delete">删除搜索词</string>
+    <string name="tv_search_delete_message">从搜索历史中删除“%1$s”？</string>
+    <string name="tv_search_clear_message">清空全部搜索历史？此操作无法撤销，不会删除观看历史或收藏。</string>
+    <string name="tv_search_manage_hint">选择「管理」删除单条记录，也可长按搜索词。</string>
+    <string name="tv_search_voice">语音搜索</string>
+</resources>

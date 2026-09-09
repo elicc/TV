@@ -2,7 +2,7 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black_20"
+    android:background="?attr/tvColorSurface"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -19,7 +19,7 @@
         android:layout_marginTop="24dp"
         android:gravity="center"
         android:lineSpacingExtra="8dp"
-        android:textColor="@color/white"
+        android:textColor="?attr/tvColorTextPrimary"
         android:textSize="18sp" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -29,7 +29,7 @@
         android:layout_marginTop="16dp"
         android:background="@drawable/shape_item_normal"
         android:text="@string/push_clip"
-        android:textColor="@color/white"
+        android:textColor="?attr/tvColorTextPrimary"
         android:textSize="18sp" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

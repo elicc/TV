@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.ui.custom.CustomWallView;
+import com.fongmi.android.tv.ui.activity.PlaybackActivity;
+import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.Util;
 
 import org.greenrobot.eventbus.EventBus;
@@ -26,10 +28,16 @@ import me.jessyan.autosize.AutoSizeCompat;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
+    private int appliedSkin;
+    private boolean appliedAtmosphere;
+
     protected abstract ViewBinding getBinding();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        appliedSkin = TvTheme.getSkin();
+        appliedAtmosphere = TvTheme.isAtmosphereEnabled();
+        setTheme(TvTheme.getThemeRes());
         super.onCreate(savedInstanceState);
         setContentView(getBinding().getRoot());
         EventBus.getDefault().register(this);
@@ -37,6 +45,24 @@ public abstract class BaseActivity extends AppCompatActivity {
         Util.hideSystemUI(this);
         setBackCallback();
         initEvent();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // A skin preference must never restart a small-window or fullscreen player.
+        // Playback screens adopt the skin the next time they are opened normally.
+        if (!(this instanceof PlaybackActivity) && (appliedSkin != TvTheme.getSkin()
+                || appliedAtmosphere != TvTheme.isAtmosphereEnabled())) {
+            appliedSkin = TvTheme.getSkin();
+            appliedAtmosphere = TvTheme.isAtmosphereEnabled();
+            recreate();
+        }
+    }
+
+    /** Matches the wallpaper owner created for this Activity; changes apply on reopen. */
+    protected boolean isFilmAtmosphereEnabled() {
+        return appliedAtmosphere;
     }
 
     @Override
@@ -51,7 +77,9 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     protected boolean customWall() {
-        return true;
+        // Content utilities and browsing use stable theme surfaces. Home/detail opt in
+        // explicitly when the user selects their saved wallpaper instead of film art.
+        return false;
     }
 
     protected void initView(Bundle savedInstanceState) {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_home">首页</string>
+    <string name="tv_more">更多</string>
+    <string name="tv_source">切换片源</string>
+    <string name="tv_source_label">来自 %1$s</string>
+    <string name="tv_details">查看详情</string>
+    <string name="tv_browse">浏览片库</string>
+    <string name="tv_configure">添加配置</string>
+    <string name="tv_local">打开本地文件</string>
+    <string name="tv_loading_title">正在加载片源</string>
+    <string name="tv_empty_title">从你的片源开始</string>
+    <string name="tv_empty_body">暂无可展示的内容。你可以浏览片库、重试或检查配置，也可以打开本地文件。</string>
+    <string name="tv_config_body">添加内容源，或通过“更多”打开本地文件、接收推送。</string>
+    <string name="tv_retry">重新加载</string>
+    <string name="tv_live_unavailable">尚未配置直播源，请先在设置中添加直播配置。</string>
+    <string name="tv_manage_history">管理观看记录</string>
+    <string name="tv_clear_history">清空当前配置的观看记录</string>
+    <string name="tv_clear_history_confirm">清空后无法恢复，是否继续？</string>
+    <string name="tv_continue">继续 %1$s</string>
+    <string name="tv_keep_empty_title">还没有收藏影片</string>
+    <string name="tv_keep_empty_body">在影片详情页收藏，便可在这里快速找到。</string>
+    <string name="tv_find_films">去找影片</string>
+    <string name="tv_config_error_title">配置加载失败</string>
+    <string name="tv_content_error_title">内容加载失败</string>
+    <string name="tv_no_content_title">暂无推荐内容</string>
+    <string name="tv_reload_config">重新加载配置</string>
+    <string name="tv_config_error_body">暂时无法读取配置。请重新加载，或前往设置检查内容源地址。</string>
+    <string name="tv_content_error_body">暂时无法加载推荐。请重试，也可以浏览片库或切换片源。</string>
+</resources>

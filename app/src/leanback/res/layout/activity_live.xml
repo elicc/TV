@@ -48,7 +48,7 @@
         android:id="@+id/recycler"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:background="@drawable/shape_live_list"
+        android:background="?attr/tvColorScrimStrong"
         android:orientation="horizontal"
         android:visibility="gone"
         tools:visibility="visible">
@@ -73,6 +73,19 @@
             android:padding="12dp"
             tools:itemCount="5"
             tools:listitem="@layout/adapter_channel" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/epgEmpty"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="24dp"
+            android:focusable="false"
+            android:accessibilityLiveRegion="polite"
+            android:text="@string/tv_playback_epg_empty"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="18sp"
+            android:visibility="gone" />
 
         <com.fongmi.android.tv.ui.custom.CustomLiveListView
             android:id="@+id/epgData"

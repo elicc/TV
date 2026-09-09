@@ -7,7 +7,10 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.LinearLayout;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.splashscreen.SplashScreen;
@@ -56,12 +59,12 @@ import com.fongmi.android.tv.ui.custom.CustomTitleView;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.ui.presenter.FuncPresenter;
 import com.fongmi.android.tv.ui.presenter.HeaderPresenter;
+import com.fongmi.android.tv.ui.presenter.HeroPresenter;
 import com.fongmi.android.tv.ui.presenter.HistoryPresenter;
 import com.fongmi.android.tv.ui.presenter.ProgressPresenter;
 import com.fongmi.android.tv.ui.presenter.VodPresenter;
 import com.fongmi.android.tv.utils.Clock;
 import com.fongmi.android.tv.utils.FileChooser;
-import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.KeyUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
@@ -69,6 +72,7 @@ import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.github.catvod.net.OkHttp;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.collect.Lists;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -79,16 +83,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener {
+public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener {
 
     private ActivityHomeBinding mBinding;
     private ArrayObjectAdapter mHistoryAdapter;
-    private ArrayObjectAdapter mFuncAdapter;
     private ArrayObjectAdapter mAdapter;
     private HistoryPresenter mPresenter;
     private SiteViewModel mViewModel;
     private Result mResult;
     private Clock mClock;
+    private boolean mLoading;
+    private boolean mConfigLoading;
+    private boolean mConfigFailed;
+    private boolean mOwnConfigEvent;
+    private String mConfigError = "";
+    private boolean mActionHandled;
+    private final ActivityResultLauncher<Intent> mFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> FileChooser.getUri(result, uri -> VideoActivity.file(this, uri)));
+
+    @Override
+    protected boolean customWall() {
+        return !isFilmAtmosphereEnabled();
+    }
 
     private Site getHome() {
         return VodConfig.get().getHome();
@@ -106,7 +121,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        mActionHandled = false;
         checkAction(intent);
+        mActionHandled = true;
     }
 
     @Override
@@ -117,6 +134,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
         mResult = Result.empty();
         mClock = Clock.create(mBinding.clock);
         mBinding.progressLayout.showProgress();
@@ -129,16 +147,43 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         initConfig();
         setTitle();
         setLogo();
+        adaptToolbar();
+        if (savedInstanceState == null) mBinding.navHome.requestFocus();
+    }
+
+    private void adaptToolbar() {
+        boolean largeText = getResources().getConfiguration().fontScale > 1.15f;
+        mBinding.toolbar.setOrientation(largeText ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+        mBinding.navSpacer.setVisibility(largeText ? View.GONE : View.VISIBLE);
+        mBinding.clock.setVisibility(largeText ? View.GONE : View.VISIBLE);
+        if (largeText) {
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mBinding.utilities.getLayoutParams();
+            params.gravity = android.view.Gravity.END;
+            mBinding.utilities.setLayoutParams(params);
+        }
     }
 
     @Override
     protected void initEvent() {
-        mBinding.title.setListener(this);
+        mBinding.title.setOnClickListener(v -> showDialog());
+        mBinding.navHome.setSelected(true);
+        mBinding.navHome.setOnClickListener(v -> {
+            mBinding.recycler.setSelectedPosition(0);
+            mBinding.recycler.requestFocus();
+        });
+        mBinding.navVod.setOnClickListener(v -> onItemClick(Func.create(R.string.home_vod)));
+        mBinding.navLive.setOnClickListener(v -> {
+            if (LiveConfig.hasUrl()) onItemClick(Func.create(R.string.home_live));
+            else new MaterialAlertDialogBuilder(this).setMessage(R.string.tv_live_unavailable).setPositiveButton(R.string.home_setting, (d, w) -> SettingActivity.start(this)).setNegativeButton(android.R.string.cancel, null).show();
+        });
+        mBinding.navKeep.setOnClickListener(v -> onItemClick(Func.create(R.string.home_keep)));
+        mBinding.navSearch.setOnClickListener(v -> onItemClick(Func.create(R.string.home_search)));
+        mBinding.settings.setOnClickListener(v -> SettingActivity.start(this));
+        mBinding.more.setOnClickListener(v -> showMore());
         mBinding.recycler.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
             @Override
             public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
-                mBinding.toolbar.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
-                if (mPresenter.isDelete()) setHistoryDelete(false);
+                if (mPresenter.isDelete() && position != getHistoryIndex()) setHistoryDelete(false);
             }
         });
     }
@@ -166,6 +211,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void setRecyclerView() {
         CustomSelector selector = new CustomSelector();
         selector.addPresenter(Integer.class, new HeaderPresenter());
+        selector.addPresenter(HeroPresenter.Item.class, new HeroPresenter(this));
         selector.addPresenter(String.class, new ProgressPresenter());
         selector.addPresenter(Vod.class, new VodPresenter(this, Style.list()));
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16), VodPresenter.class);
@@ -178,16 +224,17 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void setViewModel() {
         mViewModel = new ViewModelProvider(this).get(SiteViewModel.class);
         mViewModel.getResult().observe(this, result -> {
+            mLoading = false;
             mAdapter.remove("progress");
             addVideo(mResult = result);
+            updateHero();
             Cache.clear().put(result);
         });
     }
 
     private void setAdapter() {
         mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
-        mAdapter.add(new ListRow(mFuncAdapter = new ArrayObjectAdapter(new FuncPresenter(this))));
-        mAdapter.add(R.string.home_history);
+        mAdapter.add(heroItem());
         mAdapter.add(R.string.home_recommend);
     }
 
@@ -195,6 +242,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         List<String> items = Arrays.asList(getHome().getName(), getConfig().getName(), getString(R.string.app_name));
         Optional<String> optional = items.stream().filter(s -> !TextUtils.isEmpty(s)).findFirst();
         optional.ifPresent(s -> mBinding.title.setText(s));
+        mBinding.title.setContentDescription(getString(R.string.tv_source) + "：" + mBinding.title.getText());
     }
 
     private void initConfig() {
@@ -206,12 +254,33 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private Callback getCallback() {
         return new Callback() {
             @Override
+            public void start() {
+                mOwnConfigEvent = true;
+                mConfigLoading = true;
+                mConfigFailed = false;
+                mConfigError = "";
+                updateHero();
+                mBinding.progressLayout.showContent();
+            }
+
+            @Override
             public void success() {
+                if (isFinishing() || isDestroyed()) return;
+                mConfigLoading = false;
+                mConfigFailed = false;
+                mConfigError = "";
+                updateHero();
                 showContent();
             }
 
             @Override
             public void error(String msg) {
+                if (isFinishing() || isDestroyed()) return;
+                mConfigLoading = false;
+                mConfigFailed = !TextUtils.isEmpty(getConfig().getUrl());
+                mLoading = false;
+                mConfigError = msg;
+                updateHero();
                 Notify.show(msg);
                 showContent();
             }
@@ -220,7 +289,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void showContent() {
         mBinding.progressLayout.showContent();
-        checkAction(getIntent());
+        if (!mActionHandled) {
+            mActionHandled = true;
+            checkAction(getIntent());
+        }
         setFocus();
     }
 
@@ -235,13 +307,20 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void setFocus() {
-        mBinding.title.setSelected(true);
+        mBinding.title.setSelected(false);
         App.post(() -> mBinding.title.setFocusable(true), 500);
-        if (!mBinding.title.hasFocus()) mBinding.recycler.requestFocus();
+        if (getCurrentFocus() == null) mBinding.navHome.requestFocus();
     }
 
     private void getVideo() {
+        if (mConfigLoading || mConfigFailed || TextUtils.isEmpty(getConfig().getUrl())) {
+            updateHero();
+            return;
+        }
         mResult = Result.empty();
+        mLoading = true;
+        mConfigError = "";
+        updateHero();
         int index = getRecommendIndex();
         boolean gone = mAdapter.indexOf("progress") == -1;
         boolean hasItem = gone && mAdapter.size() > index;
@@ -267,15 +346,54 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         mAdapter.addAll(mAdapter.size(), rows);
     }
 
-    private void setFunc() {
-        List<Func> items = new ArrayList<>();
-        items.add(Func.create(R.string.home_vod));
-        if (LiveConfig.hasUrl()) items.add(Func.create(R.string.home_live));
-        items.add(Func.create(R.string.home_search));
-        items.add(Func.create(R.string.home_keep));
-        items.add(Func.create(R.string.home_push));
-        items.add(Func.create(R.string.home_setting));
-        mFuncAdapter.setItems(items, new BaseDiffCallback<Func>());
+    private HeroPresenter.Item heroItem() {
+        Vod vod = mConfigFailed || mConfigLoading ? null : mResult.getList().stream().filter(v -> !v.isAction() && !TextUtils.isEmpty(v.getId())).findFirst().orElse(null);
+        String error = !mConfigError.isEmpty() ? mConfigError : mResult.getMsg();
+        return new HeroPresenter.Item(vod, getHome().getKey(), getHome().getName(), !TextUtils.isEmpty(getConfig().getUrl()), mLoading || mConfigLoading, mConfigFailed, error, mHistoryAdapter != null && mHistoryAdapter.size() > 0);
+    }
+
+    private void updateHero() {
+        if (mAdapter != null && mAdapter.size() > 0) mAdapter.replace(0, heroItem());
+    }
+
+    private void showMore() {
+        String[] labels = {getString(R.string.home_push), getString(R.string.tv_local), getString(R.string.tv_manage_history), getString(R.string.tv_clear_history), getString(R.string.tv_retry)};
+        new MaterialAlertDialogBuilder(this).setTitle(R.string.tv_more).setItems(labels, (dialog, which) -> {
+            if (which == 0) PushActivity.start(this);
+            else if (which == 1) PermissionUtil.requestFile(this, granted -> {
+                if (granted) FileChooser.from(mFileLauncher).show(new String[]{"video/*", "audio/*"});
+            });
+            else if (which == 2 && mHistoryAdapter.size() > 0) {
+                setHistoryDelete(true);
+                mBinding.recycler.setSelectedPosition(getHistoryIndex());
+                mBinding.recycler.requestFocus();
+            } else if (which == 3 && mHistoryAdapter.size() > 0) {
+                new MaterialAlertDialogBuilder(this).setMessage(R.string.tv_clear_history_confirm).setPositiveButton(android.R.string.ok, (d, w) -> clearHistory()).setNegativeButton(android.R.string.cancel, null).show();
+            } else if (which == 4) onHeroRetry();
+        }).show();
+    }
+
+    @Override
+    public void onHeroClick(Vod vod) {
+        onItemClick(vod);
+    }
+
+    @Override
+    public void onHeroBrowse() {
+        VodActivity.start(this, mResult);
+    }
+
+    @Override
+    public void onHeroConfigure() {
+        SettingActivity.start(this);
+    }
+
+    @Override
+    public void onHeroRetry() {
+        if (mConfigLoading || mLoading) return;
+        if (TextUtils.isEmpty(getConfig().getUrl())) onHeroConfigure();
+        else if (mConfigFailed) VodConfig.get().load(getCallback());
+        else getVideo();
     }
 
     private void getHistory() {
@@ -284,13 +402,15 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void getHistory(boolean renew) {
         List<History> items = History.get();
-        int historyIndex = getHistoryIndex();
-        int recommendIndex = getRecommendIndex();
-        boolean exist = recommendIndex - historyIndex == 2;
+        int header = mAdapter.indexOf(R.string.home_history);
+        if (header >= 0 && (items.isEmpty() || renew)) mAdapter.removeItems(header, 2);
         if (renew) mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
-        if ((items.isEmpty() && exist) || (renew && exist)) mAdapter.removeItems(historyIndex, 1);
-        if ((!items.isEmpty() && !exist) || (renew && exist)) mAdapter.add(historyIndex, new ListRow(mHistoryAdapter));
         mHistoryAdapter.setItems(items, new BaseDiffCallback<History>());
+        if (!items.isEmpty() && (header < 0 || renew)) {
+            mAdapter.add(1, R.string.home_history);
+            mAdapter.add(2, new ListRow(mHistoryAdapter));
+        }
+        updateHero();
     }
 
     private void setHistoryDelete(boolean delete) {
@@ -299,10 +419,13 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void clearHistory() {
-        mAdapter.removeItems(getHistoryIndex(), 1);
+        int header = mAdapter.indexOf(R.string.home_history);
+        if (header >= 0) mAdapter.removeItems(header, 2);
         History.clear(VodConfig.getCid());
         mPresenter.setDelete(false);
         mHistoryAdapter.clear();
+        updateHero();
+        mBinding.more.requestFocus();
     }
 
     private int getHistoryIndex() {
@@ -314,19 +437,27 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void setLogo() {
-        ImgUtil.logo(mBinding.logo);
+        mBinding.logo.setImageResource(R.drawable.ic_logo);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onConfigEvent(ConfigEvent event) {
         switch (event.type()) {
             case VOD:
+                // BaseConfig emits VOD even on failure. Do not override our
+                // callback result using a previously loaded site's stale state.
+                // Settings may load a replacement with its own callback.
+                if (!mOwnConfigEvent && !mConfigLoading && !getHome().isEmpty()) {
+                    mConfigFailed = false;
+                    mConfigError = "";
+                }
+                mOwnConfigEvent = false;
                 RefreshEvent.history();
                 RefreshEvent.home();
                 setLogo();
                 break;
             case COMMON:
-                setFunc();
+                updateHero();
                 break;
             case BOOT:
                 LiveActivity.start(this);
@@ -419,13 +550,16 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     public void onItemDelete(History item) {
         mHistoryAdapter.remove(item.delete());
         if (mHistoryAdapter.size() > 0) return;
-        mAdapter.removeItems(getHistoryIndex(), 1);
+        int header = mAdapter.indexOf(R.string.home_history);
+        if (header >= 0) mAdapter.removeItems(header, 2);
         mPresenter.setDelete(false);
+        updateHero();
+        mBinding.more.requestFocus();
     }
 
     @Override
     public boolean onLongClick() {
-        if (mPresenter.isDelete()) clearHistory();
+        if (mPresenter.isDelete()) new MaterialAlertDialogBuilder(this).setMessage(R.string.tv_clear_history_confirm).setPositiveButton(android.R.string.ok, (d, w) -> clearHistory()).setNegativeButton(android.R.string.cancel, null).show();
         else setHistoryDelete(true);
         return true;
     }
@@ -447,8 +581,19 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (KeyUtil.isMenuKey(event)) showDialog();
-        if (KeyUtil.isActionDown(event) & KeyUtil.isDownKey(event) && getCurrentFocus() == mBinding.title) return mBinding.recycler.getChildAt(0).requestFocus();
+        if (KeyUtil.isActionDown(event) && KeyUtil.isMenuKey(event)) {
+            showDialog();
+            return true;
+        }
+        if (KeyUtil.isActionDown(event) && KeyUtil.isDownKey(event) && mBinding.toolbar.hasFocus()) {
+            if (getResources().getConfiguration().fontScale > 1.15f && !mBinding.utilities.hasFocus()) {
+                mBinding.title.requestFocus();
+                return true;
+            }
+            mBinding.recycler.setSelectedPosition(0);
+            mBinding.recycler.requestFocus();
+            return true;
+        }
         return super.dispatchKeyEvent(event);
     }
 
@@ -465,6 +610,18 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) mBinding.recycler.post(() -> {
+            // Rebinding the Hero while another page is open can leave focus on
+            // the invisible grid container. Preserve every real control focus.
+            if (hasWindowFocus() && (getCurrentFocus() == null || getCurrentFocus() == mBinding.recycler)) {
+                mBinding.navHome.requestFocus();
+            }
+        });
+    }
+
+    @Override
     protected void onBackInvoked() {
         if (mBinding.progressLayout.isProgress()) {
             showContent();
@@ -472,6 +629,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             setHistoryDelete(false);
         } else if (mBinding.recycler.getSelectedPosition() != 0) {
             mBinding.recycler.scrollToPosition(0);
+        } else if (!mBinding.toolbar.hasFocus()) {
+            mBinding.navHome.requestFocus();
         } else {
             if (PlaybackService.isRunning()) Util.moveToBackground(this);
             else super.onBackInvoked();
@@ -479,14 +638,22 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putBoolean("home.actionHandled", mActionHandled);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     protected void onDestroy() {
-        DLNARendererService.stop(this);
-        LiveConfig.get().clear();
-        VodConfig.get().clear();
-        BackupManager.backup();
-        OkHttp.get().clear();
-        Source.get().exit();
-        Server.get().stop();
+        if (!isChangingConfigurations()) {
+            DLNARendererService.stop(this);
+            LiveConfig.get().clear();
+            VodConfig.get().clear();
+            BackupManager.backup();
+            OkHttp.get().clear();
+            Source.get().exit();
+            Server.get().stop();
+        }
         super.onDestroy();
     }
 }

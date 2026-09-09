@@ -1,0 +1,23 @@
+<resources>
+    <color name="tv_background">#101114</color>
+    <color name="tv_surface">#232429</color>
+    <color name="tv_surface_raised">#303137</color>
+    <color name="tv_text_primary">#F5F3EF</color>
+    <color name="tv_text_secondary">#B7B4AE</color>
+    <color name="tv_text_disabled">#8F8E89</color>
+    <color name="tv_accent_champagne">#D7B889</color>
+    <color name="tv_accent_ice">#9CCBEE</color>
+    <color name="tv_accent_jade">#9AD6BE</color>
+    <color name="tv_on_accent">#101114</color>
+    <color name="tv_focus">#E7C995</color>
+    <color name="tv_focus_ice">#B9E1FA</color>
+    <color name="tv_focus_jade">#B5E6D0</color>
+    <color name="tv_selected_champagne">#3D3328</color>
+    <color name="tv_selected_ice">#273845</color>
+    <color name="tv_selected_jade">#273E35</color>
+    <color name="tv_outline">#74767D</color>
+    <color name="tv_scrim">#B3101114</color>
+    <color name="tv_scrim_strong">#E6101114</color>
+    <color name="tv_error">#FFB4AB</color>
+    <color name="tv_warning">#F2CC8F</color>
+</resources>

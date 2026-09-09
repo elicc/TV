@@ -522,7 +522,12 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void showEpg(Channel item) {
-        if (mChannel == null || mChannel.getData(mViewModel.getZoneId()).getList().isEmpty() || mEpgDataAdapter.getItemCount() == 0 || !mChannel.equals(item) || !mChannel.getGroup().equals(mGroup)) return;
+        if (mChannel == null || !mChannel.equals(item) || !mChannel.getGroup().equals(mGroup)) return;
+        if (mChannel.getData(mViewModel.getZoneId()).getList().isEmpty() || mEpgDataAdapter.getItemCount() == 0) {
+            mBinding.epgEmpty.setVisibility(View.VISIBLE);
+            return;
+        }
+        mBinding.epgEmpty.setVisibility(View.GONE);
         mBinding.epgData.setSelectedPosition(mChannel.getData(mViewModel.getZoneId()).getSelected());
         mBinding.epgData.setVisibility(View.VISIBLE);
         mBinding.channel.setVisibility(View.GONE);
@@ -532,6 +537,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void hideEpg() {
+        mBinding.epgEmpty.setVisibility(View.GONE);
         mBinding.channel.setVisibility(View.VISIBLE);
         mBinding.group.setVisibility(View.VISIBLE);
         mBinding.epgData.setVisibility(View.GONE);
@@ -700,6 +706,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         EpgData data = epg.getEpgData();
         boolean hasTitle = !data.getTitle().isEmpty();
         mEpgDataAdapter.addAll(epg.getList());
+        if (!epg.getList().isEmpty()) mBinding.epgEmpty.setVisibility(View.GONE);
         mBinding.widget.name.setMaxEms(hasTitle ? 12 : 48);
         mBinding.widget.play.setText(data.format());
         mLive.onEpgChanged(data);

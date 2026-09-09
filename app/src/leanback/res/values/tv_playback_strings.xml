@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_playback_fullscreen">Play fullscreen</string>
+    <string name="tv_playback_fullscreen_hint">Player. Press OK for fullscreen.</string>
+    <string name="tv_playback_more">More settings</string>
+    <string name="tv_playback_less">Fewer settings</string>
+    <string name="tv_playback_epg_empty">No program guide. Keep watching or change channels.</string>
+    <string name="tv_playback_epg_current">Now playing · %1$s</string>
+    <string name="tv_playback_epg_selected">Selected · %1$s</string>
+</resources>

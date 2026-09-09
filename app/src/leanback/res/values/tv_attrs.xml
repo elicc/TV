@@ -1,0 +1,17 @@
+<resources>
+    <attr name="tvColorBackground" format="color" />
+    <attr name="tvColorSurface" format="color" />
+    <attr name="tvColorSurfaceRaised" format="color" />
+    <attr name="tvColorTextPrimary" format="color" />
+    <attr name="tvColorTextSecondary" format="color" />
+    <attr name="tvColorTextDisabled" format="color" />
+    <attr name="tvColorAccent" format="color" />
+    <attr name="tvColorOnAccent" format="color" />
+    <attr name="tvColorFocus" format="color" />
+    <attr name="tvColorSelected" format="color" />
+    <attr name="tvColorOutline" format="color" />
+    <attr name="tvColorScrim" format="color" />
+    <attr name="tvColorScrimStrong" format="color" />
+    <attr name="tvColorError" format="color" />
+    <attr name="tvColorWarning" format="color" />
+</resources>

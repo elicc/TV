@@ -1,0 +1,920 @@
+<!doctype html>
+<title>FongMi TV — Design Direction Proposals</title>
+<style>
+  :root {
+    --ink: #0E1014;
+    --paper: #F4F2EE;
+    --line: rgba(14,16,20,.12);
+    --line-soft: rgba(14,16,20,.06);
+    --muted: rgba(14,16,20,.6);
+    --muted-2: rgba(14,16,20,.42);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #ECE7DD;
+      --paper: #0B0D11;
+      --line: rgba(236,231,221,.12);
+      --line-soft: rgba(236,231,221,.06);
+      --muted: rgba(236,231,221,.62);
+      --muted-2: rgba(236,231,221,.42);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #ECE7DD;
+    --paper: #0B0D11;
+    --line: rgba(236,231,221,.12);
+    --line-soft: rgba(236,231,221,.06);
+    --muted: rgba(236,231,221,.62);
+    --muted-2: rgba(236,231,221,.42);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 64px 48px 120px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  .topbar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding-bottom: 24px; border-bottom: 1px solid var(--line);
+    margin-bottom: 64px;
+  }
+  .topbar .mark {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 22px; font-weight: 500; letter-spacing: -0.01em;
+  }
+  .topbar .meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .intro { max-width: 760px; margin-bottom: 88px; }
+  .intro .eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+  }
+  .intro h1 {
+    font-family: 'Fraunces', serif; font-weight: 400;
+    font-size: clamp(40px, 5vw, 64px); line-height: 1.05;
+    letter-spacing: -0.02em; text-wrap: balance;
+    margin-bottom: 24px;
+  }
+  .intro p { color: var(--muted); font-size: 16px; max-width: 60ch; }
+
+  .direction {
+    padding-top: 72px;
+    border-top: 1px solid var(--line);
+    margin-top: 72px;
+  }
+  .direction:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+
+  .dir-header {
+    display: grid; grid-template-columns: 1fr auto; gap: 32px;
+    align-items: end; margin-bottom: 40px;
+  }
+  .dir-header .num {
+    font-family: 'Fraunces', serif; font-weight: 300;
+    font-size: 14px; color: var(--muted-2);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+  }
+  .dir-header h2 {
+    font-family: 'Fraunces', serif; font-weight: 400;
+    font-size: 44px; line-height: 1; letter-spacing: -0.02em;
+    margin-top: 8px;
+  }
+  .dir-header .tag {
+    font-size: 12px; color: var(--muted);
+    margin-top: 12px; letter-spacing: 0.04em;
+  }
+  .dir-header .desc {
+    color: var(--muted); font-size: 14px; max-width: 38ch;
+    text-align: right; line-height: 1.5;
+  }
+
+  .system {
+    display: grid; grid-template-columns: 280px 1fr; gap: 48px;
+    margin-bottom: 48px;
+  }
+  .sys-block h3 {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .swatches { display: flex; flex-direction: column; gap: 10px; }
+  .swatch {
+    display: grid; grid-template-columns: 40px 1fr auto;
+    align-items: center; gap: 12px;
+    padding: 6px 0;
+  }
+  .swatch .chip {
+    width: 40px; height: 40px; border-radius: 4px;
+    border: 1px solid var(--line-soft);
+  }
+  .swatch .name { font-size: 13px; font-weight: 500; }
+  .swatch .hex { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .swatch .role { font-size: 11px; color: var(--muted-2); }
+
+  .type-sample {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+    background: var(--paper);
+  }
+  .type-sample .role { font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .type-sample .display { font-size: 56px; line-height: 1; margin-bottom: 24px; letter-spacing: -0.02em; }
+  .type-sample .body { font-size: 14px; color: var(--muted); max-width: 56ch; }
+  .type-sample .meta { font-size: 12px; color: var(--muted-2); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+  .screens { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 16px; }
+
+  .screen {
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    font-size: 11px;
+    border: 1px solid var(--line);
+  }
+  .screen .label {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,.6); color: white;
+    padding: 2px 6px; border-radius: 3px;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    z-index: 10;
+  }
+  .screen .ratio {
+    position: absolute; bottom: 8px; right: 8px;
+    color: rgba(255,255,255,.4);
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    z-index: 10;
+  }
+
+  /* Reusable TV screen components */
+  .tv {
+    width: 100%; height: 100%; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .tv .topbar-tv {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px;
+  }
+  .tv .logo { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; }
+  .tv .clock { font-size: 10px; opacity: .6; font-family: 'JetBrains Mono', monospace; }
+  .tv .nav { display: flex; gap: 12px; font-size: 9px; }
+  .tv .nav span { opacity: .55; }
+
+  .row-tv { padding: 0 14px 6px; }
+  .row-tv .sec-title { font-size: 11px; font-weight: 600; margin-bottom: 6px; opacity: .9; }
+  .row-tv .sec-more { font-size: 9px; opacity: .5; margin-left: 6px; font-weight: 400; }
+  .row-tv .cards { display: flex; gap: 6px; }
+  .card-tv {
+    flex: 1; aspect-ratio: 2/3; border-radius: 3px;
+    position: relative; overflow: hidden;
+  }
+  .card-tv.w16 { aspect-ratio: 16/9; }
+  .card-tv .grad {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--g1, #444) 0%, var(--g2, #222) 100%);
+  }
+  .card-tv .grad.c1 { --g1: #6B7280; --g2: #1F2937; }
+  .card-tv .grad.c2 { --g1: #B91C1C; --g2: #450A0A; }
+  .card-tv .grad.c3 { --g1: #1E40AF; --g2: #0C1A4A; }
+  .card-tv .grad.c4 { --g1: #047857; --g2: #022C22; }
+  .card-tv .grad.c5 { --g1: #7C2D12; --g2: #1C0701; }
+  .card-tv .grad.c6 { --g1: #6D28D9; --g2: #1E0844; }
+  .card-tv .name {
+    position: absolute; left: 4px; right: 4px; bottom: 3px;
+    font-size: 8px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,.8);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .focus-ring {
+    position: absolute; inset: -2px;
+    border-radius: 5px; pointer-events: none;
+  }
+  .focus-pill {
+    position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+    padding: 1px 6px; border-radius: 8px; font-size: 8px; font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .hero {
+    flex: 1; position: relative; overflow: hidden;
+    margin: 0 14px 10px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--g1, #333) 0%, var(--g2, #111) 100%);
+  }
+  .hero .grad-bg { position: absolute; inset: 0; }
+  .hero .vignette {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,.75) 0%, transparent 50%, transparent 100%),
+      linear-gradient(0deg, rgba(0,0,0,.85) 0%, transparent 50%);
+  }
+  .hero .content { position: absolute; left: 14px; bottom: 12px; right: 40%; }
+  .hero .badge { font-size: 8px; padding: 1px 5px; border-radius: 2px; display: inline-block; margin-bottom: 5px; }
+  .hero .title { font-size: 16px; font-weight: 700; line-height: 1.05; margin-bottom: 4px; }
+  .hero .meta-row { font-size: 8px; opacity: .8; margin-bottom: 6px; }
+  .hero .desc { font-size: 8px; opacity: .65; line-height: 1.35; margin-bottom: 8px; }
+  .hero .cta { display: flex; gap: 4px; }
+  .hero .btn { padding: 3px 10px; border-radius: 10px; font-size: 8px; font-weight: 600; }
+
+  /* ===== Direction 1: Golden Cinema ===== */
+  .d1 .screen { background: #0A0805; color: #F5E9D0; font-family: 'Playfair Display', 'Times New Roman', serif; }
+  .d1 .screen .sec-title { font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #E5B14C; font-weight: 500; }
+  .d1 .screen .nav span { color: #B5A48A; font-family: 'Inter', sans-serif; }
+  .d1 .screen .logo { color: #F5E9D0; font-family: 'Playfair Display', serif; font-weight: 500; }
+  .d1 .screen .clock { color: #B5A48A; font-family: 'Inter', sans-serif; }
+  .d1 .screen .topbar-tv { border-bottom: 1px solid rgba(229,177,76,.18); position: relative; }
+  .d1 .screen .topbar-tv::after {
+    content: ''; position: absolute; bottom: -1px; left: 14px; width: 32px; height: 1px;
+    background: #E5B14C;
+  }
+  .d1 .screen .card-tv { box-shadow: 0 0 0 1px rgba(229,177,76,.15); }
+  .d1 .screen .card-tv .grad.c1 { --g1: #3D2817; --g2: #1A0F08; }
+  .d1 .screen .card-tv .grad.c2 { --g1: #5A1A1A; --g2: #1F0606; }
+  .d1 .screen .card-tv .grad.c3 { --g1: #1A2E4A; --g2: #06121F; }
+  .d1 .screen .card-tv .grad.c4 { --g1: #1A3D2E; --g2: #06140E; }
+  .d1 .screen .card-tv .grad.c5 { --g1: #4A1A0A; --g2: #1F0805; }
+  .d1 .screen .card-tv .grad.c6 { --g1: #2E1A4A; --g2: #0E061F; }
+  .d1 .screen .card-tv .name { font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 500; }
+  .d1 .screen .focus-ring { border: 2px solid #E5B14C; box-shadow: 0 0 12px rgba(229,177,76,.4); }
+  .d1 .screen .focus-pill { background: #E5B14C; color: #0A0805; font-family: 'Inter', sans-serif; }
+  .d1 .screen .hero { background: linear-gradient(135deg, #1A0F08 0%, #3D2817 50%, #0A0805 100%); }
+  .d1 .screen .hero .badge { background: transparent; border: 1px solid #E5B14C; color: #E5B14C; font-family: 'Inter', sans-serif; letter-spacing: 0.15em; text-transform: uppercase; }
+  .d1 .screen .hero .title { font-weight: 700; }
+  .d1 .screen .hero .meta-row { font-family: 'Inter', sans-serif; color: #B5A48A; }
+  .d1 .screen .hero .desc { color: #B5A48A; font-family: 'Inter', sans-serif; }
+  .d1 .screen .hero .btn.primary { background: #E5B14C; color: #0A0805; }
+  .d1 .screen .hero .btn.ghost { background: transparent; border: 1px solid #F5E9D0; color: #F5E9D0; }
+
+  /* ===== Direction 2: Neo Noir ===== */
+  .d2 .screen { background: #000; color: #F5F5F7; font-family: 'Inter', -apple-system, sans-serif; }
+  .d2 .screen .sec-title { font-size: 11px; font-weight: 700; letter-spacing: -0.01em; }
+  .d2 .screen .nav span { color: #86868B; font-size: 10px; font-weight: 500; }
+  .d2 .screen .nav span.active { color: #F5F5F7; }
+  .d2 .screen .logo { color: #F5F5F7; }
+  .d2 .screen .clock { color: #86868B; }
+  .d2 .screen .topbar-tv { border-bottom: 1px solid rgba(255,255,255,.06); }
+  .d2 .screen .card-tv { background: #1C1C1E; }
+  .d2 .screen .card-tv .grad.c1 { --g1: #48484A; --g2: #1C1C1E; }
+  .d2 .screen .card-tv .grad.c2 { --g1: #5C2A2A; --g2: #1A0808; }
+  .d2 .screen .card-tv .grad.c3 { --g1: #1F3554; --g2: #080F1F; }
+  .d2 .screen .card-tv .grad.c4 { --g1: #1F4538; --g2: #08140E; }
+  .d2 .screen .card-tv .grad.c5 { --g1: #4A2818; --g2: #1A0805; }
+  .d2 .screen .card-tv .grad.c6 { --g1: #2E1F4A; --g2: #0E081F; }
+  .d2 .screen .card-tv .name { font-weight: 500; }
+  .d2 .screen .focus-ring { border: 2px solid #FF3B30; }
+  .d2 .screen .focus-pill { background: #FF3B30; color: #FFF; }
+  .d2 .screen .hero { background: #1C1C1E; }
+  .d2 .screen .hero .badge { background: #FF3B30; color: #FFF; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .d2 .screen .hero .title { font-weight: 700; letter-spacing: -0.02em; }
+  .d2 .screen .hero .meta-row { color: #86868B; }
+  .d2 .screen .hero .desc { color: #86868B; }
+  .d2 .screen .hero .btn.primary { background: #F5F5F7; color: #000; }
+  .d2 .screen .hero .btn.ghost { background: rgba(255,255,255,.1); color: #F5F5F7; backdrop-filter: blur(10px); }
+
+  /* ===== Direction 3: Midnight Neon ===== */
+  .d3 .screen { background: #050818; color: #E0F7FF; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  .d3 .screen::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(0,229,255,.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(179,136,255,.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .d3 .screen > * { position: relative; z-index: 1; }
+  .d3 .screen .sec-title { font-size: 11px; font-weight: 600; color: #00E5FF; letter-spacing: 0.04em; }
+  .d3 .screen .sec-title::before { content: '>'; margin-right: 4px; color: #B388FF; }
+  .d3 .screen .nav span { color: #6B7BA8; font-size: 10px; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+  .d3 .screen .nav span.active { color: #00E5FF; }
+  .d3 .screen .logo { color: #E0F7FF; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+  .d3 .screen .clock { color: #6B7BA8; font-family: 'JetBrains Mono', monospace; }
+  .d3 .screen .topbar-tv { border-bottom: 1px solid rgba(0,229,255,.15); }
+  .d3 .screen .card-tv { background: #0F1430; border: 1px solid rgba(0,229,255,.1); }
+  .d3 .screen .card-tv .grad.c1 { --g1: #2A3060; --g2: #0F1430; }
+  .d3 .screen .card-tv .grad.c2 { --g1: #4A1A3D; --g2: #1F0820; }
+  .d3 .screen .card-tv .grad.c3 { --g1: #1F3554; --g2: #06121F; }
+  .d3 .screen .card-tv .grad.c4 { --g1: #1F4538; --g2: #08140E; }
+  .d3 .screen .card-tv .grad.c5 { --g1: #4A2818; --g2: #1A0805; }
+  .d3 .screen .card-tv .grad.c6 { --g1: #2E1F4A; --g2: #0E081F; }
+  .d3 .screen .card-tv .name { font-family: 'JetBrains Mono', monospace; }
+  .d3 .screen .focus-ring { border: 1.5px solid #00E5FF; box-shadow: 0 0 8px rgba(0,229,255,.6), inset 0 0 6px rgba(0,229,255,.2); }
+  .d3 .screen .focus-pill { background: #00E5FF; color: #050818; font-family: 'JetBrains Mono', monospace; }
+  .d3 .screen .hero {
+    background: linear-gradient(135deg, #0F1430 0%, #2A1A4A 100%);
+    border: 1px solid rgba(0,229,255,.2);
+  }
+  .d3 .screen .hero .badge { background: rgba(0,229,255,.15); border: 1px solid #00E5FF; color: #00E5FF; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+  .d3 .screen .hero .title { font-weight: 700; letter-spacing: -0.01em; }
+  .d3 .screen .hero .meta-row { color: #B388FF; font-family: 'JetBrains Mono', monospace; }
+  .d3 .screen .hero .desc { color: #6B7BA8; }
+  .d3 .screen .hero .btn.primary { background: #00E5FF; color: #050818; }
+  .d3 .screen .hero .btn.ghost { background: transparent; border: 1px solid #B388FF; color: #B388FF; }
+
+  /* ===== Direction 4: Warm Theatre ===== */
+  .d4 .screen { background: #1A1014; color: #FFF4ED; font-family: 'Fraunces', 'Times New Roman', serif; }
+  .d4 .screen::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,107,74,.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .d4 .screen > * { position: relative; z-index: 1; }
+  .d4 .screen .sec-title { font-size: 12px; font-weight: 500; color: #FF6B4A; }
+  .d4 .screen .sec-title::before { content: '●'; font-size: 6px; color: #FF6B4A; margin-right: 5px; vertical-align: middle; }
+  .d4 .screen .nav span { color: #B5968E; font-family: 'Lato', sans-serif; font-size: 10px; }
+  .d4 .screen .nav span.active { color: #FFF4ED; }
+  .d4 .screen .logo { color: #FFF4ED; font-family: 'Fraunces', serif; font-weight: 500; }
+  .d4 .screen .clock { color: #B5968E; font-family: 'Lato', sans-serif; }
+  .d4 .screen .topbar-tv { }
+  .d4 .screen .card-tv { border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .d4 .screen .card-tv .grad.c1 { --g1: #4A2E1A; --g2: #1F0F08; }
+  .d4 .screen .card-tv .grad.c2 { --g1: #5A2010; --g2: #1F0805; }
+  .d4 .screen .card-tv .grad.c3 { --g1: #1F2E4A; --g2: #080F1F; }
+  .d4 .screen .card-tv .grad.c4 { --g1: #1F4A38; --g2: #08140E; }
+  .d4 .screen .card-tv .grad.c5 { --g1: #4A2010; --g2: #1F0805; }
+  .d4 .screen .card-tv .grad.c6 { --g1: #2E1F4A; --g2: #0E081F; }
+  .d4 .screen .card-tv .name { font-family: 'Lato', sans-serif; font-weight: 500; font-size: 8px; }
+  .d4 .screen .focus-ring { border: 2px solid #FF6B4A; box-shadow: 0 0 16px rgba(255,107,74,.5), 0 4px 12px rgba(0,0,0,.5); }
+  .d4 .screen .focus-pill { background: #FF6B4A; color: #1A1014; font-family: 'Lato', sans-serif; }
+  .d4 .screen .hero {
+    background: linear-gradient(135deg, #4A1F2A 0%, #FF6B4A 60%, #FFD4A3 100%);
+    box-shadow: 0 4px 24px rgba(255,107,74,.2);
+  }
+  .d4 .screen .hero .vignette {
+    background:
+      linear-gradient(90deg, rgba(26,16,20,.85) 0%, transparent 60%),
+      linear-gradient(0deg, rgba(26,16,20,.5) 0%, transparent 60%);
+  }
+  .d4 .screen .hero .badge { background: rgba(255,212,163,.95); color: #1A1014; font-family: 'Lato', sans-serif; font-weight: 600; letter-spacing: 0.08em; }
+  .d4 .screen .hero .title { font-weight: 600; }
+  .d4 .screen .hero .meta-row { color: #FFD4A3; font-family: 'Lato', sans-serif; }
+  .d4 .screen .hero .desc { color: #FFF4ED; font-family: 'Lato', sans-serif; }
+  .d4 .screen .hero .btn.primary { background: #FFF4ED; color: #1A1014; }
+  .d4 .screen .hero .btn.ghost { background: rgba(26,16,20,.4); color: #FFF4ED; backdrop-filter: blur(8px); }
+
+  .pickup {
+    margin-top: 32px; padding: 24px; border: 1px solid var(--line);
+    border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+  }
+  .pickup .item h4 { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+  .pickup .item p { font-size: 13px; line-height: 1.5; }
+
+  .footer {
+    margin-top: 96px; padding-top: 32px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 12px;
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Lato:wght@400;500;700&display=swap" rel="stylesheet">
+
+<header class="topbar">
+  <div class="mark">FongMi TV — Design Direction Proposals</div>
+  <div class="meta">Four curated options · Choose one to implement</div>
+</header>
+
+<section class="intro">
+  <div class="eyebrow">Visual Identity · 2026</div>
+  <h1>Four design directions for a TV cinema experience.</h1>
+  <p>Each direction is a complete system — palette, type, layout, focus state, hero treatment. Pick the one that fits the brand voice, and we will implement it across the app: colors, shapes, focus indicators, hero, and detail page.</p>
+</section>
+
+<!-- ============ DIRECTION 1: GOLDEN CINEMA ============ -->
+<section class="direction d1">
+  <div class="dir-header">
+    <div>
+      <div class="num">01 / 04</div>
+      <h2>Golden Cinema</h2>
+      <div class="tag">黄金年代影院 — Cinematic nostalgia, premium</div>
+    </div>
+    <div class="desc">Inspired by 1930s Hollywood marquees and the IMAX auditorium. Gold on deep brown-black, serif headlines, decorative gold rules. For a viewer who treats film as ceremony.</div>
+  </div>
+
+  <div class="system">
+    <div class="sys-block">
+      <h3>Palette</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#0A0805"></div><div><div class="name">Ink</div><div class="role">background</div></div><div class="hex">#0A0805</div></div>
+        <div class="swatch"><div class="chip" style="background:#1A140C"></div><div><div class="name">Surface</div><div class="role">elevated</div></div><div class="hex">#1A140C</div></div>
+        <div class="swatch"><div class="chip" style="background:#E5B14C"></div><div><div class="name">Marquee Gold</div><div class="role">primary / focus</div></div><div class="hex">#E5B14C</div></div>
+        <div class="swatch"><div class="chip" style="background:#C9302C"></div><div><div class="name">Velvet Red</div><div class="role">accent / live</div></div><div class="hex">#C9302C</div></div>
+        <div class="swatch"><div class="chip" style="background:#F5E9D0"></div><div><div class="name">Parchment</div><div class="role">text primary</div></div><div class="hex">#F5E9D0</div></div>
+        <div class="swatch"><div class="chip" style="background:#B5A48A"></div><div><div class="name">Aged Brass</div><div class="role">text secondary</div></div><div class="hex">#B5A48A</div></div>
+      </div>
+    </div>
+    <div class="type-sample" style="background:#0A0805; color:#F5E9D0; border-color:rgba(229,177,76,.18)">
+      <div class="role" style="color:#B5A48A">Display · Playfair Display Bold</div>
+      <div class="display" style="font-family:'Playfair Display',serif; color:#F5E9D0">The show begins<br>at sundown.</div>
+      <div class="body" style="color:#B5A48A; font-family:'Inter',sans-serif">A serif headline paired with a quiet Inter body. Gold rules separate sections the way a velvet rope separates a theatre lobby from its auditorium.</div>
+      <div class="meta" style="color:#B5A48A; border-color:rgba(229,177,76,.18)">Playfair Display 700 · Inter 400/500</div>
+    </div>
+  </div>
+
+  <div class="screens">
+    <!-- Home -->
+    <div class="screen">
+      <span class="label">HOME</span><span class="ratio">16:9</span>
+      <div class="tv">
+        <div class="topbar-tv">
+          <div class="logo">◆ FongMi</div>
+          <div class="nav"><span>点播</span><span>直播</span><span>搜索</span><span>收藏</span><span>设置</span></div>
+          <div class="clock">21:48</div>
+        </div>
+        <div class="hero">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">IMAX · 4K HDR</span>
+            <div class="title">沙丘：第二部</div>
+            <div class="meta-row">Dune: Part Two · 2024 · 科幻 / 冒险</div>
+            <div class="desc">保罗·亚崔迪携手弗雷曼人踏上复仇之旅，在厄拉科斯沙漠展开史诗级的命运之战。</div>
+            <div class="cta">
+              <span class="btn primary">▶ 立即观看</span>
+              <span class="btn ghost">+ 收藏</span>
+            </div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">继续观看</div>
+          <div class="cards">
+            <div class="card-tv w16"><div class="grad c1"></div><div class="name">庆余年 第二季 · 12</div>
+              <div class="focus-ring"></div>
+              <div class="focus-pill">观看到 24:18</div>
+            </div>
+            <div class="card-tv w16"><div class="grad c2"></div><div class="name">周处除三害</div></div>
+            <div class="card-tv w16"><div class="grad c3"></div><div class="name">奥本海默</div></div>
+            <div class="card-tv w16"><div class="grad c4"></div><div class="name">银河护卫队3</div></div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">编辑推荐 <span class="sec-more">查看全部 ›</span></div>
+          <div class="cards">
+            <div class="card-tv"><div class="grad c5"></div><div class="name">蜘蛛夫人</div></div>
+            <div class="card-tv"><div class="grad c6"></div><div class="name">花月杀手</div></div>
+            <div class="card-tv"><div class="grad c1"></div><div class="name">可怜的东西</div></div>
+            <div class="card-tv"><div class="grad c2"></div><div class="name">你想活出怎样的</div></div>
+            <div class="card-tv"><div class="grad c3"></div><div class="name">利益区域</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail -->
+    <div class="screen">
+      <span class="label">DETAIL</span>
+      <div class="tv">
+        <div class="hero" style="margin:8px 8px 0; flex:0 0 50%; background:linear-gradient(135deg,#3D2817 0%,#1A0F08 100%)">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">1080P · 45 分钟</span>
+            <div class="title" style="font-size:13px">沙丘：第二部</div>
+          </div>
+        </div>
+        <div class="row-tv" style="padding:8px 10px">
+          <div style="font-family:'Inter',sans-serif; font-size:8px; color:#B5A48A; line-height:1.4; margin-bottom:6px">科幻 · 冒险 · 2024<br>导演：丹尼斯·维伦纽瓦</div>
+          <div class="cards">
+            <span class="btn primary" style="background:#E5B14C; color:#0A0805; padding:2px 6px; border-radius:8px; font-size:7px; font-family:'Inter',sans-serif; font-weight:600">▶ 播放</span>
+            <span class="btn ghost" style="border:1px solid #F5E9D0; color:#F5E9D0; padding:1px 5px; border-radius:8px; font-size:7px; font-family:'Inter',sans-serif">+ 收藏</span>
+            <span class="btn ghost" style="border:1px solid #F5E9D0; color:#F5E9D0; padding:1px 5px; border-radius:8px; font-size:7px; font-family:'Inter',sans-serif">换源</span>
+          </div>
+          <div class="sec-title" style="margin-top:8px; font-size:8px">选集</div>
+          <div class="cards" style="display:grid; grid-template-columns:repeat(5,1fr); gap:3px; margin-top:4px">
+            <div style="background:rgba(229,177,76,.15); border:1px solid #E5B14C; border-radius:2px; padding:3px; text-align:center; font-family:'Inter',sans-serif; font-size:7px; color:#E5B14C">01</div>
+            <div style="background:rgba(245,233,208,.05); border-radius:2px; padding:3px; text-align:center; font-family:'Inter',sans-serif; font-size:7px; color:#F5E9D0">02</div>
+            <div style="background:rgba(245,233,208,.05); border-radius:2px; padding:3px; text-align:center; font-family:'Inter',sans-serif; font-size:7px; color:#F5E9D0">03</div>
+            <div style="background:rgba(245,233,208,.05); border-radius:2px; padding:3px; text-align:center; font-family:'Inter',sans-serif; font-size:7px; color:#F5E9D0">04</div>
+            <div style="background:rgba(245,233,208,.05); border-radius:2px; padding:3px; text-align:center; font-family:'Inter',sans-serif; font-size:7px; color:#F5E9D0">05</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="screen">
+      <span class="label">SETTINGS</span>
+      <div class="tv">
+        <div class="topbar-tv" style="border-bottom:1px solid rgba(229,177,76,.18)">
+          <div class="logo">◆ FongMi</div>
+          <div class="clock" style="color:#B5A48A">设置</div>
+        </div>
+        <div style="padding:8px 10px; display:flex; flex-direction:column; gap:4px; font-family:'Inter',sans-serif">
+          <div style="font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:#E5B14C; margin:6px 0 2px">通用</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border:1px solid rgba(229,177,76,.3); border-radius:3px; background:rgba(229,177,76,.05)">
+            <span style="font-size:8px; color:#F5E9D0">点播配置</span>
+            <span style="font-size:7px; color:#B5A48A">泥巴.tv ›</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px"><span style="font-size:8px; color:#F5E9D0">直播源</span><span style="font-size:7px; color:#B5A48A">我的直播 ›</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px"><span style="font-size:8px; color:#F5E9D0">播放器</span><span style="font-size:7px; color:#B5A48A">EXO ›</span></div>
+          <div style="font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:#E5B14C; margin:8px 0 2px">数据</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px"><span style="font-size:8px; color:#F5E9D0">缓存</span><span style="font-size:7px; color:#B5A48A">12.3 MB</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px"><span style="font-size:8px; color:#F5E9D0">版本</span><span style="font-size:7px; color:#B5A48A">2.5.1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pickup">
+    <div class="item"><h4>Best for</h4><p>Viewers who treat TV as a cinema, want premium feel, willing to add 5-10s of ceremony to the experience.</p></div>
+    <div class="item"><h4>Risk</h4><p>Serif headline at 44sp may feel heavy on small chips. Gold-on-black is high-contrast; some settings pages need a lighter surface.</p></div>
+    <div class="item"><h4>Mood words</h4><p>Theatre · Marquee · Velvet · 35mm · Curator</p></div>
+  </div>
+</section>
+
+<!-- ============ DIRECTION 2: NEO NOIR ============ -->
+<section class="direction d2">
+  <div class="dir-header">
+    <div>
+      <div class="num">02 / 04</div>
+      <h2>Neo Noir</h2>
+      <div class="tag">极简暗夜 — Pure restraint, single accent</div>
+    </div>
+    <div class="desc">Pure black, single bold red, no decoration that does not serve the content. The product behaves like a cinema lobby that takes itself seriously.</div>
+  </div>
+
+  <div class="system">
+    <div class="sys-block">
+      <h3>Palette</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#000000"></div><div><div class="name">Black</div><div class="role">background</div></div><div class="hex">#000000</div></div>
+        <div class="swatch"><div class="chip" style="background:#1C1C1E"></div><div><div class="name">Surface</div><div class="role">elevated</div></div><div class="hex">#1C1C1E</div></div>
+        <div class="swatch"><div class="chip" style="background:#FF3B30"></div><div><div class="name">Signal Red</div><div class="role">primary / focus</div></div><div class="hex">#FF3B30</div></div>
+        <div class="swatch"><div class="chip" style="background:#F5F5F7"></div><div><div class="name">Paper</div><div class="role">text primary / CTA</div></div><div class="hex">#F5F5F7</div></div>
+        <div class="swatch"><div class="chip" style="background:#86868B"></div><div><div class="name">Ash</div><div class="role">text secondary</div></div><div class="hex">#86868B</div></div>
+        <div class="swatch"><div class="chip" style="background:#48484A"></div><div><div class="name">Steel</div><div class="role">divider / dim</div></div><div class="hex">#48484A</div></div>
+      </div>
+    </div>
+    <div class="type-sample" style="background:#000; color:#F5F5F7; border-color:#1C1C1E">
+      <div class="role" style="color:#86868B">Display · Inter Bold</div>
+      <div class="display" style="font-family:'Inter',sans-serif; color:#F5F5F7; font-weight:700; letter-spacing:-0.03em">Less, but better.</div>
+      <div class="body" style="color:#86868B">A single typeface does all the work. No decoration, no gradient, no ornament — the content is the only thing on the screen that asks for attention.</div>
+      <div class="meta" style="color:#86868B; border-color:#1C1C1E">Inter 400 / 500 / 700 · Tabular numerals for ratings and time</div>
+    </div>
+  </div>
+
+  <div class="screens">
+    <div class="screen">
+      <span class="label">HOME</span>
+      <div class="tv">
+        <div class="topbar-tv">
+          <div class="logo">● FongMi</div>
+          <div class="nav"><span>点播</span><span>直播</span><span>搜索</span><span>我的</span></div>
+          <div class="clock">21:48</div>
+        </div>
+        <div class="hero">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">本周最佳</span>
+            <div class="title">沙丘：第二部</div>
+            <div class="meta-row">2024 · 2h 46m · Sci-Fi</div>
+            <div class="desc">保罗·亚崔迪携手弗雷曼人踏上复仇之旅，在厄拉科斯沙漠展开史诗级的命运之战。</div>
+            <div class="cta">
+              <span class="btn primary">▶ 播放</span>
+              <span class="btn ghost">+ 收藏</span>
+            </div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">继续观看</div>
+          <div class="cards">
+            <div class="card-tv w16"><div class="grad c1"></div><div class="name">庆余年 S2 · 12</div>
+              <div class="focus-ring"></div>
+              <div class="focus-pill">24:18</div>
+            </div>
+            <div class="card-tv w16"><div class="grad c2"></div><div class="name">周处除三害</div></div>
+            <div class="card-tv w16"><div class="grad c3"></div><div class="name">奥本海默</div></div>
+            <div class="card-tv w16"><div class="grad c4"></div><div class="name">银河护卫队3</div></div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">编辑推荐</div>
+          <div class="cards">
+            <div class="card-tv"><div class="grad c5"></div><div class="name">蜘蛛夫人</div></div>
+            <div class="card-tv"><div class="grad c6"></div><div class="name">花月杀手</div></div>
+            <div class="card-tv"><div class="grad c1"></div><div class="name">可怜的东西</div></div>
+            <div class="card-tv"><div class="grad c2"></div><div class="name">你想活出怎样的</div></div>
+            <div class="card-tv"><div class="grad c3"></div><div class="name">利益区域</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">DETAIL</span>
+      <div class="tv">
+        <div class="hero" style="margin:8px 8px 0; flex:0 0 50%">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">1080P · 45m</span>
+            <div class="title" style="font-size:13px">沙丘：第二部</div>
+          </div>
+        </div>
+        <div class="row-tv" style="padding:8px 10px">
+          <div style="font-size:8px; color:#86868B; line-height:1.4; margin-bottom:6px">Sci-Fi · 2024<br>Denis Villeneuve</div>
+          <div class="cards" style="display:flex; gap:3px; margin-bottom:8px">
+            <span class="btn primary" style="padding:2px 6px; border-radius:8px; font-size:7px; font-weight:600">▶ 播放</span>
+            <span class="btn ghost" style="padding:1px 5px; border-radius:8px; font-size:7px">+ 收藏</span>
+            <span class="btn ghost" style="padding:1px 5px; border-radius:8px; font-size:7px">换源</span>
+          </div>
+          <div class="sec-title" style="font-size:8px; margin-bottom:3px">选集</div>
+          <div class="cards" style="display:grid; grid-template-columns:repeat(5,1fr); gap:3px">
+            <div style="background:#FF3B30; border-radius:2px; padding:3px; text-align:center; font-size:7px; color:#FFF; font-weight:600">01</div>
+            <div style="background:#1C1C1E; border-radius:2px; padding:3px; text-align:center; font-size:7px; color:#F5F5F7">02</div>
+            <div style="background:#1C1C1E; border-radius:2px; padding:3px; text-align:center; font-size:7px; color:#F5F5F7">03</div>
+            <div style="background:#1C1C1E; border-radius:2px; padding:3px; text-align:center; font-size:7px; color:#F5F5F7">04</div>
+            <div style="background:#1C1C1E; border-radius:2px; padding:3px; text-align:center; font-size:7px; color:#F5F5F7">05</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">SETTINGS</span>
+      <div class="tv">
+        <div class="topbar-tv"><div class="logo">● FongMi</div><div class="clock">设置</div></div>
+        <div style="padding:8px 10px; display:flex; flex-direction:column; gap:2px">
+          <div style="font-size:7px; letter-spacing:0.18em; text-transform:uppercase; color:#86868B; margin:6px 0 2px">General</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; background:#FF3B30; border-radius:3px; color:#FFF">
+            <span style="font-size:8px; font-weight:600">点播配置</span><span style="font-size:7px">泥巴.tv ›</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px; color:#F5F5F7"><span style="font-size:8px">直播源</span><span style="font-size:7px; color:#86868B">我的直播 ›</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px; color:#F5F5F7"><span style="font-size:8px">播放器</span><span style="font-size:7px; color:#86868B">EXO ›</span></div>
+          <div style="font-size:7px; letter-spacing:0.18em; text-transform:uppercase; color:#86868B; margin:8px 0 2px">Data</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px; color:#F5F5F7"><span style="font-size:8px">缓存</span><span style="font-size:7px; color:#86868B">12.3 MB</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:3px; color:#F5F5F7"><span style="font-size:8px">版本</span><span style="font-size:7px; color:#86868B">2.5.1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pickup">
+    <div class="item"><h4>Best for</h4><p>Power users who want zero visual noise. Reads as "engineered" rather than "playful."</p></div>
+    <div class="item"><h4>Risk</h4><p>Can feel cold. Less inviting for casual viewers; red accent must be used sparingly or it loses meaning.</p></div>
+    <div class="item"><h4>Mood words</h4><p>Engineered · Quiet · Confident · Cinema lobby · Late night</p></div>
+  </div>
+</section>
+
+<!-- ============ DIRECTION 3: MIDNIGHT NEON ============ -->
+<section class="direction d3">
+  <div class="dir-header">
+    <div>
+      <div class="num">03 / 04</div>
+      <h2>Midnight Neon</h2>
+      <div class="tag">午夜霓虹 — Cyber, electric, future-leaning</div>
+    </div>
+    <div class="desc">A midnight-blue field lit by electric cyan and violet. Monospace metadata, glowing focus, and section labels that quote the terminal. For a viewer who treats TV as a control panel.</div>
+  </div>
+
+  <div class="system">
+    <div class="sys-block">
+      <h3>Palette</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#050818"></div><div><div class="name">Void</div><div class="role">background</div></div><div class="hex">#050818</div></div>
+        <div class="swatch"><div class="chip" style="background:#0F1430"></div><div><div class="name">Panel</div><div class="role">elevated</div></div><div class="hex">#0F1430</div></div>
+        <div class="swatch"><div class="chip" style="background:#00E5FF"></div><div><div class="name">Cyber Cyan</div><div class="role">primary / focus</div></div><div class="hex">#00E5FF</div></div>
+        <div class="swatch"><div class="chip" style="background:#B388FF"></div><div><div class="name">Quantum Violet</div><div class="role">secondary accent</div></div><div class="hex">#B388FF</div></div>
+        <div class="swatch"><div class="chip" style="background:#FF3D8C"></div><div><div class="name">Pulse Magenta</div><div class="role">live / alerts</div></div><div class="hex">#FF3D8C</div></div>
+        <div class="swatch"><div class="chip" style="background:#E0F7FF"></div><div><div class="name">Glow</div><div class="role">text primary</div></div><div class="hex">#E0F7FF</div></div>
+      </div>
+    </div>
+    <div class="type-sample" style="background:#050818; color:#E0F7FF; border-color:rgba(0,229,255,.2)">
+      <div class="role" style="color:#6B7BA8; font-family:'JetBrains Mono',monospace">Display · Space Grotesk · Mono metadata</div>
+      <div class="display" style="font-family:'Space Grotesk',sans-serif; color:#E0F7FF; font-weight:700; letter-spacing:-0.02em">/stream.tonight</div>
+      <div class="body" style="color:#6B7BA8; font-family:'Inter',sans-serif">Section labels quote the terminal: <span style="color:#00E5FF; font-family:'JetBrains Mono',monospace">&gt; now_playing</span> · <span style="color:#B388FF; font-family:'JetBrains Mono',monospace">&gt; trending</span>. Card metadata is monospace; the focus ring glows.</div>
+      <div class="meta" style="color:#6B7BA8; border-color:rgba(0,229,255,.15); font-family:'JetBrains Mono',monospace">Space Grotesk 700 · Inter 400/500 · JetBrains Mono 400</div>
+    </div>
+  </div>
+
+  <div class="screens">
+    <div class="screen">
+      <span class="label">HOME</span>
+      <div class="tv">
+        <div class="topbar-tv">
+          <div class="logo">[FM]</div>
+          <div class="nav"><span class="active">VOD</span><span>LIVE</span><span>SEARCH</span><span>ME</span></div>
+          <div class="clock">21:48</div>
+        </div>
+        <div class="hero">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">04K.HDR</span>
+            <div class="title">DUNE.PART_TWO</div>
+            <div class="meta-row">2024 · 166MIN · SCI-FI</div>
+            <div class="desc">保罗·亚崔迪携手弗雷曼人踏上复仇之旅，在厄拉科斯沙漠展开史诗级的命运之战。</div>
+            <div class="cta">
+              <span class="btn primary">▶ PLAY</span>
+              <span class="btn ghost">+ SAVE</span>
+            </div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">continue_watching</div>
+          <div class="cards">
+            <div class="card-tv w16"><div class="grad c1"></div><div class="name">Q.Y.F.S2E12</div>
+              <div class="focus-ring"></div>
+              <div class="focus-pill">24:18</div>
+            </div>
+            <div class="card-tv w16"><div class="grad c2"></div><div class="name">monkey.king</div></div>
+            <div class="card-tv w16"><div class="grad c3"></div><div class="name">oppenheimer</div></div>
+            <div class="card-tv w16"><div class="grad c4"></div><div class="name">gotg.vol3</div></div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">trending_now</div>
+          <div class="cards">
+            <div class="card-tv"><div class="grad c5"></div><div class="name">madam.web</div></div>
+            <div class="card-tv"><div class="grad c6"></div><div class="name">killers.fb</div></div>
+            <div class="card-tv"><div class="grad c1"></div><div class="name">poor.things</div></div>
+            <div class="card-tv"><div class="grad c2"></div><div class="name">how.do.you</div></div>
+            <div class="card-tv"><div class="grad c3"></div><div class="name">zone.of.int</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">DETAIL</span>
+      <div class="tv">
+        <div class="hero" style="margin:8px 8px 0; flex:0 0 50%; background:linear-gradient(135deg,#1F2A4A 0%,#0F1430 100%)">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">1080P.45M</span>
+            <div class="title" style="font-size:11px; font-family:'JetBrains Mono',monospace">DUNE.PART_TWO</div>
+          </div>
+        </div>
+        <div class="row-tv" style="padding:8px 10px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:7px; color:#6B7BA8; line-height:1.5; margin-bottom:6px">SCIFI.2024<br>DIR: D.VILLENEUVE</div>
+          <div class="cards" style="display:flex; gap:3px; margin-bottom:8px">
+            <span class="btn primary" style="padding:2px 6px; border-radius:2px; font-size:7px; font-weight:600; font-family:'JetBrains Mono',monospace">▶ PLAY</span>
+            <span class="btn ghost" style="padding:1px 5px; border-radius:2px; font-size:7px; font-family:'JetBrains Mono',monospace">+ SAVE</span>
+            <span class="btn ghost" style="padding:1px 5px; border-radius:2px; font-size:7px; font-family:'JetBrains Mono',monospace">SRC</span>
+          </div>
+          <div class="sec-title" style="font-size:8px; margin-bottom:3px">episodes</div>
+          <div class="cards" style="display:grid; grid-template-columns:repeat(5,1fr); gap:3px">
+            <div style="background:rgba(0,229,255,.15); border:1px solid #00E5FF; border-radius:2px; padding:3px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7px; color:#00E5FF">01</div>
+            <div style="background:#0F1430; border:1px solid #1F2A4A; border-radius:2px; padding:3px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7px; color:#E0F7FF">02</div>
+            <div style="background:#0F1430; border:1px solid #1F2A4A; border-radius:2px; padding:3px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7px; color:#E0F7FF">03</div>
+            <div style="background:#0F1430; border:1px solid #1F2A4A; border-radius:2px; padding:3px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7px; color:#E0F7FF">04</div>
+            <div style="background:#0F1430; border:1px solid #1F2A4A; border-radius:2px; padding:3px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:7px; color:#E0F7FF">05</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">SETTINGS</span>
+      <div class="tv">
+        <div class="topbar-tv"><div class="logo">[FM]</div><div class="clock">SETTINGS</div></div>
+        <div style="padding:8px 10px; display:flex; flex-direction:column; gap:2px; font-family:'JetBrains Mono',monospace">
+          <div style="font-size:7px; color:#00E5FF; margin:6px 0 2px; letter-spacing:0.1em">// GENERAL</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border:1px solid #00E5FF; background:rgba(0,229,255,.1); border-radius:2px; color:#00E5FF">
+            <span style="font-size:8px; font-weight:500">&gt; vod.config</span><span style="font-size:7px">mubai.tv</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:2px; color:#E0F7FF"><span style="font-size:8px">live.source</span><span style="font-size:7px; color:#6B7BA8">my_live</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:2px; color:#E0F7FF"><span style="font-size:8px">player</span><span style="font-size:7px; color:#6B7BA8">exo</span></div>
+          <div style="font-size:7px; color:#B388FF; margin:8px 0 2px; letter-spacing:0.1em">// DATA</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:2px; color:#E0F7FF"><span style="font-size:8px">cache</span><span style="font-size:7px; color:#6B7BA8">12.3MB</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 6px; border-radius:2px; color:#E0F7FF"><span style="font-size:8px">version</span><span style="font-size:7px; color:#6B7BA8">2.5.1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pickup">
+    <div class="item"><h4>Best for</h4><p>Young, tech-savvy viewers. Anime / sci-fi / tech content. The most distinct identity in this set — clearly not Netflix.</p></div>
+    <div class="item"><h4>Risk</h4><p>Can read as "gamer UI" rather than "cinema." Glow effects need to be tuned carefully on real TVs (don't burn into OLED).</p></div>
+    <div class="item"><h4>Mood words</h4><p>Terminal · Glowing · Anime night · Streaming room · Cyber cinema</p></div>
+  </div>
+</section>
+
+<!-- ============ DIRECTION 4: WARM THEATRE ============ -->
+<section class="direction d4">
+  <div class="dir-header">
+    <div>
+      <div class="num">04 / 04</div>
+      <h2>Warm Theatre</h2>
+      <div class="tag">暖光剧场 — Inviting, soft, modern streamer</div>
+    </div>
+    <div class="desc">A deep plum-black warmed by coral light, soft cards, gentle shadows, and friendly rounded shapes. The product feels like a curated living-room cinema — the most inviting direction in the set.</div>
+  </div>
+
+  <div class="system">
+    <div class="sys-block">
+      <h3>Palette</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#1A1014"></div><div><div class="name">Plum Black</div><div class="role">background</div></div><div class="hex">#1A1014</div></div>
+        <div class="swatch"><div class="chip" style="background:#2A1A1F"></div><div><div class="name">Stage Curtain</div><div class="role">elevated</div></div><div class="hex">#2A1A1F</div></div>
+        <div class="swatch"><div class="chip" style="background:#FF6B4A"></div><div><div class="name">Coral</div><div class="role">primary / focus</div></div><div class="hex">#FF6B4A</div></div>
+        <div class="swatch"><div class="chip" style="background:#FFD4A3"></div><div><div class="name">Apricot</div><div class="role">secondary accent</div></div><div class="hex">#FFD4A3</div></div>
+        <div class="swatch"><div class="chip" style="background:#FFB4A2"></div><div><div class="name">Peach</div><div class="role">live / live pulse</div></div><div class="hex">#FFB4A2</div></div>
+        <div class="swatch"><div class="chip" style="background:#FFF4ED"></div><div><div class="name">Cream</div><div class="role">text primary</div></div><div class="hex">#FFF4ED</div></div>
+      </div>
+    </div>
+    <div class="type-sample" style="background:linear-gradient(135deg,#1A1014 0%,#2A1A1F 100%); color:#FFF4ED; border-color:rgba(255,107,74,.25)">
+      <div class="role" style="color:#B5968E; font-family:'Lato',sans-serif">Display · Fraunces SemiBold · Lato Body</div>
+      <div class="display" style="font-family:'Fraunces',serif; color:#FFF4ED; font-weight:500; letter-spacing:-0.01em">Tonight,<br>let's stay in.</div>
+      <div class="body" style="color:#B5968E; font-family:'Lato',sans-serif">A modern serif sets a warm, human tone. Lato body keeps things readable at TV distance. Coral is the only spot color — and only on the active item.</div>
+      <div class="meta" style="color:#B5968E; border-color:rgba(255,107,74,.15)">Fraunces 500 · Lato 400/500 · 18px corner radius · soft shadows</div>
+    </div>
+  </div>
+
+  <div class="screens">
+    <div class="screen">
+      <span class="label">HOME</span>
+      <div class="tv">
+        <div class="topbar-tv">
+          <div class="logo">FongMi</div>
+          <div class="nav"><span>点播</span><span class="active">直播</span><span>搜索</span><span>我的</span></div>
+          <div class="clock">21:48</div>
+        </div>
+        <div class="hero">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">IMAX · 4K HDR</span>
+            <div class="title">沙丘：第二部</div>
+            <div class="meta-row">2024 · 2小时46分钟 · 科幻冒险</div>
+            <div class="desc">保罗·亚崔迪携手弗雷曼人踏上复仇之旅，在厄拉科斯沙漠展开史诗级的命运之战。</div>
+            <div class="cta">
+              <span class="btn primary">▶ 立即观看</span>
+              <span class="btn ghost">+ 收藏</span>
+            </div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">继续观看</div>
+          <div class="cards">
+            <div class="card-tv w16"><div class="grad c1"></div><div class="name">庆余年 第二季 · 12</div>
+              <div class="focus-ring"></div>
+              <div class="focus-pill">24:18</div>
+            </div>
+            <div class="card-tv w16"><div class="grad c2"></div><div class="name">周处除三害</div></div>
+            <div class="card-tv w16"><div class="grad c3"></div><div class="name">奥本海默</div></div>
+            <div class="card-tv w16"><div class="grad c4"></div><div class="name">银河护卫队3</div></div>
+          </div>
+        </div>
+        <div class="row-tv"><div class="sec-title">编辑推荐</div>
+          <div class="cards">
+            <div class="card-tv"><div class="grad c5"></div><div class="name">蜘蛛夫人</div></div>
+            <div class="card-tv"><div class="grad c6"></div><div class="name">花月杀手</div></div>
+            <div class="card-tv"><div class="grad c1"></div><div class="name">可怜的东西</div></div>
+            <div class="card-tv"><div class="grad c2"></div><div class="name">你想活出怎样的</div></div>
+            <div class="card-tv"><div class="grad c3"></div><div class="name">利益区域</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">DETAIL</span>
+      <div class="tv">
+        <div class="hero" style="margin:8px 8px 0; flex:0 0 50%; border-radius:6px">
+          <div class="vignette"></div>
+          <div class="content">
+            <span class="badge">1080P · 45 分钟</span>
+            <div class="title" style="font-size:13px">沙丘：第二部</div>
+          </div>
+        </div>
+        <div class="row-tv" style="padding:8px 10px">
+          <div style="font-family:'Lato',sans-serif; font-size:8px; color:#B5968E; line-height:1.4; margin-bottom:6px">科幻 · 冒险 · 2024<br>导演：丹尼斯·维伦纽瓦</div>
+          <div class="cards" style="display:flex; gap:3px; margin-bottom:8px">
+            <span class="btn primary" style="padding:3px 7px; border-radius:8px; font-size:7px; font-weight:600; font-family:'Lato',sans-serif">▶ 播放</span>
+            <span class="btn ghost" style="padding:2px 5px; border-radius:8px; font-size:7px; font-family:'Lato',sans-serif">+ 收藏</span>
+            <span class="btn ghost" style="padding:2px 5px; border-radius:8px; font-size:7px; font-family:'Lato',sans-serif">换源</span>
+          </div>
+          <div class="sec-title" style="font-size:8px; margin-bottom:3px">选集</div>
+          <div class="cards" style="display:grid; grid-template-columns:repeat(5,1fr); gap:3px">
+            <div style="background:#FF6B4A; border-radius:4px; padding:3px; text-align:center; font-family:'Lato',sans-serif; font-size:7px; color:#FFF; font-weight:600">01</div>
+            <div style="background:rgba(255,244,237,.08); border-radius:4px; padding:3px; text-align:center; font-family:'Lato',sans-serif; font-size:7px; color:#FFF4ED">02</div>
+            <div style="background:rgba(255,244,237,.08); border-radius:4px; padding:3px; text-align:center; font-family:'Lato',sans-serif; font-size:7px; color:#FFF4ED">03</div>
+            <div style="background:rgba(255,244,237,.08); border-radius:4px; padding:3px; text-align:center; font-family:'Lato',sans-serif; font-size:7px; color:#FFF4ED">04</div>
+            <div style="background:rgba(255,244,237,.08); border-radius:4px; padding:3px; text-align:center; font-family:'Lato',sans-serif; font-size:7px; color:#FFF4ED">05</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <span class="label">SETTINGS</span>
+      <div class="tv">
+        <div class="topbar-tv"><div class="logo">FongMi</div><div class="clock">设置</div></div>
+        <div style="padding:8px 10px; display:flex; flex-direction:column; gap:3px; font-family:'Lato',sans-serif">
+          <div style="font-size:7px; color:#FF6B4A; margin:6px 0 2px; font-weight:600">通用</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:rgba(255,107,74,.15); border:1.5px solid #FF6B4A; border-radius:8px; color:#FFF4ED; box-shadow:0 4px 12px rgba(255,107,74,.25)">
+            <span style="font-size:8px; font-weight:500">点播配置</span><span style="font-size:7px; color:#FFD4A3">泥巴.tv ›</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; border-radius:8px; color:#FFF4ED"><span style="font-size:8px">直播源</span><span style="font-size:7px; color:#B5968E">我的直播 ›</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; border-radius:8px; color:#FFF4ED"><span style="font-size:8px">播放器</span><span style="font-size:7px; color:#B5968E">EXO ›</span></div>
+          <div style="font-size:7px; color:#FF6B4A; margin:8px 0 2px; font-weight:600">数据</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; border-radius:8px; color:#FFF4ED"><span style="font-size:8px">缓存</span><span style="font-size:7px; color:#B5968E">12.3 MB</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; border-radius:8px; color:#FFF4ED"><span style="font-size:8px">版本</span><span style="font-size:7px; color:#B5968E">2.5.1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pickup">
+    <div class="item"><h4>Best for</h4><p>Family / casual viewers. The most "approachable" direction. Strong fit for a Chinese TV app with broad audience.</p></div>
+    <div class="item"><h4>Risk</h4><p>Coral on plum can read as a children's app if not balanced with serious typography. Need to keep card metadata and section labels quiet.</p></div>
+    <div class="item"><h4>Mood words</h4><p>Curated · Living room · Soft · Film festival · Warm</p></div>
+  </div>
+</section>
+
+<div class="footer">
+  Pick a direction (or a custom mix). Once chosen, I will translate it into the full token set and implement it across the app: colors, type scale, focus state, hero, detail page, settings master-detail.
+</div>

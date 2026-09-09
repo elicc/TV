@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.BuildConfig;
@@ -37,6 +39,8 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.TvTheme;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.net.OkHttp;
 
@@ -50,6 +54,9 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
 
     private ActivitySettingBinding mBinding;
     private String[] size;
+    private AlertDialog themeDialog;
+    private int restoreFocusId = View.NO_ID;
+    private static final String STATE_FOCUS = "setting_focus";
 
     public static void start(Activity activity) {
         activity.startActivity(new Intent(activity, SettingActivity.class));
@@ -71,8 +78,18 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     }
 
     @Override
+    protected boolean customWall() {
+        return false;
+    }
+
+    @Override
     protected void initView(Bundle savedInstanceState) {
-        mBinding.vod.requestFocus();
+        restoreFocusId = savedInstanceState == null ? R.id.vod : savedInstanceState.getInt(STATE_FOCUS, R.id.vod);
+        mBinding.getRoot().post(() -> {
+            View target = findViewById(restoreFocusId);
+            if (target == null || !target.requestFocus()) mBinding.vod.requestFocus();
+            restoreFocusId = View.NO_ID;
+        });
         mBinding.vodUrl.setText(VodConfig.getDesc());
         mBinding.liveUrl.setText(LiveConfig.getDesc());
         mBinding.wallUrl.setText(WallConfig.getDesc());
@@ -81,7 +98,16 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         setOtherText();
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        View focused = getCurrentFocus();
+        outState.putInt(STATE_FOCUS, restoreFocusId == R.id.skin ? R.id.skin : focused == null ? R.id.vod : focused.getId());
+        super.onSaveInstanceState(outState);
+    }
+
     private void setOtherText() {
+        mBinding.skinText.setText(TvTheme.getSkinLabels(this)[TvTheme.getSkin()]);
+        mBinding.atmosphereText.setText(Setting.getSwitch(TvTheme.isAtmosphereEnabled()));
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(Setting.getSwitch(Setting.isIncognito()));
         mBinding.sizeText.setText((size = ResUtil.getStringArray(R.array.select_size))[PlayerSetting.getSize()]);
@@ -98,6 +124,8 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
 
     @Override
     protected void initEvent() {
+        mBinding.skin.setOnClickListener(this::setSkin);
+        mBinding.atmosphere.setOnClickListener(this::setAtmosphere);
         mBinding.vod.setOnClickListener(this::onVod);
         mBinding.doh.setOnClickListener(this::setDoh);
         mBinding.live.setOnClickListener(this::onLive);
@@ -246,6 +274,32 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     private boolean onWallHistory(View view) {
         HistoryDialog.create().wall().show(this);
         return true;
+    }
+
+    private void setSkin(View view) {
+        themeDialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tv_setting_skin)
+                .setSingleChoiceItems(TvTheme.getSkinLabels(this), TvTheme.getSkin(), (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which == TvTheme.getSkin()) return;
+                    restoreFocusId = R.id.skin;
+                    TvTheme.setSkin(which);
+                    recreate();
+                })
+                .setNegativeButton(R.string.dialog_negative, null)
+                .setOnDismissListener(dialog -> mBinding.skin.requestFocus())
+                .show();
+    }
+
+    private void setAtmosphere(View view) {
+        TvTheme.setAtmosphereEnabled(!TvTheme.isAtmosphereEnabled());
+        mBinding.atmosphereText.setText(Setting.getSwitch(TvTheme.isAtmosphereEnabled()));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (themeDialog != null) themeDialog.dismiss();
+        super.onDestroy();
     }
 
     private void setIncognito(View view) {

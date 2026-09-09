@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_keep_title">我的收藏</string>
+    <string name="tv_keep_manage">管理收藏</string>
+    <string name="tv_keep_done">完成</string>
+    <string name="tv_keep_remove">移除收藏</string>
+    <string name="tv_keep_remove_message">将《%1$s》移出收藏？之后可在详情页重新收藏。</string>
+</resources>

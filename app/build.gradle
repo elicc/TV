@@ -16,7 +16,7 @@ android {
     compileSdk libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
-        applicationId "com.fongmi.android.tv"
+        applicationId "com.elicc.android.tv"
         minSdk libs.versions.minSdk.get().toInteger()
         targetSdk libs.versions.targetSdk.get().toInteger()
         versionCode 563
@@ -45,6 +45,20 @@ android {
     }
 
     signingConfigs {
+        debug {
+            // 永久为 debug 启用 v3+v4 签名方案 — 部分 OEM 设备（如 TCL MT5879 Android 11）
+            // 的 OverseasAppConfig 校验只接受 v3+ 签名的 APK（实测 v4 才彻底通过，
+            // v3 仍会触发 INSTALL_FAILED_VERIFICATION_FAILURE）。v4 签名
+            // 需要同时存在 v2/v3，否则系统会忽略 v4 并降级校验。
+            storeFile file(System.getProperty('user.home') + '/.android/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            enableV1Signing false
+            enableV2Signing true
+            enableV3Signing true
+            enableV4Signing true
+        }
         release {
             storeFile file(localProps['storeFile'])
             keyAlias localProps['keyAlias']
@@ -54,6 +68,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 显式绑定 debug 签名，使 AGP 在 assembleDebug / assembleLeanbackDebug
+            // / assembleMobileDebug 时自动签 v2+v3，无需事后手动 apksigner。
+            signingConfig = signingConfigs.debug
+        }
         release {
             minifyEnabled = true
             shrinkResources = true

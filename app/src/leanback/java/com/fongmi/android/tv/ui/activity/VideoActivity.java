@@ -90,9 +90,9 @@ import com.fongmi.android.tv.utils.PartUtil;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.Sniffer;
 import com.fongmi.android.tv.utils.Traffic;
+import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
-import com.github.bassaer.library.MDColor;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -266,6 +266,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (TextUtils.isEmpty(intent.getStringExtra("id")) || isSameVideo(intent)) return;
+        mBinding.atmosphere.clear();
         saveHistory(true);
         mVod.reset();
         setIntent(intent);
@@ -274,9 +275,16 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     @Override
+    protected boolean customWall() {
+        return !isFilmAtmosphereEnabled();
+    }
+
+    @Override
     protected void initView(Bundle savedInstanceState) {
         super.initView(savedInstanceState);
         mFrameParams = mBinding.video.getLayoutParams();
+        mBinding.atmosphere.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
+        if (!isFilmAtmosphereEnabled()) mBinding.getRoot().setBackgroundColor(TvTheme.color(this, R.attr.tvColorScrimStrong));
         mClock = Clock.create(mBinding.widget.clock);
         mKeyDown = CustomKeyDownVod.create(this);
         mR1 = this::hideControl;
@@ -297,6 +305,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
         mBinding.content.setOnClickListener(view -> onContent());
+        mBinding.fullscreen.setOnClickListener(view -> enterFullscreen());
+        mBinding.control.action.more.setOnClickListener(view -> setAdvancedControls(!isVisible(mBinding.control.action.advanced)));
         mBinding.control.action.text.setOnClickListener(this::onTrack);
         mBinding.control.action.audio.setOnClickListener(this::onTrack);
         mBinding.control.action.video.setOnClickListener(this::onTrack);
@@ -367,6 +377,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void setVideoView() {
         setSeekNextFocusDown(R.id.next);
         setActionFocusBoundary(mBinding.control.action.getRoot());
+        mBinding.control.action.more.setVisibility(View.VISIBLE);
+        setAdvancedControls(false);
         PlayerEngineDialog.setText(mBinding.control.action.player);
         mBinding.control.action.danmaku.setVisibility(DanmakuSetting.isLoad() ? View.VISIBLE : View.GONE);
     }
@@ -742,7 +754,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (TextUtils.isEmpty(text) && !TextUtils.isEmpty(view.getText())) return;
         view.setText(Sniffer.buildClickable(resId > 0 ? getString(resId, text) : text, this::clickableSpan), TextView.BufferType.SPANNABLE);
         view.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
-        view.setLinkTextColor(MDColor.YELLOW_500);
+        view.setLinkTextColor(TvTheme.color(this, R.attr.tvColorAccent));
         CustomMovement.bind(view);
     }
 
@@ -836,6 +848,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void enterFullscreen() {
+        mBinding.atmosphere.clear();
+        mBinding.atmosphere.setVisibility(View.GONE);
         mFocus1 = getCurrentFocus();
         mBinding.video.requestFocus();
         mBinding.video.setForeground(null);
@@ -852,6 +866,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         getFocus1().requestFocus();
         mKeyDown.setFull(false);
         setFullscreen(false);
+        updateAtmosphere();
         mFocus2 = null;
         hideInfo();
     }
@@ -1064,7 +1079,26 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.widget.center.setVisibility(View.GONE);
     }
 
+    private void setAdvancedControls(boolean expanded) {
+        mBinding.control.action.advanced.setVisibility(expanded ? View.VISIBLE : View.GONE);
+        mBinding.control.action.more.setText(expanded ? R.string.tv_playback_less : R.string.tv_playback_more);
+        mBinding.control.action.more.setSelected(expanded);
+        mBinding.control.action.next.setNextFocusLeftId(expanded ? R.id.ending : R.id.more);
+        mBinding.control.action.more.setNextFocusRightId(expanded ? R.id.player : R.id.next);
+        // Preserve a reachable focus target when advanced controls are collapsed.
+        if (!expanded && isAdvancedControl(getCurrentFocus())) mBinding.control.action.more.requestFocus();
+    }
+
+    private boolean isAdvancedControl(View view) {
+        while (view != null) {
+            if (view == mBinding.control.action.advanced) return true;
+            view = view.getParent() instanceof View ? (View) view.getParent() : null;
+        }
+        return false;
+    }
+
     private void showControl(View view) {
+        if (isAdvancedControl(view)) setAdvancedControls(true);
         mBinding.control.getRoot().setVisibility(View.VISIBLE);
         view.requestFocus();
         setR1Callback();
@@ -1105,7 +1139,15 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setArtwork();
     }
 
+    private void updateAtmosphere() {
+        boolean visible = isFilmAtmosphereEnabled() && !isFullscreen();
+        mBinding.atmosphere.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (visible && mHistory != null) mBinding.atmosphere.setImage(getSite().getKey(), mHistory.getVodPic());
+        else mBinding.atmosphere.clear();
+    }
+
     private void setArtwork() {
+        updateAtmosphere();
         ImgUtil.load(this, mHistory.getVodPic(), new CustomTarget<>() {
             @Override
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
@@ -1283,6 +1325,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onItemClick(Vod item) {
+        mBinding.atmosphere.clear();
         mVod.selectSource(item);
     }
 
@@ -1419,10 +1462,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     protected void onStart() {
         super.onStart();
         mClock.stop().start();
+        updateAtmosphere();
     }
 
     @Override
     protected void onStop() {
+        mBinding.atmosphere.clear();
         super.onStop();
         saveHistory(false);
         if (PlayerSetting.isBackgroundOff()) mClock.stop();
@@ -1430,7 +1475,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onBackInvoked() {
-        if (isVisible(mBinding.control.getRoot())) {
+        if (isVisible(mBinding.control.getRoot()) && isVisible(mBinding.control.action.advanced)) {
+            setAdvancedControls(false);
+            mBinding.control.action.more.requestFocus();
+            setR1Callback();
+        } else if (isVisible(mBinding.control.getRoot())) {
             hideControl();
         } else if (isVisible(mBinding.widget.center)) {
             hideCenter();
@@ -1445,6 +1494,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onDestroy() {
+        mBinding.atmosphere.clear();
         mClock.release();
         saveHistory(true);
         DanmakuApi.cancel();

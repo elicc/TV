@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_playback_fullscreen">全屏播放</string>
+    <string name="tv_playback_fullscreen_hint">播放器，按确定进入全屏</string>
+    <string name="tv_playback_more">更多设置</string>
+    <string name="tv_playback_less">收起设置</string>
+    <string name="tv_playback_epg_empty">暂无节目单，可继续观看或切换频道</string>
+    <string name="tv_playback_epg_current">正在播出 · %1$s</string>
+    <string name="tv_playback_epg_selected">已选择 · %1$s</string>
+</resources>

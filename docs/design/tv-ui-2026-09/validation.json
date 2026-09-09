@@ -1,0 +1,35 @@
+{
+  "svg_parse": 4,
+  "png_1920x1080": 4,
+  "local_preview_links": "pass",
+  "python_syntax": "pass",
+  "application_tests": "not run; no application modifications",
+  "semantic_contrast_on_panel": {
+    "A": {
+      "primary": 14.6,
+      "secondary": 7.5,
+      "accent": 8.41
+    },
+    "B": {
+      "primary": 14.54,
+      "secondary": 7.66,
+      "accent": 7.58
+    },
+    "C": {
+      "primary": 12.9,
+      "secondary": 7.39,
+      "accent": 8.84
+    }
+  },
+  "limits": [
+    "no approved visual baseline",
+    "no Android D-pad regression",
+    "installed APK / checkout equivalence unverified",
+    "concept images not real catalog data"
+  ],
+  "browser_preview": {
+    "all_four_images_loaded": true,
+    "horizontal_overflow_1440px": false
+  },
+  "visual_review": "concept-only passed; not Android runtime verification"
+}

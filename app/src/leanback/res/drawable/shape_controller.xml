@@ -2,10 +2,10 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <solid android:color="?attr/colorSurface" />
+    <solid android:color="?attr/tvColorSurface" />
 
     <corners
-        android:topLeftRadius="28dp"
-        android:topRightRadius="28dp" />
+        android:topLeftRadius="@dimen/tv_radius_panel"
+        android:topRightRadius="@dimen/tv_radius_panel" />
 
 </shape>

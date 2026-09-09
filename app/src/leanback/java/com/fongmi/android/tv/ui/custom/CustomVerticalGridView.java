@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
-import androidx.leanback.widget.VerticalGridView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.fongmi.android.tv.R;
@@ -19,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class CustomVerticalGridView extends VerticalGridView {
+public class CustomVerticalGridView extends TvVerticalGridView {
 
     private List<View> views;
     private boolean pressDown;

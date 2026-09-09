@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_setting_title">設定</string>
+    <string name="tv_setting_content">內容與網路</string>
+    <string name="tv_setting_appearance">外觀</string>
+    <string name="tv_setting_playback">播放</string>
+    <string name="tv_setting_data">隱私與資料</string>
+    <string name="tv_setting_about">關於</string>
+    <string name="tv_setting_skin">主題配色</string>
+    <string name="tv_setting_atmosphere">影片氛圍</string>
+    <string name="tv_setting_atmosphere_hint">在首頁和詳情使用同片模糊背景，不修改已儲存的桌布。</string>
+    <string name="tv_setting_clear_cache">清理快取</string>
+    <string name="tv_setting_vod_home">選擇點播源</string>
+    <string name="tv_setting_live_home">選擇直播源</string>
+    <string name="tv_setting_vod_history">點播配置歷史</string>
+    <string name="tv_setting_live_history">直播配置歷史</string>
+    <string name="tv_setting_wall_default">切換內建桌布</string>
+    <string name="tv_setting_wall_refresh">重新整理桌布，長按查看配置歷史</string>
+    <string name="tv_search_manage">管理</string>
+    <string name="tv_search_clear">清空全部</string>
+    <string name="tv_search_delete">刪除搜尋詞</string>
+    <string name="tv_search_delete_message">從搜尋歷史中刪除「%1$s」？</string>
+    <string name="tv_search_clear_message">清空全部搜尋歷史？此操作無法復原，不會刪除觀看歷史或收藏。</string>
+    <string name="tv_search_manage_hint">選擇「管理」刪除單筆記錄，也可長按搜尋詞。</string>
+    <string name="tv_search_voice">語音搜尋</string>
+</resources>
