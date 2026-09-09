@@ -7,5 +7,6 @@
 *.properties
 lib-*.aar
 /Release
+.claude
 
 .gpt-imagegen
