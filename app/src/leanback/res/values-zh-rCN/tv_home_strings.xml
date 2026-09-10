@@ -27,4 +27,5 @@
     <string name="tv_reload_config">重新加载配置</string>
     <string name="tv_config_error_body">暂时无法读取配置。请重新加载，或前往设置检查内容源地址。</string>
     <string name="tv_content_error_body">暂时无法加载推荐。请重试，也可以浏览片库或切换片源。</string>
+    <string name="tv_home_remote_hint">方向键  导航     OK  确认     菜单  更多操作     返回  上一级</string>
 </resources>

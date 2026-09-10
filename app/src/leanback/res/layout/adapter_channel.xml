@@ -7,7 +7,8 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/number"
@@ -35,7 +36,7 @@
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textColor="@color/text"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_card_title"
         tools:text="CNN" />
 
 </com.fongmi.android.tv.ui.custom.CustomLeftRightLayout>

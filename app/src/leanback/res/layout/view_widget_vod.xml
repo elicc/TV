@@ -8,7 +8,10 @@
         android:id="@+id/top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingTop="@dimen/tv_safe_vertical"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
+        android:paddingBottom="16dp"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -33,7 +36,7 @@
             android:layout_below="@+id/title"
             android:layout_alignStart="@+id/title"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="1920 x 1080" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -72,7 +75,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="@string/error_play_url" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -87,7 +90,7 @@
         android:fontFeatureSettings="tnum"
         android:gravity="center"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_body"
         android:visibility="gone"
         tools:text="Speed 3.0x"
         tools:visibility="visible" />
@@ -120,7 +123,7 @@
                 android:layout_height="wrap_content"
                 android:fontFeatureSettings="tnum"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="@dimen/tv_text_body"
                 tools:text="00:00:00" />
 
             <com.google.android.material.textview.MaterialTextView
@@ -130,7 +133,7 @@
                 android:layout_marginEnd="4dp"
                 android:text="/"
                 android:textColor="@color/white"
-                android:textSize="16sp" />
+                android:textSize="@dimen/tv_text_body" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/duration"
@@ -138,7 +141,7 @@
                 android:layout_height="wrap_content"
                 android:fontFeatureSettings="tnum"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="@dimen/tv_text_body"
                 tools:text="00:00:00" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>

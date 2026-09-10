@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tv_setting_title">Settings</string>
+    <string name="tv_setting_back">‹ Back</string>
+    <string name="tv_setting_groups">Setting groups</string>
     <string name="tv_setting_content">Content and network</string>
     <string name="tv_setting_appearance">Appearance</string>
     <string name="tv_setting_playback">Playback</string>

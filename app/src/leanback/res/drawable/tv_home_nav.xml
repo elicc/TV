@@ -14,18 +14,11 @@
     </item>
     <item
         android:state_selected="true">
-        <layer-list>
-            <item
-                android:gravity="bottom"
-                android:height="2dp"
-                android:left="12dp"
-                android:right="12dp">
-                <shape>
-                    <solid
-                        android:color="?attr/tvColorAccent"/>
-                </shape>
-            </item>
-        </layer-list>
+        <shape>
+            <solid android:color="?attr/tvColorSurfaceRaised" />
+            <corners android:radius="@dimen/tv_radius_control" />
+            <stroke android:width="1dp" android:color="?attr/tvColorOutline" />
+        </shape>
     </item>
     <item
         android:drawable="@android:color/transparent"/>

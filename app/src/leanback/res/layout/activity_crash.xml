@@ -2,8 +2,13 @@
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/tvColorBackground"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingStart="@dimen/tv_safe_horizontal"
+    android:paddingTop="@dimen/tv_safe_vertical"
+    android:paddingEnd="@dimen/tv_safe_horizontal"
+    android:paddingBottom="@dimen/tv_safe_vertical">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="wrap_content"
@@ -18,8 +23,8 @@
         android:gravity="center"
         android:lineSpacingExtra="4dp"
         android:text="@string/crash_info"
-        android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="@dimen/tv_text_body" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/restart"
@@ -29,8 +34,13 @@
         android:background="@drawable/selector_button"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:minHeight="48dp"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:stateListAnimator="@animator/tv_focus_scale"
         android:text="@string/crash_restart"
-        android:textColor="@color/white" />
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="@dimen/tv_text_button" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/details"
@@ -40,7 +50,12 @@
         android:background="@drawable/selector_button"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:minHeight="48dp"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:stateListAnimator="@animator/tv_focus_scale"
         android:text="@string/crash_details"
-        android:textColor="@color/white" />
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="@dimen/tv_text_button" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

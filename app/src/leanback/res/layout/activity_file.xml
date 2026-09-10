@@ -10,6 +10,9 @@
         android:layout_height="match_parent"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:padding="24dp" />
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingTop="@dimen/tv_safe_vertical"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
+        android:paddingBottom="@dimen/tv_safe_vertical" />
 
 </com.fongmi.android.tv.ui.custom.ProgressLayout>

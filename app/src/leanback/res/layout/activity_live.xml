@@ -48,7 +48,12 @@
         android:id="@+id/recycler"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:background="?attr/tvColorScrimStrong"
+        android:layout_marginStart="@dimen/tv_safe_horizontal"
+        android:layout_marginTop="@dimen/tv_safe_vertical"
+        android:layout_marginBottom="@dimen/tv_safe_vertical"
+        android:background="@drawable/tv_setting_panel"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:orientation="horizontal"
         android:visibility="gone"
         tools:visibility="visible">
@@ -99,4 +104,3 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 </FrameLayout>
-

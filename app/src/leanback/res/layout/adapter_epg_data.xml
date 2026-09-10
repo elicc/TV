@@ -6,7 +6,8 @@
     android:background="@drawable/selector_live"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/title"
@@ -16,7 +17,7 @@
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textColor="@color/text"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_card_title"
         tools:text="七龍珠" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -27,7 +28,7 @@
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textColor="@color/text"
-        android:textSize="14sp"
+        android:textSize="@dimen/tv_text_body"
         tools:text="18:00 ~ 19:00" />
 
 </com.fongmi.android.tv.ui.custom.CustomLeftRightLayout>

@@ -45,6 +45,8 @@ public class PushActivity extends BaseActivity {
     protected void initView(Bundle savedInstanceState) {
         mBinding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(getTab()), 250, 1));
         mBinding.info.setText(ResUtil.getString(R.string.push_info, Server.get().getAddress()));
+        mBinding.code.setContentDescription(mBinding.info.getText());
+        if (savedInstanceState == null) mBinding.code.requestFocus();
     }
 
     @Override

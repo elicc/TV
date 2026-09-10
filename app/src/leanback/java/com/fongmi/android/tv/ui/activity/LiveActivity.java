@@ -289,7 +289,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     private void setWidth(Live live) {
         int padding = ResUtil.dp2px(52);
-        if (live.getWidth() == 0) for (Group item : live.getGroups()) live.setWidth(Math.max(live.getWidth(), ResUtil.getTextWidth(item.getName(), 16)));
+        if (live.getWidth() == 0) for (Group item : live.getGroups()) live.setWidth(Math.max(live.getWidth(), ResUtil.getTextWidth(item.getName(), 20)));
         int width = live.getWidth() == 0 ? 0 : Math.min(live.getWidth() + padding, ResUtil.getScreenWidth() / 4);
         setWidth(mBinding.group, width);
     }
@@ -298,7 +298,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         int logo = ResUtil.dp2px(60);
         int padding = ResUtil.dp2px(64);
         if (group.isKeep()) group.setWidth(0);
-        if (group.getWidth() == 0) for (Channel item : group.getChannel()) group.setWidth(Math.max(group.getWidth(), (item.getLogo().isEmpty() ? 0 : logo) + ResUtil.getTextWidth(item.getNumber() + item.getName(), 16)));
+        if (group.getWidth() == 0) for (Channel item : group.getChannel()) group.setWidth(Math.max(group.getWidth(), (item.getLogo().isEmpty() ? 0 : logo) + ResUtil.getTextWidth(item.getNumber() + item.getName(), 20)));
         int width = group.getWidth() == 0 ? 0 : Math.min(group.getWidth() + padding, ResUtil.getScreenWidth() / 2);
         setWidth(mBinding.channel, width);
         return group;
@@ -307,8 +307,8 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private void setWidth(Epg epg) {
         int padding = ResUtil.dp2px(52);
         if (epg.getList().isEmpty()) return;
-        int minWidth = ResUtil.getTextWidth(epg.getList().get(0).getTime(), 14);
-        if (epg.getWidth() == 0) for (EpgData item : epg.getList()) epg.setWidth(Math.max(epg.getWidth(), ResUtil.getTextWidth(item.getTitle(), 16)));
+        int minWidth = ResUtil.getTextWidth(epg.getList().get(0).getTime(), 16);
+        if (epg.getWidth() == 0) for (EpgData item : epg.getList()) epg.setWidth(Math.max(epg.getWidth(), ResUtil.getTextWidth(item.getTitle(), 20)));
         int maxWidth = ResUtil.getScreenWidth() / 2;
         int minContentWidth = Math.min(minWidth + padding, maxWidth);
         int width = epg.getWidth() == 0 ? 0 : Math.clamp(epg.getWidth() + padding, minContentWidth, maxWidth);

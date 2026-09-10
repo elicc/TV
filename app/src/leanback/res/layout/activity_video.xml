@@ -15,9 +15,12 @@
 
     <FrameLayout
         android:id="@+id/video"
-        android:layout_width="400dp"
-        android:layout_height="225dp"
-        android:layout_margin="24dp"
+        android:layout_width="420dp"
+        android:layout_height="236dp"
+        android:layout_marginTop="@dimen/tv_safe_vertical"
+        android:layout_marginStart="@dimen/tv_safe_horizontal"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
         android:background="@color/black"
         android:defaultFocusHighlightEnabled="false"
         android:focusable="true"
@@ -62,13 +65,13 @@
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/tv_safe_vertical"
         android:layout_marginEnd="24dp"
         android:layout_toEndOf="@+id/video"
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="28sp"
+        android:textSize="@dimen/tv_text_display"
         tools:text="慶餘年第二季" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -82,7 +85,7 @@
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextSecondary"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_body"
         tools:text="更新到第二季" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -103,7 +106,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="站源：泥巴" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -114,7 +117,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="年份：2022" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -125,7 +128,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="地區：台灣" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -135,7 +138,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="類型：科幻" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -152,7 +155,7 @@
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextSecondary"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_body"
         tools:text="導演：FongMi" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -167,7 +170,7 @@
         android:maxLines="2"
         android:nextFocusDown="@id/content"
         android:textColor="?attr/tvColorTextSecondary"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_body"
         tools:text="演員：FongMi" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -198,7 +201,7 @@
             android:singleLine="true"
             android:text="@string/tv_playback_fullscreen"
             android:textColor="?attr/tvColorAccent"
-            android:textSize="18sp" />
+            android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/content"
@@ -219,7 +222,7 @@
             android:singleLine="true"
             android:text="@string/detail_desc"
             android:textColor="?attr/tvColorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/keep"
@@ -240,7 +243,7 @@
             android:singleLine="true"
             android:text="@string/keep"
             android:textColor="?attr/tvColorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/change"
@@ -261,7 +264,7 @@
             android:singleLine="true"
             android:text="@string/play_change"
             android:textColor="?attr/tvColorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="@dimen/tv_text_button" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -285,8 +288,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -297,8 +300,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -309,8 +312,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
             <androidx.leanback.widget.HorizontalGridView
@@ -320,8 +323,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
             <androidx.leanback.widget.HorizontalGridView
@@ -331,8 +334,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
             <androidx.leanback.widget.HorizontalGridView
@@ -342,8 +345,8 @@
                 android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>

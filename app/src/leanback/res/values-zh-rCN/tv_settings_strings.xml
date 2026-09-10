@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tv_setting_title">设置</string>
+    <string name="tv_setting_back">‹ 返回</string>
+    <string name="tv_setting_groups">设置分组</string>
     <string name="tv_setting_content">内容与网络</string>
     <string name="tv_setting_appearance">外观</string>
     <string name="tv_setting_playback">播放</string>

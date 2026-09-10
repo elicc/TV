@@ -86,7 +86,7 @@
         <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
         <item name="android:nextFocusUp">@id/exo_progress</item>
         <item name="android:textColor">?attr/tvColorTextPrimary</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">@dimen/tv_text_button</item>
     </style>
 
 </resources>

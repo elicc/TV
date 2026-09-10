@@ -10,6 +10,11 @@
         android:id="@+id/code"
         android:layout_width="250dp"
         android:layout_height="250dp"
+        android:background="@drawable/selector_item"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:padding="8dp"
+        android:stateListAnimator="@animator/tv_focus_scale"
         android:scaleType="fitXY" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -20,16 +25,23 @@
         android:gravity="center"
         android:lineSpacingExtra="8dp"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="18sp" />
+        android:textSize="@dimen/tv_text_card_title" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/clip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:background="@drawable/shape_item_normal"
+        android:background="@drawable/selector_item"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:minHeight="48dp"
+        android:gravity="center"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:stateListAnimator="@animator/tv_focus_scale"
         android:text="@string/push_clip"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="18sp" />
+        android:textSize="@dimen/tv_text_button" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

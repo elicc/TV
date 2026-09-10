@@ -7,6 +7,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.widget.NestedScrollView;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.BuildConfig;
@@ -84,10 +85,10 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
 
     @Override
     protected void initView(Bundle savedInstanceState) {
-        restoreFocusId = savedInstanceState == null ? R.id.vod : savedInstanceState.getInt(STATE_FOCUS, R.id.vod);
+        restoreFocusId = savedInstanceState == null ? R.id.navContent : savedInstanceState.getInt(STATE_FOCUS, R.id.navContent);
         mBinding.getRoot().post(() -> {
             View target = findViewById(restoreFocusId);
-            if (target == null || !target.requestFocus()) mBinding.vod.requestFocus();
+            if (target == null || !target.requestFocus()) mBinding.navContent.requestFocus();
             restoreFocusId = View.NO_ID;
         });
         mBinding.vodUrl.setText(VodConfig.getDesc());
@@ -101,7 +102,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         View focused = getCurrentFocus();
-        outState.putInt(STATE_FOCUS, restoreFocusId == R.id.skin ? R.id.skin : focused == null ? R.id.vod : focused.getId());
+        outState.putInt(STATE_FOCUS, restoreFocusId == R.id.skin ? R.id.skin : focused == null ? R.id.navContent : focused.getId());
         super.onSaveInstanceState(outState);
     }
 
@@ -124,6 +125,17 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
 
     @Override
     protected void initEvent() {
+        mBinding.settingBack.setOnClickListener(view -> finish());
+        bindSectionNavigation(mBinding.navContent, mBinding.settingsScroll, mBinding.sectionContent, mBinding.vod);
+        bindSectionNavigation(mBinding.navAppearance, mBinding.settingsScroll, mBinding.sectionAppearance, mBinding.skin);
+        bindSectionNavigation(mBinding.navPlayback, mBinding.settingsScroll, mBinding.sectionPlayback, mBinding.player);
+        bindSectionNavigation(mBinding.navData, mBinding.utilityScroll, mBinding.sectionData, mBinding.incognito);
+        bindSectionNavigation(mBinding.navAbout, mBinding.utilityScroll, mBinding.sectionAbout, mBinding.version);
+        bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh);
+        bindSectionFocus(mBinding.navAppearance, mBinding.skin, mBinding.atmosphere, mBinding.wall, mBinding.wallDefault, mBinding.wallRefresh, mBinding.size);
+        bindSectionFocus(mBinding.navPlayback, mBinding.player, mBinding.danmaku);
+        bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.backup, mBinding.restore, mBinding.cache);
+        bindSectionFocus(mBinding.navAbout, mBinding.version);
         mBinding.skin.setOnClickListener(this::setSkin);
         mBinding.atmosphere.setOnClickListener(this::setAtmosphere);
         mBinding.vod.setOnClickListener(this::onVod);
@@ -148,6 +160,39 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.wallDefault.setOnClickListener(this::setWallDefault);
         mBinding.wallRefresh.setOnClickListener(this::setWallRefresh);
         mBinding.wallRefresh.setOnLongClickListener(this::onWallHistory);
+    }
+
+    private void bindSectionNavigation(View navigation, NestedScrollView scroller, View section, View target) {
+        navigation.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) return;
+            selectNavigation(view);
+            scrollToSection(scroller, section);
+        });
+        navigation.setOnClickListener(view -> {
+            selectNavigation(view);
+            scrollToSection(scroller, section);
+            target.requestFocus();
+        });
+    }
+
+    private void bindSectionFocus(View navigation, View... items) {
+        for (View item : items) {
+            item.setOnFocusChangeListener((view, hasFocus) -> {
+                if (hasFocus) selectNavigation(navigation);
+            });
+        }
+    }
+
+    private void selectNavigation(View selected) {
+        mBinding.navContent.setSelected(mBinding.navContent == selected);
+        mBinding.navAppearance.setSelected(mBinding.navAppearance == selected);
+        mBinding.navPlayback.setSelected(mBinding.navPlayback == selected);
+        mBinding.navData.setSelected(mBinding.navData == selected);
+        mBinding.navAbout.setSelected(mBinding.navAbout == selected);
+    }
+
+    private void scrollToSection(NestedScrollView scroller, View section) {
+        scroller.post(() -> scroller.smoothScrollTo(0, section.getTop()));
     }
 
     @Override

@@ -16,10 +16,10 @@
             android:layout_height="match_parent"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:paddingStart="24dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="24dp"
+            android:paddingStart="@dimen/tv_safe_horizontal"
+            android:paddingTop="@dimen/tv_gap_md"
+            android:paddingEnd="@dimen/tv_safe_horizontal"
+            android:paddingBottom="@dimen/tv_safe_vertical"
             app:focusOutEnd="true"
             app:focusOutFront="true" />
 

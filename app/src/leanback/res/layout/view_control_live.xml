@@ -5,10 +5,10 @@
     android:layout_gravity="bottom"
     android:background="@drawable/shape_controller"
     android:orientation="vertical"
-    android:paddingStart="24dp"
+    android:paddingStart="@dimen/tv_safe_horizontal"
     android:paddingTop="24dp"
-    android:paddingEnd="24dp"
-    android:paddingBottom="16dp">
+    android:paddingEnd="@dimen/tv_safe_horizontal"
+    android:paddingBottom="@dimen/tv_safe_vertical">
 
     <androidx.media3.ui.PlayerSeekView
         android:id="@+id/seek"

@@ -9,9 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="16dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
+        android:paddingTop="@dimen/tv_safe_vertical"
         android:orientation="horizontal">
 
         <TextView
@@ -48,7 +48,10 @@
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
-                android:padding="24dp" />
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingTop="@dimen/tv_gap_md"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
+                android:paddingBottom="@dimen/tv_safe_vertical" />
 
         </com.fongmi.android.tv.ui.custom.ProgressLayout>
 

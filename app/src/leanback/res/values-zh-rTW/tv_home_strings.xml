@@ -27,4 +27,5 @@
     <string name="tv_reload_config">重新載入設定</string>
     <string name="tv_config_error_body">暫時無法讀取配置。請重新載入，或前往設定檢查內容源位址。</string>
     <string name="tv_content_error_body">暫時無法載入推薦。請重試，也可以瀏覽片庫或切換片源。</string>
+    <string name="tv_home_remote_hint">方向鍵  導航     OK  確認     選單  更多操作     返回  上一級</string>
 </resources>

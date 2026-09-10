@@ -1,18 +1,42 @@
 <resources>
-    <dimen name="tv_space_xs">4dp</dimen>
-    <dimen name="tv_space_sm">8dp</dimen>
-    <dimen name="tv_space_md">16dp</dimen>
+    <dimen name="tv_gap_xs">6dp</dimen>
+    <dimen name="tv_gap_sm">12dp</dimen>
+    <dimen name="tv_gap_md">18dp</dimen>
+    <dimen name="tv_gap_lg">24dp</dimen>
+    <dimen name="tv_gap_xl">36dp</dimen>
+    <dimen name="tv_rail_gap">32dp</dimen>
+    <dimen name="tv_card_gap_x">24dp</dimen>
+    <dimen name="tv_card_gap_y">28dp</dimen>
+    <dimen name="tv_space_xs">@dimen/tv_gap_xs</dimen>
+    <dimen name="tv_space_sm">@dimen/tv_gap_sm</dimen>
+    <dimen name="tv_space_md">@dimen/tv_gap_md</dimen>
     <dimen name="tv_space_lg">24dp</dimen>
-    <dimen name="tv_space_xl">32dp</dimen>
-    <dimen name="tv_safe_horizontal">48dp</dimen>
-    <dimen name="tv_safe_vertical">27dp</dimen>
-    <dimen name="tv_radius_control">8dp</dimen>
-    <dimen name="tv_radius_card">8dp</dimen>
-    <dimen name="tv_radius_panel">16dp</dimen>
-    <dimen name="tv_focus_width">2dp</dimen>
-    <dimen name="tv_text_meta">14sp</dimen>
+    <dimen name="tv_space_xl">@dimen/tv_rail_gap</dimen>
+    <!-- Stitch references are authored on a 1920x1080 raster. The leanback
+         emulator exposes a 960x540 dp canvas at 2x density, so convert the
+         72px/48px reference safe area to logical Android units. -->
+    <dimen name="tv_overscan_h">36dp</dimen>
+    <dimen name="tv_overscan_v">24dp</dimen>
+    <dimen name="tv_safe_horizontal">@dimen/tv_overscan_h</dimen>
+    <dimen name="tv_safe_vertical">@dimen/tv_overscan_v</dimen>
+    <dimen name="tv_radius_button">12dp</dimen>
+    <dimen name="tv_radius_card">16dp</dimen>
+    <dimen name="tv_radius_chip">20dp</dimen>
+    <dimen name="tv_radius_modal">24dp</dimen>
+    <dimen name="tv_radius_control">@dimen/tv_radius_button</dimen>
+    <dimen name="tv_radius_panel">@dimen/tv_radius_modal</dimen>
+    <dimen name="tv_focus_stroke">3.5dp</dimen>
+    <dimen name="tv_focus_stroke_offset">2dp</dimen>
+    <dimen name="tv_focus_glow">25dp</dimen>
+    <dimen name="tv_focus_width">@dimen/tv_focus_stroke</dimen>
+    <dimen name="tv_text_meta">12sp</dimen>
+    <dimen name="tv_text_caption">14sp</dimen>
     <dimen name="tv_text_body">16sp</dimen>
-    <dimen name="tv_text_navigation">18sp</dimen>
-    <dimen name="tv_text_title">28sp</dimen>
-    <dimen name="tv_text_hero">36sp</dimen>
+    <dimen name="tv_text_button">16sp</dimen>
+    <dimen name="tv_text_card_title">20sp</dimen>
+    <dimen name="tv_text_section">26sp</dimen>
+    <dimen name="tv_text_hero">38sp</dimen>
+    <dimen name="tv_text_display">48sp</dimen>
+    <dimen name="tv_text_navigation">@dimen/tv_text_body</dimen>
+    <dimen name="tv_text_title">@dimen/tv_text_section</dimen>
 </resources>

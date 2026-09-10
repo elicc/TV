@@ -11,9 +11,9 @@
         android:layout_height="wrap_content"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:paddingStart="24dp"
-        android:paddingTop="24dp"
-        android:paddingEnd="24dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingTop="@dimen/tv_safe_vertical"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
         app:focusOutEnd="false"
         app:focusOutFront="false" />
 

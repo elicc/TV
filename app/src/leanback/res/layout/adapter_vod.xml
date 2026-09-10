@@ -6,6 +6,7 @@
     android:layout_height="wrap_content"
     android:focusable="true"
     android:focusableInTouchMode="true"
+    android:stateListAnimator="@animator/tv_focus_scale"
     android:foreground="@drawable/selector_vod">
 
     <com.google.android.material.imageview.ShapeableImageView
@@ -79,7 +80,7 @@
         android:padding="6dp"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="16sp"
+        android:textSize="@dimen/tv_text_card_title"
         tools:text="蜘蛛人" />
 
 </RelativeLayout>

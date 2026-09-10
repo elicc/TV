@@ -27,4 +27,5 @@
     <string name="tv_reload_config">Reload configuration</string>
     <string name="tv_config_error_body">Unable to load this configuration. Retry, or check the source address in Settings.</string>
     <string name="tv_content_error_body">Unable to load recommendations. Retry, or browse the library and switch sources.</string>
+    <string name="tv_home_remote_hint">D-pad  Navigate     OK  Select     Menu  More actions     Back  Previous level</string>
 </resources>

@@ -8,7 +8,10 @@
         android:id="@+id/top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingTop="@dimen/tv_safe_vertical"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
+        android:paddingBottom="16dp"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -22,7 +25,7 @@
             android:ellipsize="marquee"
             android:singleLine="true"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="@dimen/tv_text_card_title"
             tools:text="民視" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -33,7 +36,7 @@
             android:layout_below="@+id/title"
             android:layout_alignStart="@+id/title"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="1920 x 1080" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -44,7 +47,7 @@
             android:layout_alignParentEnd="true"
             android:fontFeatureSettings="tnum"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="@dimen/tv_text_card_title"
             tools:text="09:20:00" />
 
     </RelativeLayout>
@@ -72,7 +75,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="@string/error_play_url" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
@@ -166,8 +169,8 @@
         android:background="@drawable/shape_live_info"
         android:gravity="center"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -177,7 +180,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="005" />
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -195,7 +198,7 @@
             android:maxEms="48"
             android:singleLine="true"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="民視" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -206,7 +209,7 @@
             android:layout_weight="1"
             android:singleLine="true"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="正在播放：食神" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -214,7 +217,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="@dimen/tv_text_body"
             tools:text="來源 1" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>

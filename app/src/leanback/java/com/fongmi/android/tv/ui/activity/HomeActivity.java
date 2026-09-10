@@ -242,6 +242,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         List<String> items = Arrays.asList(getHome().getName(), getConfig().getName(), getString(R.string.app_name));
         Optional<String> optional = items.stream().filter(s -> !TextUtils.isEmpty(s)).findFirst();
         optional.ifPresent(s -> mBinding.title.setText(s));
+        boolean connected = !TextUtils.isEmpty(getConfig().getUrl()) && !mConfigFailed;
+        mBinding.sourceStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getColor(connected ? R.color.tv_success : R.color.tv_danger)));
         mBinding.title.setContentDescription(getString(R.string.tv_source) + "：" + mBinding.title.getText());
     }
 

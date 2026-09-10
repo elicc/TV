@@ -10,13 +10,13 @@
         android:id="@+id/result"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
+        android:layout_marginStart="@dimen/tv_safe_horizontal"
+        android:layout_marginTop="@dimen/tv_safe_vertical"
+        android:layout_marginEnd="@dimen/tv_safe_horizontal"
         android:layout_marginBottom="16dp"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="24sp"
+        android:textSize="@dimen/tv_text_section"
         tools:text="@string/collect_result" />
 
     <androidx.leanback.widget.HorizontalGridView
@@ -25,8 +25,8 @@
         android:layout_height="wrap_content"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal"
         app:focusOutEnd="false"
         app:focusOutFront="false" />
 
@@ -36,4 +36,3 @@
         android:layout_height="match_parent" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>
-
