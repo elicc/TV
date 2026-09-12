@@ -1,0 +1,450 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>fongmi_tv_leanback_1080p_settings_sniffer_full</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Noto+Sans+SC:wght@300;400;500;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      background-color: #131315;
+      color: #E2E2E6;
+      font-family: 'Noto Sans SC', sans-serif;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .focus-ring-gold {
+      outline: 3.5px solid #FCD58B;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.025);
+      z-index: 10;
+    }
+    .selected-nav {
+      outline: 3.5px solid #FCD58B;
+      background-color: #202024;
+      transform: scale(1.02);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between p-[72px] select-none">
+
+  <!-- 顶部 Header (72dp 高度区) -->
+  <header class="w-full flex items-center justify-between pb-6 border-b border-white/10">
+    <div class="flex items-center gap-6">
+      <button class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/10 border border-white/15 text-white hover:bg-white/20 transition-all cursor-pointer">
+        <svg class="w-5 h-5 stroke-[#FCD58B]" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"></path>
+        </svg>
+        <span class="text-sm font-semibold tracking-wide text-white">BACK 返回</span>
+      </button>
+      <div class="flex items-center gap-3 text-base text-white/50">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 stroke-white/40" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="hover:text-white/80 transition-colors">首页</span>
+        </div>
+        <span class="text-white/30">/</span>
+        <span class="hover:text-white/80 transition-colors">设置</span>
+        <span class="text-white/30">/</span>
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FCD58B]/10 border border-[#FCD58B]/30 text-[#FCD58B] font-semibold text-sm">
+          <svg class="w-4 h-4 stroke-[#FCD58B]" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
+            <path d="M2 12h2M20 12h2M12 2v2M12 20v2m-7.07-2.93l1.41-1.41M17.66 6.34l1.41-1.41M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41"></path>
+            <circle cx="12" cy="12" r="5"></circle>
+          </svg>
+          <span class="">网络嗅探 (Sniffer)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧状态指示与时间对齐 -->
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1b1b1d] border border-white/10">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs text-white/90 font-medium">内核在线: Pie (Hooked)</span>
+        <span class="w-1 h-3 bg-white/20 rounded-full mx-0.5"></span>
+        <span class="text-xs font-mono text-[#FCD58B]">28 条规则生效</span>
+      </div>
+      <div class="flex items-center gap-3 pl-2 border-l border-white/10 font-mono text-white/80">
+        <div class="flex flex-col items-end leading-tight">
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold text-white tracking-tight">21:40</span>
+            <span class="text-xs font-sans text-white/50">周五</span>
+          </div>
+          <div class="text-[11px] text-emerald-400/90 font-sans tracking-wide">
+            4K 60FPS · 局域网在线
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 核心 3 栏标准栅格布局: 450dp : 900dp : 450dp -->
+  <main class="w-full grid grid-cols-12 gap-8 my-auto pt-6">
+
+    <!-- 左 3 列 (450dp)：6 个系统分组导航 -->
+    <section class="col-span-3 flex flex-col gap-3"><div class="text-xs font-mono text-white/40 tracking-wider mb-1 flex items-center justify-between px-1">
+        <span class="">设置分组 (D-PAD ▲▼ 切换)</span>
+        <span class="text-[11px] text-white/30">3 / 6</span>
+      </div>
+
+      <!-- 1. 配置接口 -->
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/10 transition-all cursor-pointer">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+            <svg class="w-5 h-5 stroke-white/50" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-white/80">配置接口 (API)</span>
+            <span class="text-xs text-white/40 mt-0.5">远程主接口、本地配置与历史</span>
+          </div>
+        </div>
+        <svg class="w-4 h-4 stroke-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+
+      <!-- 2. 解码与渲染 -->
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/10 transition-all cursor-pointer">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+            <svg class="w-5 h-5 stroke-white/50" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-white/80">解码与渲染</span>
+            <span class="text-xs text-white/40 mt-0.5">硬件加速、音视频透传与渲染器</span>
+          </div>
+        </div>
+        <svg class="w-4 h-4 stroke-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+
+      <!-- 3. 网络嗅探 (Sniffer) —— 选中态 -->
+      <div class="selected-nav flex items-center justify-between px-4 py-3 rounded-xl text-white transition-all shadow-lg border border-[#FCD58B]/50">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-[#FCD58B]/20 flex items-center justify-center shrink-0 border border-[#FCD58B]/30">
+            <svg class="w-5 h-5 stroke-[#FCD58B]" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12h2M20 12h2M12 2v2M12 20v2m-7.07-2.93l1.41-1.41M17.66 6.34l1.41-1.41M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41"></path>
+              <circle cx="12" cy="12" r="5"></circle>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-bold text-white tracking-wide">网络嗅探 (Sniffer)</span>
+              <div class="w-2 h-2 rounded-full bg-[#FCD58B] animate-pulse"></div>
+            </div>
+            <span class="text-xs text-[#FCD58B]/80 mt-0.5">视频流探测、UA欺骗与正则排除</span>
+          </div>
+        </div>
+        <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#FCD58B] text-black font-bold shadow-sm shrink-0">当前选中</span>
+      </div>
+
+      <!-- 4. 直播源配置 (IPTV) -->
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/10 transition-all cursor-pointer">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+            <svg class="w-5 h-5 stroke-white/50" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-white/80">直播源配置 (IPTV)</span>
+            <span class="text-xs text-white/40 mt-0.5">默认超时切台、EPG刷新频率</span>
+          </div>
+        </div>
+        <svg class="w-4 h-4 stroke-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+
+      <!-- 5. WebDAV / 云盘挂载 -->
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/10 transition-all cursor-pointer">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+            <svg class="w-5 h-5 stroke-white/50" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-white/80">WebDAV / 云盘挂载</span>
+            <span class="text-xs text-white/40 mt-0.5">阿里云盘、Alist、本地局域网</span>
+          </div>
+        </div>
+        <svg class="w-4 h-4 stroke-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+
+      <!-- 6. 关于与固件更新 -->
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/10 transition-all cursor-pointer">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+            <svg class="w-5 h-5 stroke-white/50" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-medium text-white/80">关于与固件更新</span>
+            <span class="text-xs text-white/40 mt-0.5">v1.8.5 Leanback (minSdk 24)</span>
+          </div>
+        </div>
+        <svg class="w-4 h-4 stroke-white/20 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div></section>
+
+    <!-- 中 6 列 (900dp)：3 大功能分组 -->
+    <section class="col-span-6 flex flex-col gap-6 pr-2">
+
+      <!-- Group 1: 嗅探内核 (3 选 1 分段选项) —— 焦点默认落在 Pie -->
+      <div class="flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-1 h-4 bg-[#FCD58B] rounded-full"></div>
+            <h2 class="text-lg font-bold text-white tracking-wide">嗅探内核 (Sniffer Core)</h2>
+          </div>
+          <span class="text-xs text-[#FCD58B]/90 font-medium">推荐：Pie (兼容性与穿透力极高)</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3.5">
+          <!-- Pie（推荐）—— 默认落焦态 -->
+          <div class="focus-ring-gold relative flex flex-col justify-between p-4 rounded-xl bg-[#202024] border border-[#FCD58B]/60 transition-all cursor-pointer">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#FCD58B]"></div>
+                <span class="text-base font-bold text-white">Pie 内核</span>
+              </div>
+              <span class="text-[11px] px-1.5 py-0.5 rounded bg-[#FCD58B] text-black font-semibold">首选推荐</span>
+            </div>
+            <p class="text-xs text-white/60 leading-relaxed">支持 Hook 劫持视频流，破防各类防盗链与复杂加密 m3u8。</p>
+            <div class="mt-2 text-[11px] font-mono text-[#FCD58B]/80 flex items-center gap-1.5">
+              <span class="">穿透率 99.2%</span> · <span class="">兼容 Android 9+</span>
+            </div>
+          </div>
+
+          <!-- WebView（轻量） -->
+          <div class="relative flex flex-col justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 text-white/60">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full border border-white/30"></div>
+                <span class="text-base font-medium text-white/90">WebView 内核</span>
+              </div>
+            </div>
+            <p class="text-xs text-white/40 leading-relaxed">系统原生轻量渲染，内存占用极小，适合老旧低内存电视机顶盒。</p>
+            <div class="mt-2 text-[11px] font-mono text-white/30">低开销 · 系统自带</div>
+          </div>
+
+          <!-- X5 (QQ 内核) -->
+          <div class="relative flex flex-col justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 text-white/60">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full border border-white/30"></div>
+                <span class="text-base font-medium text-white/90">X5 独立内核</span>
+              </div>
+            </div>
+            <p class="text-xs text-white/40 leading-relaxed">内置腾讯 X5 TBS 播放扩展引擎，具备独立的流媒体嗅探管道。</p>
+            <div class="mt-2 text-[11px] font-mono text-white/30">扩展引擎 · 需下载组件</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 2: 全局嗅探规则 (多行 Regex + 操作按钮) -->
+      <div class="flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-1 h-4 bg-[#FCD58B] rounded-full"></div>
+            <h2 class="text-lg font-bold text-white tracking-wide">嗅探后缀 Regex (Global Sniff Rules)</h2>
+          </div>
+          <span class="text-xs text-white/50">当前已自动识别 28 种流媒体格式</span>
+        </div>
+
+        <div class="flex flex-col p-4 rounded-xl bg-[#1b1b1d] border border-white/10">
+          <div class="w-full bg-[#131315] p-3 rounded-lg border border-white/5 font-mono text-sm text-[#FCD58B] leading-relaxed break-all">
+            .m3u8|.mp4|video/tos|flv|avi|mkv|rmvb|ts|mov|webm|f4v|m3u|quicktime
+          </div>
+          <div class="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+            <span class="text-xs text-white/40">匹配流媒体响应头 Content-Type 及 URL 扩展名</span>
+            <div class="flex items-center gap-3">
+              <button class="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/80 hover:bg-white/10">恢复默认</button>
+              <button class="px-4 py-1.5 rounded-lg bg-[#FCD58B] text-black font-semibold text-xs tracking-wide shadow-md">+ 添加后缀</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 3: 过滤与伪装 (4 行 Toggle / 输入控制) -->
+      <div class="flex flex-col gap-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-1 h-4 bg-[#FCD58B] rounded-full"></div>
+          <h2 class="text-lg font-bold text-white tracking-wide">过滤与伪装 (Filter &amp; Disguise)</h2>
+        </div>
+
+        <div class="flex flex-col gap-2 rounded-xl bg-[#1b1b1d] border border-white/10 p-3.5"><!-- 行 1: 广告分片与死链过滤 -->
+          <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-semibold text-white/90">广告分片与死链过滤</span>
+              <span class="text-xs text-white/40">自动跳过 TS 伪装分片、倒计时插播切片及无效 404/403 重定向</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-emerald-400 font-mono font-medium">已开启</span>
+              <div class="w-11 h-6 bg-emerald-500 rounded-full flex items-center justify-end px-1 shadow-sm">
+                <div class="w-4 h-4 bg-white rounded-full shadow-md"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 行 2: 自定义 User-Agent 伪装 -->
+          <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-white/90">自定义 User-Agent 伪装</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded bg-white/10 text-white/60 font-mono">Chrome/118</span>
+              </div>
+              <span class="text-xs font-mono text-white/40 truncate max-w-[420px]">Mozilla/5.0 (Android 12; Mobile; TV) AppleWebKit/537.36 Chrome/118.0</span>
+            </div>
+            <button class="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-medium text-white transition-all">修改</button>
+          </div>
+
+          <!-- 行 3: 跳过 TS 伪装切片 -->
+          <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-semibold text-white/90">跳过 TS 伪装切片 (Anti-Hijack)</span>
+              <span class="text-xs text-white/40">防运营商劫持注入与虚假前置 5 秒切片</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-emerald-400 font-mono font-medium">已开启</span>
+              <div class="w-11 h-6 bg-emerald-500 rounded-full flex items-center justify-end px-1 shadow-sm">
+                <div class="w-4 h-4 bg-white rounded-full shadow-md"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 行 4: 嗅探超时参数 -->
+          <div class="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-semibold text-white/90">嗅探超时自动换源 (Sniff Timeout)</span>
+              <span class="text-xs text-white/40">单源抓取视频直链超时后，立即触发下级备用解析源</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-mono text-[#FCD58B] font-bold px-2.5 py-0.5 rounded bg-[#FCD58B]/10 border border-[#FCD58B]/20">5 秒</span>
+              <span class="text-xs text-white/40">自适应</span>
+            </div>
+          </div></div>
+      </div>
+
+    </section>
+
+    <!-- 右 3 列 (450dp)：3 个全局固定卡 (卡2突出显示) -->
+    <section class="col-span-3 flex flex-col gap-4">
+
+      <!-- 卡 1: 局域网手机扫码推送 (PORT 9978) -->
+      <div class="p-5 rounded-2xl bg-[#1b1b1d] border border-white/10 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-sm font-bold text-white tracking-wide">局域网手机扫码推送</span>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/60">PORT 9978</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <!-- 纯矢量 SVG 二维码示意 -->
+          <div class="w-20 h-20 bg-white p-2 rounded-lg flex items-center justify-center shrink-0">
+            <svg class="w-full h-full text-black" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2 2h7v7H2V2zm2 2v3h3V4H4zm11-2h7v7h-7V2zm2 2v3h3V4h-3zM2 15h7v7H2v-7zm2 2v3h3v-3H4zm9 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 4h2v-2h-2v2zm2-2h2v2h-2v-2zm-2-4h2v2h-2v-2zm-6-2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 2h2v2h-2v-2zm4 2h2v2h-2v-2z"></path>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-white/90">同一 WiFi 手机扫码</span>
+            <span class="text-xs font-mono text-[#FCD58B] mt-0.5">http://192.168.1.108:9978</span>
+            <span class="text-[11px] text-white/40 mt-1">可在手机网页直接粘贴长链接并秒速推送到电视</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡 2: 视频嗅探规则库 (本页面专属高亮态) -->
+      <div class="p-5 rounded-2xl bg-[#202024] border-2 border-[#FCD58B]/50 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 stroke-[#FCD58B]" fill="none" viewBox="0 0 24 24" stroke-width="2.5">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span class="text-sm font-bold text-white tracking-wide">视频嗅探规则库</span>
+          </div>
+          <span class="text-[11px] font-mono text-[#FCD58B]">Pie / WebView 内核</span>
+        </div>
+        <div class="flex items-center justify-between my-1">
+          <span class="text-xs text-white/60">当前已载入规则</span>
+          <span class="text-sm font-mono font-bold text-[#FCD58B]">28 <span class="text-xs text-white/40">条规则生效</span></span>
+        </div>
+        <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden my-1">
+          <div class="bg-gradient-to-r from-amber-400 to-[#FCD58B] h-full w-[88%]"></div>
+        </div>
+        <span class="text-[11px] text-white/50 mt-1">自动识别 m3u8 / mp4 / flv 等主流切片，屏蔽网页悬浮广告</span>
+      </div>
+
+      <!-- 卡 3: D-pad 遥控交互指引 -->
+      <div class="p-5 rounded-2xl bg-[#1b1b1d] border border-white/10 flex flex-col justify-between">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 stroke-white/60" fill="none" viewBox="0 0 24 24" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+          <span class="text-sm font-bold text-white tracking-wide">D-pad 遥控交互指引</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="flex flex-col bg-white/[0.02] p-2 rounded-lg">
+            <span class="text-[#FCD58B] font-bold mb-0.5">OK 键</span>
+            <span class="text-white/60 text-[11px]">激活选项 / 立即切换生效</span>
+          </div>
+          <div class="flex flex-col bg-white/[0.02] p-2 rounded-lg">
+            <span class="text-[#FCD58B] font-bold mb-0.5">Menu 菜单</span>
+            <span class="text-white/60 text-[11px]">呼出高级规则编辑</span>
+          </div>
+          <div class="flex flex-col bg-white/[0.02] p-2 rounded-lg">
+            <span class="text-white/80 font-semibold mb-0.5">方向键 ◀ ▶</span>
+            <span class="text-white/60 text-[11px]">跨列跳转 (导航/设置/面板)</span>
+          </div>
+          <div class="flex flex-col bg-white/[0.02] p-2 rounded-lg">
+            <span class="text-white/80 font-semibold mb-0.5">长按 OK</span>
+            <span class="text-white/60 text-[11px]">重置当前条目为预设</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 底部 4 键提示条与 72dp Overscan 安全对齐 -->
+  <footer class="w-full flex items-center justify-between pt-5 border-t border-white/5 text-xs text-white/50"><div class="flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 font-mono text-[11px] text-white/90 font-medium">▲▼◀▶</span>
+        <span class="">移动焦点</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#FCD58B] text-black font-bold font-mono text-[11px]">OK</span>
+        <span class="text-white/90 font-medium">确定切换 / 展开</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 font-mono text-[11px] text-white/90 font-medium">Menu</span>
+        <span class="">高级规则设置</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 font-mono text-[11px] text-white/90 font-medium">Back</span>
+        <span class="">保存并返回</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-[11px] font-mono text-white/40">
+      <span class="text-emerald-400/80">内存占用: 86MB / 2.0GB (minSdk 24 优化)</span>
+      <span class="text-white/20">|</span>
+      <span class="">FongMi TV v1.8.5 · Leanback Spec</span>
+    </div></footer>
+
+
+
+
+
+</body></html>

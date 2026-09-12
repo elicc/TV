@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <title>fongmi_tv_leanback_1080p_home_empty_webdav_config</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0E0E10;
+      color: #E2E2E6;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .card-focus-selected {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.4);
+      transform: scale(1.03);
+    }
+    .btn-focus-gold {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-[1080px] overflow-hidden relative bg-[#0E0E10] select-none p-[72px] flex flex-col justify-between">
+  <!-- Subtle Background Ambient Light -->
+  <div class="absolute -top-[120px] right-[250px] w-[600px] h-[600px] bg-[#E5A958]/[0.05] rounded-full blur-[150px] pointer-events-none"></div>
+  <div class="absolute bottom-[50px] left-[100px] w-[500px] h-[500px] bg-blue-500/[0.02] rounded-full blur-[140px] pointer-events-none"></div>
+
+  <!-- 1. Header (72dp 高等效) -->
+  <header class="w-full flex items-center justify-between h-[64px] relative z-10">
+    <div class="flex items-center gap-5">
+      <div class="w-11 h-11 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-white/80">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-white/40 text-[18px]">首页</span>
+        <span class="text-white/20 text-[16px]">/</span>
+        <span class="text-white font-bold text-[22px] tracking-wide">网盘 / 局域网挂载 (WebDAV / SMB)</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]">
+        <div class="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+        <span class="text-[14px] text-white/60 font-mono">当前已挂载: <span class="text-white font-semibold">0 / 5</span></span>
+      </div>
+      <div class="w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/70">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Central Main Area (两段式: 上 4 类型卡 + 下动态表单) -->
+  <main class="w-full flex-1 flex flex-col justify-between py-4 relative z-10 gap-6">
+
+    <!-- 第一段 (约 170dp 高): 4 个挂载类型横排选择卡 (卡 1 阿里云盘已选中) -->
+    <div>
+      <div class="flex items-center justify-between mb-3.5">
+        <span class="text-[15px] font-semibold text-white/80">第一步：选择云盘或协议类型 (按 ◀▶ 切换)</span>
+        <span class="text-xs text-[#FCD58B]">当前已选：阿里云盘 (OpenAPI 秒播)</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-6">
+        <!-- 卡 1: 阿里云盘 (默认焦点态 / 选中态) -->
+        <div class="h-[150px] rounded-[20px] bg-[#1E1E24] border border-[#FCD58B]/40 p-5 flex flex-col justify-between relative card-focus-selected transition-transform">
+          <div class="absolute top-3.5 right-3.5 px-2.5 py-0.5 rounded-full bg-[#E5A958] text-[#0E0E10] text-[11px] font-bold">
+            已选 RECOMMENDED
+          </div>
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-[#E5A958] flex items-center justify-center text-[#0E0E10]">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-[18px] font-bold text-white">阿里云盘</h3>
+              <span class="text-[12px] text-[#FCD58B] font-mono">Open Token 直链</span>
+            </div>
+          </div>
+          <p class="text-[12px] text-white/60">官方 OpenAPI 授权，免下载原画 4K 秒播</p>
+        </div>
+
+        <!-- 卡 2: Alist -->
+        <div class="h-[150px] rounded-[20px] bg-[#151518] border border-white/[0.08] p-5 flex flex-col justify-between hover:bg-white/[0.04] transition-colors">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-[#2A2A30] flex items-center justify-center text-white/70">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6-3h6m-6 6h4"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-[18px] font-bold text-white/80">Alist 聚合网盘</h3>
+              <span class="text-[12px] text-white/40 font-mono">多盘统一挂载</span>
+            </div>
+          </div>
+          <p class="text-[12px] text-white/40">支持 115 / 夸克 / 百度网盘 / 蓝奏等数十种网盘</p>
+        </div>
+
+        <!-- 卡 3: SMB 局域网 -->
+        <div class="h-[150px] rounded-[20px] bg-[#151518] border border-white/[0.08] p-5 flex flex-col justify-between hover:bg-white/[0.04] transition-colors">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-[#2A2A30] flex items-center justify-center text-white/70">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-[18px] font-bold text-white/80">SMB 局域网</h3>
+              <span class="text-[12px] text-white/40 font-mono">NAS / 电脑共享</span>
+            </div>
+          </div>
+          <p class="text-[12px] text-white/40">Windows 共享 / 群晖 / 威联通局域网直连</p>
+        </div>
+
+        <!-- 卡 4: WebDAV -->
+        <div class="h-[150px] rounded-[20px] bg-[#151518] border border-white/[0.08] p-5 flex flex-col justify-between hover:bg-white/[0.04] transition-colors">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-[#2A2A30] flex items-center justify-center text-white/70">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-[18px] font-bold text-white/80">标准 WebDAV</h3>
+              <span class="text-[12px] text-white/40 font-mono">标准 RFC 协议</span>
+            </div>
+          </div>
+          <p class="text-[12px] text-white/40">坚果云 / Infuse / 个人 VPS 服务器挂载</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二段: 动态表单 (根据选中类型切换，当前呈现「阿里云盘」配置表单 + 右侧切换说明) -->
+    <div class="flex-1 bg-[#131316]/90 border border-white/[0.06] rounded-[24px] p-8 grid grid-cols-[1050px_1fr] gap-10">
+      
+      <!-- Left Form: AliYun Drive Form -->
+      <div class="flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-[19px] font-bold text-white flex items-center gap-2.5">
+              <span>阿里云盘授权凭据</span>
+              <span class="text-xs px-2.5 py-0.5 rounded bg-white/10 text-white/60 font-mono">OAuth 2.0 / Refresh Token</span>
+            </h2>
+            <a href="#" class="text-[13px] text-[#FCD58B] hover:underline flex items-center gap-1">
+              <span>如何手机扫码快速获取 Token？</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Token Input Box (64dp 高) -->
+          <div class="flex flex-col gap-2">
+            <label class="text-[14px] text-white/70">刷新令牌 (Refresh Token / 32位代码)</label>
+            <div class="h-[64px] bg-[#202024] border border-[#9B9BA1]/40 rounded-[14px] px-5 flex items-center justify-between font-mono">
+              <span class="text-white/40 text-[15px]">3a7b9f8e4c2d10a8e9f2b3c4d5e6a7b8... (按 OK 调起键盘或手机贴入)</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded">支持手机推送</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Switch & Path Setting -->
+          <div class="grid grid-cols-2 gap-5 mt-5">
+            <div class="h-[60px] bg-[#1A1A1E] border border-white/[0.06] rounded-[14px] px-5 flex items-center justify-between">
+              <div>
+                <div class="text-[14px] text-white font-medium">挂载到根目录</div>
+                <div class="text-[11px] text-white/40">在主页以专属盘符直接展现</div>
+              </div>
+              <div class="w-12 h-6 rounded-full bg-[#E5A958] p-0.5 flex items-center justify-end">
+                <div class="w-5 h-5 rounded-full bg-[#0E0E10]"></div>
+              </div>
+            </div>
+
+            <div class="h-[60px] bg-[#1A1A1E] border border-white/[0.06] rounded-[14px] px-5 flex items-center justify-between">
+              <div>
+                <div class="text-[14px] text-white font-medium">根目录路径</div>
+                <div class="text-[11px] text-[#FCD58B] font-mono">/我的资源/影视库</div>
+              </div>
+              <span class="text-xs text-white/40">修改</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button (DEFAULT FOCUSED) -->
+        <div class="flex items-center gap-4 mt-6">
+          <button class="flex-1 h-[56px] rounded-[14px] bg-[#E5A958] text-[#0E0E10] font-bold text-[17px] flex items-center justify-center gap-2.5 transition-all btn-focus-gold">
+            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span>测试连接并挂载</span>
+          </button>
+          <button class="h-[56px] px-7 rounded-[14px] bg-white/[0.06] border border-white/10 text-white font-semibold text-[15px] hover:bg-white/10">
+            保存为离线配置
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Form Preview Guide (切换到 WebDAV / Alist 时的动态表单结构说明) -->
+      <div class="border-l border-white/[0.08] pl-8 flex flex-col justify-between">
+        <div>
+          <span class="text-[13px] font-semibold text-white/60 tracking-wider">多协议表单动态架构规范</span>
+          <div class="mt-3.5 space-y-3">
+            <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div class="text-[13px] font-medium text-white/80 mb-1">切换到「WebDAV」表单字段：</div>
+              <p class="text-[12px] text-white/50 leading-relaxed font-mono">
+                • 服务器地址 (http/https)<br>
+                • 端口 (如 5005 / 443)<br>
+                • 路径 (如 /dav)<br>
+                • 用户名 &amp; 密码
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div class="text-[13px] font-medium text-white/80 mb-1">切换到「SMB 局域网」表单字段：</div>
+              <p class="text-[12px] text-white/50 leading-relaxed font-mono">
+                • 局域网主机 IP / 共享名<br>
+                • 匿名访问 (Guest) 开关<br>
+                • 域用户凭据
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-[12px] text-white/40 flex items-center gap-2">
+          <svg class="w-4 h-4 text-[#FCD58B]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>单屏单焦点：焦点切换至表单时自动联动滚动</span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- 3. Bottom 4-key TV Remote Bar -->
+  <footer class="w-full h-[52px] flex items-center justify-between border-t border-white/[0.08] pt-4 relative z-10 text-[14px]">
+    <div class="flex items-center gap-8 text-white/80">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#FCD58B] text-[#0E0E10] font-bold text-xs">OK</span>
+        <span class="text-white font-medium">测试连接并保存</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">◀ ▶</span>
+        <span class="text-white/70">切换挂载类型</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">Menu</span>
+        <span class="text-white/70">查看已挂载服务器列表</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">Back</span>
+        <span class="text-white/70">返回上级</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs font-mono text-white/40">
+      <span>1080p 16:9</span>
+      <span>•</span>
+      <span>72dp Overscan</span>
+      <span>•</span>
+      <span class="text-[#FCD58B]">4-Protocol Mount System</span>
+    </div>
+  </footer>
+
+</body></html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <title>fongmi_tv_leanback_1080p_home_empty_vod_config</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0E0E10;
+      color: #E2E2E6;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .focus-ring-gold {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.025);
+    }
+    .qr-pattern {
+      background-image: 
+        radial-gradient(#111 20%, transparent 20%),
+        radial-gradient(#111 20%, transparent 20%);
+      background-color: #ffffff;
+      background-position: 0 0, 10px 10px;
+      background-size: 20px 20px;
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-[1080px] overflow-hidden relative bg-[#0E0E10] select-none p-[72px] flex flex-col justify-between">
+  <!-- Subtle Background Ambient Light & Watermark -->
+  <div class="absolute -top-[160px] -left-[100px] w-[640px] h-[640px] bg-[#E5A958]/[0.05] rounded-full blur-[140px] pointer-events-none"></div>
+  <div class="absolute -bottom-[200px] right-[100px] w-[700px] h-[700px] bg-[#E5A958]/[0.04] rounded-full blur-[160px] pointer-events-none"></div>
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.02]">
+    <span class="text-[280px] font-black tracking-widest text-white">FONGMI</span>
+  </div>
+
+  <!-- 1. Header (72dp 高等效) -->
+  <header class="w-full flex items-center justify-between h-[64px] relative z-10">
+    <!-- Left Breadcrumb & Back -->
+    <div class="flex items-center gap-5">
+      <div class="w-11 h-11 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-white/80 hover:bg-white/10 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-white/40 text-[18px]">首页</span>
+        <span class="text-white/20 text-[16px]">/</span>
+        <span class="text-white font-bold text-[22px] tracking-wide">点播数据源配置 (VOD Spider)</span>
+      </div>
+    </div>
+
+    <!-- Right Status & Settings -->
+    <div class="flex items-center gap-5">
+      <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]">
+        <div class="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+        <span class="text-[14px] text-white/60 font-mono">已配置接口: <span class="text-white font-semibold">0 / 6</span></span>
+      </div>
+      <div class="w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/70">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Central Main Grid (900dp : 750dp) -->
+  <main class="w-full flex-1 grid grid-cols-[920px_1fr] gap-10 items-stretch py-6 relative z-10">
+    
+    <!-- Left Column: QR Code + Manual URL Input -->
+    <div class="flex flex-col justify-between bg-[#131316]/90 border border-white/[0.06] rounded-[24px] p-8">
+      
+      <!-- A. Top QR Card -->
+      <div class="flex flex-col items-center justify-center bg-[#1B1B1F] border border-white/[0.06] rounded-[20px] p-7 relative">
+        <span class="text-[18px] font-semibold text-white mb-4">手机扫码推送配置 (HTTP 9978)</span>
+        
+        <!-- 240x240 QR Canvas -->
+        <div class="w-[220px] h-[220px] bg-white rounded-xl p-3 shadow-2xl relative flex flex-col justify-between">
+          <!-- 4 Corner Locators -->
+          <div class="flex justify-between">
+            <div class="w-12 h-12 border-4 border-black p-1 flex items-center justify-center"><div class="w-6 h-6 bg-black"></div></div>
+            <div class="w-12 h-12 border-4 border-black p-1 flex items-center justify-center"><div class="w-6 h-6 bg-black"></div></div>
+          </div>
+          <!-- Center simulated 8x8 code matrix -->
+          <div class="w-full h-16 grid grid-cols-8 grid-rows-3 gap-1 px-1">
+            <div class="bg-black"></div><div class="bg-transparent"></div><div class="bg-black"></div><div class="bg-black"></div>
+            <div class="bg-transparent"></div><div class="bg-black"></div><div class="bg-transparent"></div><div class="bg-black"></div>
+            <div class="bg-black"></div><div class="bg-black"></div><div class="bg-transparent"></div><div class="bg-black"></div>
+            <div class="bg-black"></div><div class="bg-transparent"></div><div class="bg-black"></div><div class="bg-black"></div>
+            <div class="bg-transparent"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-transparent"></div>
+            <div class="bg-black"></div><div class="bg-black"></div><div class="bg-transparent"></div><div class="bg-black"></div>
+          </div>
+          <div class="flex justify-between items-end">
+            <div class="w-12 h-12 border-4 border-black p-1 flex items-center justify-center"><div class="w-6 h-6 bg-black"></div></div>
+            <div class="w-9 h-9 border-2 border-black p-0.5 flex items-center justify-center"><div class="w-4 h-4 bg-black"></div></div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-full border border-white/10">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-[14px] text-[#FCD58B] font-mono font-medium tracking-wide">http://192.168.1.108:9978</span>
+        </div>
+        <p class="text-[13px] text-[#9B9BA1] mt-2.5">局域网内任意手机浏览器或微信扫码打开，秒级自动写入 JSON 源</p>
+      </div>
+
+      <!-- B. URL Manual Input -->
+      <div class="flex flex-col gap-3 mt-4">
+        <label class="text-[15px] font-medium text-white/80 flex items-center justify-between">
+          <span>手动粘贴 Spider JSON URL 接口</span>
+          <span class="text-xs text-white/40">支持 http / https / clan / fan 格式</span>
+        </label>
+        
+        <div class="flex items-center gap-3">
+          <!-- Input Container -->
+          <div class="flex-1 h-[64px] bg-[#202024] border border-[#9B9BA1]/40 rounded-[14px] px-5 flex items-center justify-between">
+            <div class="flex items-center gap-3 w-full">
+              <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+              </svg>
+              <span class="text-white/30 text-[16px] font-mono">https://ghproxy.com/https://raw.github.../spider.json</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="p-2 rounded-lg bg-white/[0.05] text-white/50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Test Connection Button (DEFAULT FOCUSED) -->
+          <button class="h-[64px] px-8 rounded-[14px] bg-[#E5A958] text-[#0E0E10] font-bold text-[17px] flex items-center justify-center gap-2.5 transition-all focus-ring-gold">
+            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span>测试连接</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Historical / Saved Interface List -->
+    <div class="flex flex-col bg-[#131316]/90 border border-white/[0.06] rounded-[24px] p-8 justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <h2 class="text-[20px] font-bold text-white">已保存的接口</h2>
+            <span class="text-xs px-2.5 py-1 rounded bg-white/10 text-white/60">可存 6 条</span>
+          </div>
+          <button class="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-[14px] font-medium text-white/80 flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#FCD58B]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>手动添加</span>
+          </button>
+        </div>
+
+        <!-- Empty State Visual Representation -->
+        <div class="w-full h-[400px] border border-dashed border-white/10 rounded-[18px] bg-[#1A1A1E]/40 flex flex-col items-center justify-center p-8 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4 text-[#FCD58B]">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-[18px] font-semibold text-white/90 mb-1.5">暂无保存的配置接口</h3>
+          <p class="text-[14px] text-white/50 max-w-[380px] leading-relaxed">请在左侧使用手机扫码即投，或粘贴 Spider API 网络地址后点击「测试连接」加入列表</p>
+
+          <!-- Simulated empty slot blueprint preview -->
+          <div class="mt-6 w-full max-w-[420px] space-y-2 opacity-35">
+            <div class="h-10 rounded-lg bg-white/[0.06] flex items-center px-4 justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-5 h-5 rounded-full bg-white/10 text-[10px] flex items-center justify-center font-mono">01</span>
+                <span class="text-xs">示例: 饭太硬 (极速4K线路)</span>
+              </div>
+              <span class="text-[10px] text-emerald-400">准备导入</span>
+            </div>
+            <div class="h-10 rounded-lg bg-white/[0.04] flex items-center px-4 justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-5 h-5 rounded-full bg-white/10 text-[10px] flex items-center justify-center font-mono">02</span>
+                <span class="text-xs">示例: 摸鱼影视 (多仓备用)</span>
+              </div>
+              <span class="text-[10px] text-white/40">空槽位</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="pt-4 border-t border-white/[0.06] flex items-center justify-between text-[13px] text-white/40">
+        <span>* 支持一键多仓聚合解析，解析失败自动平滑重试</span>
+        <span class="font-mono text-[#FCD58B]">D-pad 焦点联动已就绪</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 3. Bottom 4-key TV Remote Bar -->
+  <footer class="w-full h-[52px] flex items-center justify-between border-t border-white/[0.08] pt-4 relative z-10 text-[14px]">
+    <div class="flex items-center gap-8 text-white/80">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-[#FCD58B] text-[#0E0E10] font-bold text-xs">OK</span>
+        <span class="text-white font-medium">测试连接</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">▶ 播放</span>
+        <span class="text-white/70">粘贴并立即启用</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">Menu</span>
+        <span class="text-white/70">高级配置 (UA/嗅探)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-semibold">Back</span>
+        <span class="text-white/70">返回上级</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs font-mono text-white/40">
+      <span>1080p 16:9</span>
+      <span>•</span>
+      <span>72dp Overscan</span>
+      <span>•</span>
+      <span class="text-[#FCD58B]">Single-Focus Ready</span>
+    </div>
+  </footer>
+
+</body></html>

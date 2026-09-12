@@ -1,0 +1,8 @@
+{
+  "name": "TV UI Architect",
+  "description": "Build immersive, fluid, and pixel-perfect TV application layouts with refined interactive micro-animations for an exceptional user experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans SC', 'Work Sans', system-ui, -apple-system, sans-serif;
+    background-color: #0E0E10;
+    color: #F3F3F6;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* 10-foot TV Focus Elevation & Halo Glow */
+.focusable {
+  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              outline 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.22s ease,
+              background-color 0.22s ease;
+  position: relative;
+}
+
+.tv-focus-primary,
+.focusable:focus,
+.focusable.tv-focused {
+  outline: 3.5px solid #FCD58B !important;
+  outline-offset: 3px !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 28px rgba(252, 213, 139, 0.48), 0 18px 42px -8px rgba(229, 169, 88, 0.45) !important;
+  z-index: 45 !important;
+}
+
+/* Fix for settings items being clipped by overflow */
+/* Add padding to scroll containers to prevent clipping */
+.scroll-container-safe {
+  padding: 16px;
+  margin: -16px;
+}
+
+/* Specialized focus for spec cards */
+.tv-focus-spec-card,
+.focusable-spec.tv-focused {
+  outline: 3.5px solid #FCD58B !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 28px rgba(252, 213, 139, 0.45), 0 20px 40px rgba(0, 0, 0, 0.8) !important;
+  transform: scale(1.04) !important;
+  z-index: 35 !important;
+}
+
+/* Nav bar focus enhancement */
+nav .focusable.tv-focused {
+  background-color: #E5A958 !important;
+  color: #0E0E10 !important;
+  font-weight: 700 !important;
+  outline: 2.5px solid #FCD58B !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 22px rgba(229, 169, 88, 0.48) !important;
+  transform: scale(1.05) !important;
+}
+nav .focusable.tv-focused svg {
+  color: #0E0E10 !important;
+  stroke: #0E0E10 !important;
+}
+
+/* Poster Card Internal Metadata Micro-Shift on Focus */
+.focusable.tv-focused .card-poster-inner {
+  border-color: rgba(252, 213, 139, 0.55);
+}
+.focusable.tv-focused .card-meta {
+  transform: translateY(-2px);
+  transition: transform 0.25s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Ambient backdrop gradient for Leanback */
+.hero-mask {
+  background: linear-gradient(90deg, #0E0E10 0%, rgba(14, 14, 16, 0.95) 38%, rgba(14, 14, 16, 0.65) 68%, rgba(14, 14, 16, 0.2) 100%),
+              linear-gradient(0deg, #0E0E10 0%, rgba(14, 14, 16, 0.92) 24%, rgba(14, 14, 16, 0) 65%);
+}
+
+.glass-pill {
+  background: rgba(32, 32, 36, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.glass-panel {
+  background: rgba(28, 28, 32, 0.85);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Gentle Ambient Atmospheric Lighting Animation */
+@keyframes ambientBreath {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1) translate(0px, 0px);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.06) translate(-15px, 12px);
+  }
+}
+.animate-ambient-light {
+  animation: ambientBreath 11s ease-in-out infinite;
+}
+
+@keyframes ambientDrift {
+  0%, 100% {
+    transform: scale(1) translate(0px, 0px);
+    opacity: 0.18;
+  }
+  50% {
+    transform: scale(1.12) translate(25px, -20px);
+    opacity: 0.32;
+  }
+}
+.animate-ambient-drift {
+  animation: ambientDrift 14s ease-in-out infinite;
+}
+
+/* Hero Shimmer Light Sweep Effect */
+@keyframes shimmerSheen {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  50%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+.shimmer-badge {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-badge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: shimmerSheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Staggered Entrance Animations */
+@keyframes fadeInUpEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.entrance-stagger-1 {
+  animation: fadeInUpEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+.entrance-stagger-2 {
+  animation: fadeInUpEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+.entrance-stagger-3 {
+  animation: fadeInUpEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+.entrance-stagger-4 {
+  animation: fadeInUpEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
+/* TV Video Player Scanline effect */
+.crt-overlay {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 6px 100%;
+}

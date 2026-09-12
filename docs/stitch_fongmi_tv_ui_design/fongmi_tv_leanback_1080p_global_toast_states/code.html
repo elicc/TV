@@ -1,0 +1,233 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <title>fongmi_tv_leanback_1080p_global_toast_states</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0E0E10;
+      color: #E2E2E6;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin 1s linear infinite;
+    }
+    .toast-shadow {
+      box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+    .focus-ring-toast {
+      outline: 3.5px solid #FCD58B;
+      outline-offset: 2px;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.5);
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-[1080px] overflow-hidden relative bg-[#0E0E10] select-none p-[72px] flex flex-col justify-between">
+  <!-- Subtle Background Ambient Light -->
+  <div class="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-[#E5A958]/[0.04] rounded-full blur-[180px] pointer-events-none"></div>
+
+  <!-- 1. Header Spec Title -->
+  <header class="w-full flex items-center justify-between h-[60px] relative z-10 border-b border-white/[0.08] pb-4">
+    <div class="flex items-center gap-4">
+      <div class="w-10 h-10 rounded-xl bg-[#E5A958]/10 border border-[#E5A958]/30 flex items-center justify-center text-[#E5A958]">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-[22px] font-bold text-white tracking-wide">FongMi TV · 全局 Toast 状态规范 (Global Toast Specs)</h1>
+        <p class="text-[13px] text-white/50">适用于 10-foot TV 远距离视距（2.5–3.5m），4 种即时反馈与容错动作定义</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-6 font-mono text-xs text-white/60">
+      <span class="px-3 py-1 rounded-md bg-white/[0.04] border border-white/10">标准高度: 64dp</span>
+      <span class="px-3 py-1 rounded-md bg-white/[0.04] border border-white/10">圆角: 16dp</span>
+      <span class="px-3 py-1 rounded-md bg-white/[0.04] border border-white/10 text-[#FCD58B]">位置: Bottom 200dp 居中</span>
+    </div>
+  </header>
+
+  <!-- 2. Central 2x2 Grid: 4 Toast State Cards -->
+  <main class="w-full flex-1 grid grid-cols-2 grid-rows-2 gap-8 py-6 relative z-10">
+
+    <!-- Card 1: 成功态 (SUCCESS) -->
+    <div class="rounded-[24px] bg-[#141418] border border-white/[0.06] p-7 flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#22C55E]"></span>
+          <span class="text-[16px] font-bold text-white">01. 成功态 (SUCCESS)</span>
+        </div>
+        <span class="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-2.5 py-0.5 rounded">持续 3 秒 · 自动退出</span>
+      </div>
+
+      <!-- Toast Preview on dark canvas -->
+      <div class="w-full h-[140px] bg-[#0E0E10] border border-white/[0.04] rounded-2xl flex items-center justify-center relative">
+        <!-- Toast Element -->
+        <div class="min-w-[560px] max-w-[680px] h-[64px] bg-[#202024]/95 border border-[#22C55E]/50 rounded-[16dp] px-5 flex items-center gap-4 toast-shadow">
+          <!-- 32dp Circle Icon -->
+          <div class="w-8 h-8 rounded-full bg-[#22C55E] flex items-center justify-center text-white flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <!-- Text -->
+          <div class="flex flex-col justify-center">
+            <div class="text-[16sp] font-medium text-white leading-tight">✓ 点播数据源已配置成功 (饭太硬 极速4K)</div>
+            <div class="text-[12sp] text-white/50 font-mono leading-tight mt-0.5">已自动启用 1,420 个频道与 Spider 解析引擎</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specs Annotation -->
+      <div class="flex items-center justify-between text-[12px] text-white/40 font-mono pt-1">
+        <span>图标: #22C55E 32dp 圆</span>
+        <span>边框: 1dp #22C55E 50%</span>
+        <span>无破坏性焦点交互</span>
+      </div>
+    </div>
+
+    <!-- Card 2: 失败态 (ERROR) -->
+    <div class="rounded-[24px] bg-[#141418] border border-white/[0.06] p-7 flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+          <span class="text-[16px] font-bold text-white">02. 失败态 (ERROR · 含焦点动作)</span>
+        </div>
+        <span class="text-xs font-mono text-rose-400 bg-rose-400/10 px-2.5 py-0.5 rounded">持续 5 秒 · 停顿容错</span>
+      </div>
+
+      <!-- Toast Preview on dark canvas -->
+      <div class="w-full h-[140px] bg-[#0E0E10] border border-white/[0.04] rounded-2xl flex items-center justify-center relative">
+        <!-- Toast Element (Error with action button, FOCUSED) -->
+        <div class="min-w-[620px] max-w-[720px] h-[64px] bg-[#202024]/95 border border-[#EF4444]/50 rounded-[16dp] px-5 flex items-center justify-between gap-4 toast-shadow">
+          <div class="flex items-center gap-4">
+            <!-- 32dp Circle Icon -->
+            <div class="w-8 h-8 rounded-full bg-[#EF4444] flex items-center justify-center text-white flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </div>
+            <!-- Text -->
+            <div class="flex flex-col justify-center">
+              <div class="text-[16sp] font-medium text-white leading-tight">✕ 连接超时，请检查网络或配置 URL</div>
+              <div class="text-[12sp] text-white/50 font-mono leading-tight mt-0.5">http://192.168.x.x/api.json (404 Not Found)</div>
+            </div>
+          </div>
+          <!-- Action Retry Button (DEFAULT FOCUSED) -->
+          <button class="h-[40px] px-5 rounded-lg bg-[#E5A958] text-[#0E0E10] font-bold text-[14px] flex items-center gap-1.5 focus-ring-toast">
+            <svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>重试</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Specs Annotation -->
+      <div class="flex items-center justify-between text-[12px] text-white/40 font-mono pt-1">
+        <span>图标: #EF4444 32dp 圆</span>
+        <span>边框: 1dp #EF4444 50%</span>
+        <span class="text-[#FCD58B]">获焦规则: 默认落焦于「重试」</span>
+      </div>
+    </div>
+
+    <!-- Card 3: 加载中 (LOADING) -->
+    <div class="rounded-[24px] bg-[#141418] border border-white/[0.06] p-7 flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#E5A958]"></span>
+          <span class="text-[16px] font-bold text-white">03. 加载中态 (LOADING)</span>
+        </div>
+        <span class="text-xs font-mono text-[#FCD58B] bg-[#FCD58B]/10 px-2.5 py-0.5 rounded">任务完成前常驻</span>
+      </div>
+
+      <!-- Toast Preview on dark canvas -->
+      <div class="w-full h-[140px] bg-[#0E0E10] border border-white/[0.04] rounded-2xl flex items-center justify-center relative">
+        <!-- Toast Element -->
+        <div class="min-w-[560px] max-w-[660px] h-[64px] bg-[#202024]/95 border border-[#E5A958]/50 rounded-[16dp] px-5 flex items-center gap-4 toast-shadow">
+          <!-- 32dp Circle Icon with Rotating Spinner -->
+          <div class="w-8 h-8 rounded-full bg-[#E5A958] flex items-center justify-center text-[#0E0E10] flex-shrink-0">
+            <svg class="w-4 h-4 animate-spin-slow" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <!-- Text -->
+          <div class="flex flex-col justify-center">
+            <div class="text-[16sp] font-medium text-white leading-tight">正在验证 M3U 直播源与 EPG 节点…</div>
+            <div class="text-[12sp] text-white/50 font-mono leading-tight mt-0.5">已扫描 38 / 120 频道，自动过滤超时流</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specs Annotation -->
+      <div class="flex items-center justify-between text-[12px] text-white/40 font-mono pt-1">
+        <span>图标: #E5A958 + 纯 SVG Spinner</span>
+        <span>边框: 1dp #E5A958 50%</span>
+        <span>动效: 1s/cycle 无卡顿</span>
+      </div>
+    </div>
+
+    <!-- Card 4: 信息态 (INFO) -->
+    <div class="rounded-[24px] bg-[#141418] border border-white/[0.06] p-7 flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#9B9BA1]"></span>
+          <span class="text-[16px] font-bold text-white">04. 信息态 (INFO)</span>
+        </div>
+        <span class="text-xs font-mono text-white/60 bg-white/10 px-2.5 py-0.5 rounded">持续 2.5 秒 · 弱干扰提示</span>
+      </div>
+
+      <!-- Toast Preview on dark canvas -->
+      <div class="w-full h-[140px] bg-[#0E0E10] border border-white/[0.04] rounded-2xl flex items-center justify-center relative">
+        <!-- Toast Element -->
+        <div class="min-w-[520px] max-w-[620px] h-[64px] bg-[#202024]/95 border border-[#66666D]/50 rounded-[16dp] px-5 flex items-center gap-4 toast-shadow">
+          <!-- 32dp Circle Icon -->
+          <div class="w-8 h-8 rounded-full bg-[#2A2A30] flex items-center justify-center text-[#E5A958] flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <!-- Text -->
+          <div class="flex flex-col justify-center">
+            <div class="text-[16sp] font-medium text-white leading-tight">数据源已保存到本地配置</div>
+            <div class="text-[12sp] text-white/50 font-mono leading-tight mt-0.5">下次启动将自动加载并尝试更新缓存</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specs Annotation -->
+      <div class="flex items-center justify-between text-[12px] text-white/40 font-mono pt-1">
+        <span>图标: #2A2A30 + #E5A958 i</span>
+        <span>边框: 1dp #66666D 50%</span>
+        <span>不抢占焦点 / 零遮挡</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 3. Bottom Comprehensive Spec Notes (TV Overscan & Interaction Rules) -->
+  <footer class="w-full h-[64px] flex items-center justify-between border-t border-white/[0.08] pt-3 relative z-10 text-[13px] text-white/50">
+    <div class="flex items-center gap-6">
+      <span class="text-white font-medium">全局物理与交互约束：</span>
+      <span>1. 入场上滑 24dp 渐显 (240ms)</span>
+      <span>2. 出场淡出渐隐 (200ms)</span>
+      <span>3. 屏幕底部 bottom: 200dp 水平居中，严禁压制底部遥控器提示条</span>
+      <span>4. 单屏单焦点：消失前 0.5s 禁止焦点强行抢占</span>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs font-mono text-white/40">
+      <span class="text-[#FCD58B]">Champagne Dark v1.2</span>
+      <span>•</span>
+      <span>1080p 72dp Overscan Compliant</span>
+    </div>
+  </footer>
+
+</body></html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html><html lang="zh-CN" class="h-full"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fongmi_tv_leanback_1080p_home_empty_source</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0E0E10',
+            surface: '#202024',
+            'surface-dark': '#151518',
+            accent: '#E5A958',
+            focus: '#FCD58B',
+            'text-primary': '#FFFFFF',
+            'text-secondary': '#9B9BA1',
+            'text-dim': '#66666D',
+            'border-subtle': '#2E2E35',
+          },
+          fontFamily: {
+            sans: ['"Space Grotesk"', '"Noto Sans SC"', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background-color: #0E0E10;
+      color: #FFFFFF;
+      font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+      user-select: none;
+    }
+
+    /* 10-foot UI TV Focus Insurance: color + 3.5dp outline + scale */
+    .tv-focus-active {
+      outline: 3.5px solid #FCD58B !important;
+      outline-offset: 3px;
+      box-shadow: 0 0 35px rgba(252, 213, 139, 0.45), 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+      transform: scale(1.05);
+      border-color: transparent !important;
+      z-index: 20;
+    }
+
+    /* Overscan 72dp guideline padding */
+    .overscan-safe {
+      padding-left: 72px;
+      padding-right: 72px;
+      padding-top: 56px;
+      padding-bottom: 48px;
+    }
+
+    /* Ambient Background Watermark */
+    .watermark-text {
+      font-size: 320px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: #FFFFFF;
+      opacity: 0.035;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="w-[1920px] h-[1080px] bg-bg flex flex-col justify-between overscan-safe relative">
+
+  <!-- Background Ambient Glow & Watermark (No real images, minSdk 24 compatible) -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <!-- Top Warm Champagne Ambient Flare -->
+    <div class="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[1200px] h-[550px] bg-[#E5A958] opacity-[0.08] blur-[140px] rounded-full"></div>
+    <!-- Center Soft Radial Glow -->
+    <div class="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] bg-[#E5A958] opacity-[0.045] blur-[160px] rounded-full"></div>
+    <!-- Huge "FONGMI TV" Watermark -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 watermark-text select-none whitespace-nowrap text-center">
+      FONGMI TV
+    </div>
+  </div>
+
+  <!-- 1. Header (72dp height equivalent) -->
+  <header class="relative z-10 w-full h-[72px] flex items-center justify-between">
+    <!-- Left: Brand Logo & Title -->
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FCD58B] via-[#E5A958] to-[#B88035] flex items-center justify-center shadow-lg shadow-[#E5A958]/20 shrink-0">
+        <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="15" rx="3"></rect>
+          <polyline points="17 2 12 7 7 2"></polyline>
+        </svg>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[22px] font-bold tracking-wider text-white leading-none">FONGMI</span>
+        <span class="px-1.5 py-0.5 rounded bg-[#E5A958] text-[#0E0E10] text-[11px] font-mono font-bold leading-none uppercase">TV</span>
+      </div>
+    </div>
+
+    <!-- Center: Standard Navigation Capsule Pills -->
+    <nav class="flex items-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
+      <span class="px-5 py-1.5 rounded-full text-[14px] font-medium text-white/90 bg-white/10 border border-white/5 cursor-pointer flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        首页
+      </span>
+      <span class="px-5 py-1.5 rounded-full text-[14px] font-medium text-text-dim hover:text-text-secondary cursor-not-allowed transition-all flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        点播
+      </span>
+      <span class="px-5 py-1.5 rounded-full text-[14px] font-medium text-text-dim hover:text-text-secondary cursor-not-allowed transition-all flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>
+        直播
+      </span>
+      <span class="px-5 py-1.5 rounded-full text-[14px] font-medium text-text-dim hover:text-text-secondary cursor-not-allowed transition-all flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+        收藏历史
+      </span>
+      <span class="px-5 py-1.5 rounded-full text-[14px] font-medium text-text-dim hover:text-text-secondary cursor-not-allowed transition-all flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        搜索
+      </span>
+    </nav>
+
+    <!-- Right: Interface Status Pill + Settings Gear + System Clock -->
+    <div class="flex items-center gap-5">
+      <!-- Interface Status Pill Indicator -->
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[12px] font-mono text-text-secondary">
+        <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+        <span class="">数据源: 未配置</span>
+      </div>
+
+      <!-- Settings Gear Button -->
+      <div class="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-text-secondary hover:text-white transition-all cursor-pointer">
+        <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </div>
+
+      <!-- Standard Clock -->
+      <div class="flex items-baseline gap-2.5 text-right pl-1">
+        <span class="text-[28px] font-bold text-white font-mono tracking-tight leading-none">20:45</span>
+        <span class="text-[11px] font-medium text-text-secondary tracking-wide uppercase">周五 · 10月24日</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Center Hero Area (Occupies ~700dp vertical room) -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center my-auto">
+    <!-- Title & Subtitle Block -->
+    <div class="text-center max-w-3xl mb-12"><div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-[13px] font-medium tracking-wide uppercase mb-4"><span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>首次启动引导 · FIRST-LAUNCH EMPTY STATE</div><h1 class="text-[40px] font-bold text-white tracking-tight leading-tight mb-3.5">欢迎使用 FongMi TV</h1><p class="text-[16px] text-text-secondary leading-normal font-normal">先添加影视内容源，约 1 分钟即可开启客厅影院</p><div class="mt-2 text-[12px] text-text-dim tracking-wide opacity-70 font-mono">注：清空/失败场景动态切换状态文案</div></div>
+
+    <!-- C. 3 Configuration Entry Cards (Horizontal row, equal width 480x180dp, gap 32dp) -->
+    <div class="flex items-center justify-center gap-8 w-full max-w-[1504px]">
+      
+      <!-- Card 1: 手机扫码推送 (RECOMMENDED Badge + Currently Focused) -->
+      <div class="tv-focus-active relative w-[480px] h-[180px] rounded-2xl bg-surface border border-border-subtle p-6 flex items-center gap-6 transition-all duration-300 cursor-pointer"><div class="absolute -top-3.5 right-6 px-3 py-1 rounded-md bg-gradient-to-r from-[#FCD58B] to-[#E5A958] text-black font-bold text-[11px] tracking-wider uppercase shadow-md shadow-[#E5A958]/30 flex items-center gap-1.5"><svg class="w-3 h-3 text-black" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>RECOMMENDED · 推荐首选</div><div class="w-[64px] h-[64px] rounded-2xl bg-[#E5A958] text-black flex items-center justify-center shrink-0 shadow-lg shadow-[#E5A958]/30"><svg class="w-8 h-8 text-[#0E0E10]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg></div><div class="flex flex-col justify-center flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="text-[20px] font-bold text-white tracking-tight">点播数据源 (VOD)</h3><span class="text-[11px] px-2 py-0.5 rounded bg-[#FCD58B]/20 text-[#FCD58B] font-mono font-medium">极速</span></div><p class="text-[13px] text-white/90 leading-tight mb-1">Spider API · 饭太硬 / 摸鱼 / 多多等接口</p><div class="flex items-center gap-1.5 text-[12px] text-[#FCD58B] font-medium leading-tight mb-1"><span class="inline-block w-1.5 h-1.5 rounded-full bg-[#34C759]"></span><span class="">同 WiFi 下扫码 1 秒导入</span><span class="font-mono text-[11px] px-1.5 py-0.5 rounded bg-white/10 text-[#FCD58B]">http://192.168.x.x:9978</span></div><div class="text-[12px] text-text-secondary">支持 JSON / M3U / TXT 链接快速推送</div></div></div>
+
+      <!-- Card 2: 输入网络短链 (Unfocused) -->
+      <div class="relative w-[480px] h-[180px] rounded-2xl bg-white/[0.04] border border-white/10 p-6 flex items-center gap-6 opacity-90 transition-all duration-300 cursor-pointer hover:border-white/20"><div class="w-[64px] h-[64px] rounded-2xl bg-[#2A2A30] text-[#E5A958] flex items-center justify-center shrink-0 border border-white/10"><svg class="w-8 h-8 text-[#E5A958]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h20"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m17 2-5 5-5-5"></path><circle cx="12" cy="14" r="2"></circle><path d="M8.5 10.5a5 5 0 0 0 0 7"></path><path d="M15.5 10.5a5 5 0 0 1 0 7"></path></svg></div><div class="flex flex-col justify-center flex-1"><h3 class="text-[20px] font-bold text-white tracking-tight mb-1.5">直播数据源 (Live)</h3><p class="text-[14px] text-text-secondary leading-relaxed mb-2">M3U / TXT URL · CCTV / 卫视 / 体育频道</p><div class="flex items-center gap-1.5 text-[12px] text-text-secondary font-mono"><span class="w-1.5 h-1.5 rounded-full bg-accent/70"></span><span class="">EPG 节目单自动抓取</span></div></div></div>
+
+      <!-- Card 3: 粘贴 Spider 配置 (Unfocused) -->
+      <div class="relative w-[480px] h-[180px] rounded-2xl bg-white/[0.04] border border-white/10 p-6 flex items-center gap-6 opacity-90 transition-all duration-300 cursor-pointer hover:border-white/20"><div class="w-[64px] h-[64px] rounded-2xl bg-[#2A2A30] text-[#E5A958] flex items-center justify-center shrink-0 border border-white/10"><svg class="w-8 h-8 text-[#E5A958]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path><circle cx="12" cy="13" r="1"></circle><path d="M12 14v3"></path></svg></div><div class="flex flex-col justify-center flex-1"><h3 class="text-[20px] font-bold text-white tracking-tight mb-1.5">网盘 / 局域网挂载</h3><p class="text-[14px] text-text-secondary leading-relaxed mb-2">阿里云盘 · Alist · SMB / WebDAV</p><div class="flex items-center gap-1.5 text-[12px] text-text-secondary font-mono"><span class="w-1.5 h-1.5 rounded-full bg-accent/70"></span><span class="">选片秒播，免下载</span></div></div></div>
+
+    </div>
+
+    <!-- D. Bottom Auxiliary Help Note (14sp, Centered, #66666D Gray) -->
+    <div class="mt-10 flex items-center justify-center gap-2 text-[14px] text-text-dim font-medium"><svg class="w-4 h-4 text-accent/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg><span class="">也可以按右上角</span><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[12px] mx-1"><svg class="w-3.5 h-3.5 text-[#FCD58B] inline-block -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>齿轮图标</span><span class="">→ 「配置接口 (API)」中手动导入</span></div>
+  </main>
+
+  <!-- 3. Bottom Remote D-pad Shortcuts Bar (48dp height equivalent) -->
+  <footer class="relative z-10 w-full h-[48px] border-t border-white/[0.06] pt-3 flex items-center justify-between text-[13px] text-text-secondary">
+    <!-- Left: Remote Controls Hints -->
+    <div class="flex items-center gap-8">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[12px] font-semibold tracking-wider">▲▼◀▶</span>
+        <span class="">移动焦点</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded bg-[#FCD58B] text-black font-mono text-[12px] font-bold">OK</span>
+        <span class="text-white font-medium">选定配置方式</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[12px] font-semibold">Menu</span>
+        <span class="">高级配置（手动编辑文件）</span>
+      </div>
+      <div class="flex items-center gap-2 opacity-70">
+        <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[12px] font-semibold">Back</span>
+        <span class="">退出</span>
+      </div>
+    </div>
+
+    <!-- Right: Technical Specification Notes (Strict TV Leanback 10-foot specs) -->
+    <div class="flex items-center gap-4 text-[12px] text-text-dim font-mono">
+      <span class="">1080p 16:9 · 72dp Overscan</span>
+      <span class="">•</span>
+      <span class="">Champagne Dark v1.2</span>
+      <span class="">•</span>
+      <span class="text-accent">D-pad Single-Focus Ready</span>
+    </div>
+  </footer>
+
+
+
+
+
+
+
+
+
+</body></html>
