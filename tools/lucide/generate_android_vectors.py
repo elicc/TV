@@ -24,6 +24,8 @@ ICONS = {
     "ic_nav_search.xml": ("search.svg", 20),
     "ic_nav_more.xml": ("more-horizontal.svg", 20),
     "ic_nav_settings.xml": ("settings.svg", 20),
+    "ic_hero_details.xml": ("info.svg", 18),
+    "ic_hero_library.xml": ("layout-grid.svg", 18),
     "ic_empty_film.xml": ("film.svg", 20),
     "ic_empty_broadcast.xml": ("radio-tower.svg", 20),
     "ic_empty_cloud.xml": ("cloud.svg", 20),

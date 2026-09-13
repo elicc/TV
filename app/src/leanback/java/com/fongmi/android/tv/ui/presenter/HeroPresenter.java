@@ -9,11 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.core.text.HtmlCompat;
 import androidx.leanback.widget.Presenter;
 
-import com.bumptech.glide.Glide;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.AdapterHeroBinding;
-import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.TvTheme;
 
@@ -55,29 +53,35 @@ public final class HeroPresenter extends Presenter {
         Item item = (Item) object;
         Vod vod = item.vod();
         boolean largeText = b.getRoot().getResources().getConfiguration().fontScale > 1.15f;
+        // History selections need the taller hero so the focused title and its
+        // atmosphere backdrop remain visible above the recent-watch row.
         int heroHeight = ResUtil.dp2px(vod != null && (!item.history() || largeText) ? 152 : 216);
         b.getRoot().getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
         b.getRoot().setMinimumHeight(heroHeight);
-        // Do not let a drawable's intrinsic height expand the wrap-content row.
-        b.poster.getLayoutParams().height = heroHeight;
         b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(item.history() && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
         int emptyTitle = item.loading() ? R.string.tv_loading_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
         b.name.setText(vod != null ? vod.getName() : b.getRoot().getContext().getString(emptyTitle));
-        bindBadge(b, vod);
+        String badge = bindBadge(b, vod);
         bindWatermark(b, vod == null ? "" : vod.getName());
         List<String> meta = new ArrayList<>();
         if (vod != null) {
-            for (String text : new String[]{vod.getYear(), vod.getTypeName(), vod.getRemarks()}) {
-                if (!TextUtils.isEmpty(text)) meta.add(text);
-            }
+            // Surface the same high-value attributes users see on the detail
+            // page, while keeping the hero compact and naturally ellipsized.
+            addMeta(meta, R.string.detail_site, vod.getSiteName(), badge);
+            addMeta(meta, R.string.detail_year, vod.getYear(), badge);
+            addMeta(meta, R.string.detail_area, vod.getArea(), badge);
+            addMeta(meta, R.string.detail_type, vod.getTypeName(), badge);
+            addMeta(meta, 0, vod.getRemarks(), badge);
+            addMeta(meta, R.string.detail_director, vod.getDirector(), badge);
+            addMeta(meta, R.string.detail_actor, vod.getActor(), badge);
         }
         b.metadata.setText(TextUtils.join(" · ", meta));
         b.metadata.setVisibility(meta.isEmpty() ? View.GONE : View.VISIBLE);
         int emptyBody = item.configFailed() ? R.string.tv_config_error_body : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_body : R.string.tv_empty_body;
         String description = vod == null ? b.getRoot().getContext().getString(emptyBody) : HtmlCompat.fromHtml(vod.getContent(), HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim();
-        b.description.setMaxLines(vod == null ? 2 : 1);
+        b.description.setMaxLines(2);
         b.description.setText(description);
-        b.description.setVisibility(item.loading() || TextUtils.isEmpty(description) || (vod != null && (!item.history() || largeText)) ? View.GONE : View.VISIBLE);
+        b.description.setVisibility(item.loading() || TextUtils.isEmpty(description) || (vod != null && largeText) ? View.GONE : View.VISIBLE);
         b.primary.setText(item.loading() ? R.string.tv_loading_title : vod != null ? R.string.tv_details : item.configFailed() ? R.string.tv_reload_config : R.string.tv_retry);
         boolean configureSecondary = item.configFailed();
         b.secondary.setText(configureSecondary ? R.string.home_setting : R.string.tv_browse);
@@ -93,15 +97,11 @@ public final class HeroPresenter extends Presenter {
         });
         b.primary.setNextFocusUpId(R.id.navHome);
         b.secondary.setNextFocusUpId(R.id.navVod);
-        Glide.with(b.poster).clear(b.poster);
-        b.poster.setImageDrawable(null);
         boolean hasImage = vod != null && !TextUtils.isEmpty(vod.getPic());
-        b.poster.setVisibility(hasImage ? View.VISIBLE : View.GONE);
         b.atmosphere.clear();
         b.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         if (hasImage) {
             if (TvTheme.isAtmosphereEnabled()) b.atmosphere.setImage(item.sourceKey(), vod.getPic());
-            Glide.with(b.poster).load(ImgUtil.getUrl(vod.getPic())).override(960, 540).fitCenter().into(b.poster);
         }
     }
 
@@ -109,11 +109,10 @@ public final class HeroPresenter extends Presenter {
     public void onUnbindViewHolder(@NonNull ViewHolder viewHolder) {
         Holder holder = (Holder) viewHolder;
         holder.binding.atmosphere.clear();
-        Glide.with(holder.binding.poster).clear(holder.binding.poster);
     }
 
     /** Prefer the source remark, then the type name, as the shimmering badge text. */
-    private void bindBadge(AdapterHeroBinding b, Vod vod) {
+    private String bindBadge(AdapterHeroBinding b, Vod vod) {
         String text = "";
         if (vod != null) {
             if (!TextUtils.isEmpty(vod.getRemarks())) text = vod.getRemarks();
@@ -123,6 +122,17 @@ public final class HeroPresenter extends Presenter {
         b.badge.setText(text);
         b.badge.setVisibility(TextUtils.isEmpty(text) ? View.GONE : View.VISIBLE);
         b.shimmer.setVisibility(b.badge.getVisibility());
+        return text;
+    }
+
+    private boolean sameText(String first, String second) {
+        return first != null && second != null && first.trim().equalsIgnoreCase(second.trim());
+    }
+
+    private void addMeta(List<String> meta, int labelRes, String value, String badge) {
+        if (TextUtils.isEmpty(value) || sameText(value, badge)) return;
+        String text = labelRes == 0 ? value.trim() : ResUtil.getString(labelRes, value.trim());
+        if (meta.stream().noneMatch(existing -> sameText(existing, text))) meta.add(text);
     }
 
     /** Giant leading-character watermark anchoring the hero column. */

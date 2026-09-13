@@ -1,0 +1,731 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=1920, height=1080, initial-scale=1.0" name="viewport">
+<title>fongmi_tv_leanback_adapter_vod</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#0E0E10',
+            surface: '#131315',
+            'surface-container': '#1B1B1D',
+            'surface-bright': '#202024',
+            'surface-card': '#18181B',
+            focus: '#FCD58B',
+            accent: '#E5A958',
+            'text-primary': '#FFFFFF',
+            'text-secondary': '#9E9EA6',
+            'text-muted': '#66666E',
+            success: '#34D399',
+            warning: '#F59E0B',
+            error: '#EF4444'
+          },
+          fontFamily: {
+            sans: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'tv-focus': '0 0 0 3.5px #FCD58B, 0 8px 25px rgba(252, 213, 139, 0.45)',
+            'tv-card-focus': '0 0 0 3.5px #FCD58B, 0 12px 28px rgba(252, 213, 139, 0.38)',
+            'panel-shadow': '0 20px 40px -10px rgba(0, 0, 0, 0.85)'
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 1920px;
+      height: 1080px;
+      background-color: #0E0E10;
+      color: #FFFFFF;
+      overflow: hidden;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .tv-focus-chip {
+      outline: 3.5px solid #FCD58B;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.025);
+      background-color: rgba(252, 213, 139, 0.2);
+      color: #FFFFFF;
+    }
+
+    .tv-card-active {
+      outline: 3.5px solid #FCD58B;
+      box-shadow: 0 0 25px rgba(252, 213, 139, 0.45);
+      transform: scale(1.025);
+      z-index: 30;
+    }
+
+    .watermark-text {
+      position: absolute;
+      right: 4px;
+      bottom: -10px;
+      font-size: 100px;
+      font-weight: 900;
+      line-height: 1;
+      opacity: 0.18;
+      pointer-events: none;
+      color: #FFFFFF;
+      font-family: system-ui, sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between w-[1920px] h-[1080px] bg-[#0E0E10] px-[72px] py-[32px] overflow-hidden">
+<!-- 电视 Overscan 背景暗态渐变光影 -->
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(229,169,88,0.06)_0%,transparent_60%)] pointer-events-none"></div>
+<!-- 1. 顶部 Header (72dp 高) -->
+<header class="h-[72px] w-full flex items-center justify-between border-b border-white/5 pb-2 shrink-0 z-20">
+<!-- 左：Back 返回 + 面包屑「首页 / 点播大厅」 -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container border border-white/10 text-text-secondary text-[14px]">
+<svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>
+</svg>
+<span class="">返回</span>
+<span class="text-[11px] px-1.5 py-0.5 rounded bg-black/40 text-text-muted font-mono">Back</span>
+</div>
+<nav class="flex items-center gap-2 text-[18px]">
+<span class="text-text-secondary font-medium">首页</span>
+<span class="text-text-muted">/</span>
+<span class="text-text-primary font-bold text-[20px] flex items-center gap-2">
+          点播大厅
+          <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+</span>
+</nav>
+</div>
+<!-- 右：当前活跃源（饭太硬 极速4K）+ 时钟 -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container border border-white/10 text-[14px]">
+<span class="w-2 h-2 rounded-full bg-success"></span>
+<span class="text-text-secondary">活跃源:</span>
+<span class="text-text-primary font-medium">饭太硬 (极速4K线路)</span>
+<span class="px-1.5 py-0.2 text-[10px] bg-accent/20 text-accent rounded font-mono ml-1">Spider v3</span>
+</div>
+<div class="flex items-baseline gap-2 font-mono">
+<span class="text-[24px] font-bold tracking-wider text-text-primary">20:45</span>
+<span class="text-[14px] text-text-muted">周五 04/19</span>
+</div>
+</div>
+</header>
+<!-- 2. 一级 Header (64dp 高)：分类 Tab + 排序 + 视图切换 -->
+<section class="h-[64px] w-full flex items-center justify-between shrink-0 z-20">
+<!-- 左：5 个一级分类 Tab（点播一级分类，高 34dp, 圆角 16dp pill, 16sp） -->
+<div class="flex items-center gap-2.5">
+<!-- Tab 1：电影 (当前高亮选中) -->
+<button class="relative h-[34px] px-4 rounded-[16px] bg-focus/15 border border-focus/80 flex items-center gap-2 font-semibold text-[16px] text-focus cursor-pointer shadow-sm">
+<svg class="w-3.5 h-3.5 text-focus" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<rect height="18" rx="2" width="18" x="3" y="3"></rect><path d="M7 3v18"></path><path d="M3 7.5h4"></path><path d="M3 12h18"></path><path d="M3 16.5h4"></path><path d="M17 3v18"></path><path d="M17 7.5h4"></path><path d="M17 16.5h4"></path>
+</svg>
+<span class="">电影</span>
+<span class="ml-0.5 text-[11px] bg-focus text-background font-bold px-1.5 py-0.2 rounded-full">842</span>
+</button>
+<!-- Tab 2：剧集 -->
+<button class="h-[34px] px-3.5 rounded-[16px] bg-surface-container border border-white/10 flex items-center gap-2 text-[16px] text-text-secondary hover:text-white transition-all cursor-pointer">
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="15" rx="2" ry="2" width="20" x="2" y="7"></rect><polyline points="17 2 12 7 7 2"></polyline>
+</svg>
+<span class="">剧集</span>
+<span class="text-[11px] text-text-muted font-mono">260</span>
+</button>
+<!-- Tab 3：综艺 -->
+<button class="h-[34px] px-3.5 rounded-[16px] bg-surface-container border border-white/10 flex items-center gap-2 text-[16px] text-text-secondary hover:text-white transition-all cursor-pointer">
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"></path><circle cx="17" cy="7" r="5"></circle>
+</svg>
+<span class="">综艺</span>
+<span class="text-[11px] text-text-muted font-mono">78</span>
+</button>
+<!-- Tab 4：动漫 -->
+<button class="h-[34px] px-3.5 rounded-[16px] bg-surface-container border border-white/10 flex items-center gap-2 text-[16px] text-text-secondary hover:text-white transition-all cursor-pointer">
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+</svg>
+<span class="">动漫</span>
+<span class="text-[11px] text-text-muted font-mono">68</span>
+</button>
+<!-- Tab 5：全部 -->
+<button class="h-[34px] px-3.5 rounded-[16px] bg-surface-container border border-white/10 flex items-center gap-2 text-[16px] text-text-secondary hover:text-white transition-all cursor-pointer">
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
+</svg>
+<span class="">全部</span>
+</button>
+</div>
+<!-- 中间 + 右侧：排序 Dropdown + 视图切换 segmented -->
+<div class="flex items-center gap-4">
+<!-- 中间：排序 Dropdown (高 36dp) -->
+<div class="h-[36px] px-3 rounded-[12px] bg-surface-container border border-white/15 flex items-center gap-2.5 text-text-primary text-[14px] cursor-pointer hover:border-accent/50 transition-colors">
+<svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="21" x2="3" y1="6" y2="6"></line><line x1="17" x2="3" y1="12" y2="12"></line><line x1="9" x2="3" y1="18" y2="18"></line>
+</svg>
+<span class="">排序: <strong class="font-semibold text-focus">最近添加</strong></span>
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="m6 9 6 6 6-6"></path>
+</svg>
+</div>
+<!-- 右侧：视图切换 segmented 3 选 1 (高 36dp) -->
+<div class="h-[36px] p-0.5 rounded-[12px] bg-surface-container border border-white/15 flex items-center gap-1">
+<!-- 选项 1：网格 grid (1:1 方块) - Lucide layout-grid (选中高亮) -->
+<button class="h-full px-3 rounded-[9px] bg-white/15 text-focus font-medium flex items-center gap-1.5 text-[13px] border border-focus/40 shadow-sm" title="网格模式 (1:1 方块)">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="7" rx="1" width="7" x="3" y="3"></rect><rect height="7" rx="1" width="7" x="14" y="3"></rect><rect height="7" rx="1" width="7" x="14" y="14"></rect><rect height="7" rx="1" width="7" x="3" y="14"></rect>
+</svg>
+<span class="">网格</span>
+</button>
+<!-- 选项 2：列表 list (16:9 横图) - Lucide list -->
+<button class="h-full px-2.5 rounded-[9px] text-text-secondary hover:text-white flex items-center gap-1.5 text-[13px]" title="列表模式 (16:9)">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="8" x2="21" y1="6" y2="6"></line><line x1="8" x2="21" y1="12" y2="12"></line><line x1="8" x2="21" y1="18" y2="18"></line><line x1="3" x2="3.01" y1="6" y2="6"></line><line x1="3" x2="3.01" y1="12" y2="12"></line><line x1="3" x2="3.01" y1="18" y2="18"></line>
+</svg>
+<span class="">列表</span>
+</button>
+<!-- 选项 3：椭圆 oval - Lucide circle-ellipsis -->
+<button class="h-full px-2.5 rounded-[9px] text-text-secondary hover:text-white flex items-center gap-1.5 text-[13px]" title="椭圆模式">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle><path d="M17 12h.01"></path><path d="M12 12h.01"></path><path d="M7 12h.01"></path>
+</svg>
+<span class="">椭圆</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 3. 核心新增：二级筛选区 (52dp 高) -->
+<section class="h-[52px] w-full flex items-center justify-between shrink-0 z-20 px-0.5 border-t border-white/5">
+<!-- 当「电影」获焦时展示的专属二级筛选横向 Chip 流 -->
+<div class="flex items-center gap-2 py-1.5">
+<span class="text-[12px] text-text-muted font-mono tracking-wider mr-1">FILTER:</span>
+<!-- Chip 1: 全部 (当前全局焦点默认，3.5dp #FCD58B 描边 + 25px glow + scale 1.025x) -->
+<button class="h-[34px] px-3 rounded-[12px] flex items-center gap-1.5 text-[13px] font-semibold tv-focus-chip cursor-pointer transition-all">
+<span class="">全部</span>
+<span class="w-1.5 h-1.5 rounded-full bg-focus"></span>
+</button>
+<!-- Chip 2: 年代 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-white/10 text-text-secondary flex items-center gap-1.5 text-[13px] hover:text-white transition-all cursor-pointer">
+<span class="text-text-muted">年代:</span>
+<span class="text-text-primary font-medium">2024</span>
+<svg class="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<!-- Chip 3: 地区 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-white/10 text-text-secondary flex items-center gap-1.5 text-[13px] hover:text-white transition-all cursor-pointer">
+<span class="text-text-muted">地区:</span>
+<span class="text-text-primary font-medium">美国</span>
+<svg class="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<!-- Chip 4: 类型 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-white/10 text-text-secondary flex items-center gap-1.5 text-[13px] hover:text-white transition-all cursor-pointer">
+<span class="text-text-muted">类型:</span>
+<span class="text-text-primary font-medium">全部</span>
+<svg class="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<!-- Chip 5: 质量 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-accent/40 text-accent flex items-center gap-1.5 text-[13px] transition-all cursor-pointer">
+<span class="text-accent/70">质量:</span>
+<span class="font-medium text-accent">4K UHD</span>
+<svg class="w-3 h-3 text-accent/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<!-- Chip 6: 评分 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-white/10 text-text-secondary flex items-center gap-1.5 text-[13px] hover:text-white transition-all cursor-pointer">
+<span class="text-text-muted">评分:</span>
+<span class="text-text-primary font-medium">≥8.0</span>
+<svg class="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<!-- Chip 7: 排序联动 -->
+<button class="h-[34px] px-3 rounded-[12px] bg-surface-container border border-white/10 text-text-secondary flex items-center gap-1.5 text-[13px] hover:text-white transition-all cursor-pointer">
+<span class="text-text-muted">排序:</span>
+<span class="text-text-primary font-medium">更新时间</span>
+<svg class="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+</div>
+<!-- 切换 Tab 联动对照标注 -->
+<div class="flex items-center gap-1 text-[11px] text-text-muted font-mono bg-surface-container/60 px-2.5 py-1 rounded-lg border border-white/5">
+<span class="text-accent">●</span>
+<span class="">当前联动: 电影分类二级配置 (切换Tab自动同步)</span>
+</div>
+</section>
+<!-- 4. 结果统计行 (36dp 高) -->
+<section class="h-[36px] w-full flex items-center justify-between shrink-0 mb-1.5 px-0.5 z-20">
+<div class="flex items-center gap-2.5 text-[13px]">
+<span class="text-text-primary font-medium flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line>
+</svg>
+        共 <strong class="text-white font-bold font-mono">1,248</strong> 部影片
+      </span>
+<span class="text-text-muted">·</span>
+<span class="text-text-secondary font-mono">当前显示 1 - 21 (第 1 页)</span>
+<span class="text-text-muted">·</span>
+<span class="text-text-muted text-[12px]">已选条件: <span class="text-text-secondary font-medium">电影 / 2024 / 美国 / 4K UHD</span></span>
+</div>
+<!-- 清空筛选按键 (Lucide x-circle) -->
+<button class="h-[28px] px-2.5 rounded-[8px] bg-surface-container border border-white/10 text-text-secondary hover:text-white flex items-center gap-1.5 text-[12px] cursor-pointer transition-colors">
+<svg class="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path>
+</svg>
+<span class="">清空筛选</span>
+</button>
+</section>
+<!-- 5. 主区域：影片网格 7 列 × 3 行 = 21 张方块卡片 (遵循 adapter_vod.xml 规范) -->
+<main class="flex-1 w-full grid grid-cols-7 gap-x-3.5 gap-y-3 relative z-10 py-1 p-2">
+<!-- 卡片 1 (第一行第一列：焦点示范 沙丘 2，3.5dp #FCD58B 描边 + 25px glow + scale 1.025x) -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] tv-card-active cursor-pointer">
+<!-- 1:1 方块图片容器 (高宽等比，约 220×220px 内缩适应，圆角 16dp) -->
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#2D2214] via-[#1B1712] to-[#121214] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">沙</span>
+<!-- 顶栏：顶左 remark 徽章 (14sp mono) + 顶右 year 徽章 (14sp mono) -->
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none shadow-sm">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-text-secondary text-[12px] font-mono leading-none border border-white/10">2024</span>
+</div>
+<!-- 底栏：底左 site 徽章 (14sp mono) + 底右 评分 -->
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm text-success text-[12px] font-mono leading-none border border-success/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
+<span class="">饭太硬</span>
+</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm text-focus font-bold text-[13px] font-mono leading-none border border-focus/40">9.2</span>
+</div>
+</div>
+<!-- name 文字区：独立行，高 30dp，字号 20sp 加粗，居中对齐，背景 shape_vod_name 下半部圆角 16dp -->
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-focus truncate tracking-wide">沙丘 2</span>
+</div>
+<!-- 焦点小浮标提示 -->
+<div class="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-focus text-background text-[10px] font-bold font-mono shadow-md z-30 flex items-center gap-1">
+<span class="">OK 详情</span>
+</div>
+</div>
+<!-- 卡片 2：奥本海默 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1F1E24] via-[#16161A] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">奥</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2023</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">在线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.8</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">奥本海默</span>
+</div>
+</div>
+<!-- 卡片 3：星际穿越 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#17252A] via-[#10191D] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">星</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K HDR</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2014</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">直连</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.4</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">星际穿越</span>
+</div>
+</div>
+<!-- 卡片 4：繁花 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#261E16] via-[#1B1612] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">繁</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">4K 杜比</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2024</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">多线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.7</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">繁花</span>
+</div>
+</div>
+<!-- 卡片 5：间谍过家家 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#291B24] via-[#1A1116] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">间</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2023</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">秒播</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.9</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">间谍过家家</span>
+</div>
+</div>
+<!-- 卡片 6：头号玩家 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1A2228] via-[#12161A] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">头</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2018</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">满速</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.9</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">头号玩家</span>
+</div>
+</div>
+<!-- 卡片 7：流浪地球 2 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#262117] via-[#1B1710] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">流</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">4K 60F</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2023</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">备用</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.4</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">流浪地球 2</span>
+</div>
+</div>
+<!-- 卡片 8：银翼杀手 2049 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#241A28] via-[#19121D] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">银</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2017</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">硬解</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.6</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">银翼杀手 2049</span>
+</div>
+</div>
+<!-- 卡片 9：盗梦空间 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1C2321] via-[#121715] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">盗</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K HDR</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2010</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">秒播</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.3</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">盗梦空间</span>
+</div>
+</div>
+<!-- 卡片 10：蝙蝠侠 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1C2028] via-[#13171F] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">蝙</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2008</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">直连</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.1</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">蝙蝠侠：黑暗骑士</span>
+</div>
+</div>
+<!-- 卡片 11：信条 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#281A1A] via-[#1B1111] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">信</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2020</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">正常</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">7.9</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">信条</span>
+</div>
+</div>
+<!-- 卡片 12：阿凡达 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1C2522] via-[#121B18] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">阿</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K HDR</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2022</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">满速</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.8</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">阿凡达：水之道</span>
+</div>
+</div>
+<!-- 卡片 13：寄生虫 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#262417] via-[#1B1A0F] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">寄</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2019</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">在线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">8.9</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">寄生虫</span>
+</div>
+</div>
+<!-- 卡片 14：教父 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#271E1C] via-[#1B1413] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">教</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 修复</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">1972</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">多线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.7</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">教父</span>
+</div>
+</div>
+<!-- 卡片 15：肖申克的救赎 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1C2129] via-[#12161C] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">肖</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">1994</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">直连</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.7</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">肖申克的救赎</span>
+</div>
+</div>
+<!-- 卡片 16：霸王别姬 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#2A231C] via-[#1B1612] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">霸</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">1993</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">满速</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.6</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">霸王别姬</span>
+</div>
+</div>
+<!-- 卡片 17：千与千寻 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1B2625] via-[#111918] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">千</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2001</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">在线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.4</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">千与千寻</span>
+</div>
+</div>
+<!-- 卡片 18：楚门的世界 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#241F1A] via-[#171411] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">楚</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 原盘</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">1998</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">硬解</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.3</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">楚门的世界</span>
+</div>
+</div>
+<!-- 卡片 19：泰坦尼克号 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#1C2028] via-[#12161E] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">泰</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 杜比</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">1997</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">多线</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.5</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">泰坦尼克号</span>
+</div>
+</div>
+<!-- 卡片 20：无间道 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#28211E] via-[#191513] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">无</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-white/20 text-white font-bold text-[12px] font-mono leading-none">1080P</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2002</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">直连</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.3</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">无间道</span>
+</div>
+</div>
+<!-- 卡片 21：指环王 -->
+<div class="relative flex flex-col rounded-[16px] bg-[#141417] border border-white/10 cursor-pointer hover:border-white/20 transition-all">
+<div class="relative aspect-square w-full rounded-t-[16px] bg-gradient-to-br from-[#222116] via-[#16150E] to-[#0E0E10] overflow-hidden p-2 flex flex-col justify-between">
+<span class="watermark-text">指</span>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-accent text-background font-bold text-[12px] font-mono leading-none">4K 导剪</span>
+<span class="px-1.5 py-0.5 rounded bg-black/60 text-text-secondary text-[12px] font-mono leading-none">2003</span>
+</div>
+<div class="flex items-center justify-between z-10">
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-text-secondary text-[12px] font-mono leading-none">极速</span>
+<span class="px-1.5 py-0.5 rounded bg-black/70 text-focus font-bold text-[13px] font-mono leading-none border border-focus/20">9.8</span>
+</div>
+</div>
+<div class="h-[30px] px-2 flex items-center justify-center bg-[#18181D] rounded-b-[16px]">
+<span class="text-[17px] font-bold text-white truncate tracking-wide">指环王：王者归来</span>
+</div>
+</div>
+</main>
+<!-- 6. 右下浮层：当焦点选中时可呼出的「影片快捷操作」精简浮层 (含播放/详情/收藏/缓存) -->
+<aside class="absolute right-[76px] bottom-[78px] w-[420px] h-[175px] rounded-[20px] bg-[#16161A]/95 backdrop-blur-xl border border-white/15 p-3.5 shadow-panel-shadow flex flex-col justify-between z-40">
+<div class="flex items-center justify-between border-b border-white/10 pb-1.5">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+<h4 class="text-[15px] font-bold text-white tracking-wide">影片快捷操作</h4>
+<span class="text-[11px] text-focus font-mono font-medium">(沙丘 2)</span>
+</div>
+<span class="text-[11px] text-text-secondary bg-white/10 px-2 py-0.2 rounded">遥控器 Menu 呼出</span>
+</div>
+<!-- 4 个操作项 (播放/详情/收藏/缓存) -->
+<div class="grid grid-cols-2 gap-2">
+<!-- 操作 1：立即播放 (高亮推荐态) -->
+<button class="h-[38px] px-3 rounded-[10px] bg-accent text-background font-bold flex items-center gap-2 text-[13px] shadow-sm hover:brightness-110 transition-all border border-focus">
+<svg class="w-3.5 h-3.5 text-background" fill="currentColor" viewBox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+<span class="">立即播放</span>
+<span class="ml-auto text-[10px] bg-background/25 text-background px-1.5 py-0.2 rounded font-mono">OK</span>
+</button>
+<!-- 操作 2：查看详情 -->
+<button class="h-[38px] px-3 rounded-[10px] bg-surface-bright border border-white/10 text-white flex items-center gap-2 text-[13px] hover:border-focus/50 transition-colors">
+<svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
+</svg>
+<span class="">查看详情</span>
+</button>
+<!-- 操作 3：加入收藏 -->
+<button class="h-[38px] px-3 rounded-[10px] bg-surface-bright border border-white/10 text-white flex items-center gap-2 text-[13px] hover:border-focus/50 transition-colors">
+<svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+</svg>
+<span class="">加入收藏</span>
+</button>
+<!-- 操作 4：缓存到本地 -->
+<button class="h-[38px] px-3 rounded-[10px] bg-surface-bright border border-white/10 text-white flex items-center gap-2 text-[13px] hover:border-focus/50 transition-colors">
+<svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line>
+</svg>
+<span class="">缓存到本地</span>
+</button>
+</div>
+</aside>
+<!-- 7. 底部 4 键提示条 (42dp 高) + 状态监控信息条 -->
+<footer class="h-[42px] w-full flex items-center justify-between border-t border-white/10 shrink-0 z-20 text-[12px] text-text-secondary">
+<!-- 遥控器 4 键统一提示 -->
+<div class="flex items-center gap-5">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-white/15 text-text-primary font-mono text-[11px]">▲▼◀▶</span>
+<span class="">移动游走 / 翻页 (21部/页)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-white/15 text-focus font-mono text-[11px] font-bold">OK</span>
+<span class="text-text-primary">进入详情</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-white/15 text-text-primary font-mono text-[11px]">Menu</span>
+<span class="">排序与视图切换</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-white/15 text-text-primary font-mono text-[11px]">Back</span>
+<span class="">返回上一页</span>
+</div>
+</div>
+<!-- 右侧系统运行参数与状态 -->
+<div class="flex items-center gap-3 text-text-muted font-mono text-[11px]">
+<span class="text-text-secondary flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+        已载入: 21 / 1,248 部
+      </span>
+<span class="">|</span>
+<span class="">下次滚动自动分页</span>
+<span class="">|</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container border border-white/5 text-text-secondary">JVM 内存 86MB</span>
+</div>
+</footer>
+
+
+</body></html>

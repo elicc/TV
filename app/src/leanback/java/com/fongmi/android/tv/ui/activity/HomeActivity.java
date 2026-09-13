@@ -97,6 +97,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private HistoryPresenter mPresenter;
     private SiteViewModel mViewModel;
     private Result mResult;
+    /** History card currently under the D-pad; null means the source hero is active. */
+    private History mFocusedHistory;
     private Clock mClock;
     private ObjectAnimator mPulse;
     private boolean mLoading;
@@ -221,6 +223,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             @Override
             public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
                 if (mPresenter.isDelete() && position != getHistoryIndex()) setHistoryDelete(false);
+                if (position != getHistoryIndex() && mFocusedHistory != null) {
+                    mFocusedHistory = null;
+                    updateHero();
+                }
             }
         });
     }
@@ -256,7 +262,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16), FuncPresenter.class);
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16, FocusHighlight.ZOOM_FACTOR_SMALL, HorizontalGridView.FOCUS_SCROLL_ALIGNED), HistoryPresenter.class);
         mBinding.recycler.setAdapter(new ItemBridgeAdapter(mAdapter = new ArrayObjectAdapter(selector)));
-        mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(16));
+        mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(12));
     }
 
     private void setViewModel() {
@@ -415,9 +421,19 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private HeroPresenter.Item heroItem() {
-        Vod vod = mConfigFailed || mConfigLoading ? null : mResult.getList().stream().filter(v -> !v.isAction() && !TextUtils.isEmpty(v.getId())).findFirst().orElse(null);
+        Vod vod;
+        boolean history = mFocusedHistory != null;
+        if (history) {
+            vod = new Vod();
+            vod.setId(mFocusedHistory.getVodId());
+            vod.setName(mFocusedHistory.getVodName());
+            vod.setPic(mFocusedHistory.getVodPic());
+            vod.setSite(VodConfig.get().getSite(mFocusedHistory.getSiteKey()));
+        } else {
+            vod = mConfigFailed || mConfigLoading ? null : mResult.getList().stream().filter(v -> !v.isAction() && !TextUtils.isEmpty(v.getId())).findFirst().orElse(null);
+        }
         String error = !mConfigError.isEmpty() ? mConfigError : mResult.getMsg();
-        return new HeroPresenter.Item(vod, getHome().getKey(), getHome().getName(), !TextUtils.isEmpty(getConfig().getUrl()), mLoading || mConfigLoading, mConfigFailed, error, mHistoryAdapter != null && mHistoryAdapter.size() > 0);
+        return new HeroPresenter.Item(vod, history ? mFocusedHistory.getSiteKey() : getHome().getKey(), history ? mFocusedHistory.getSiteName() : getHome().getName(), !TextUtils.isEmpty(getConfig().getUrl()), history ? false : mLoading || mConfigLoading, history ? false : mConfigFailed, history ? "" : error, history);
     }
 
     private void updateHero() {
@@ -449,7 +465,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public void onHeroClick(Vod vod) {
-        onItemClick(vod);
+        // A focused history hero is a lightweight Vod projection; keep the
+        // original site key when resuming playback instead of the home source.
+        if (mFocusedHistory != null) onItemClick(mFocusedHistory);
+        else onItemClick(vod);
     }
 
     @Override
@@ -490,6 +509,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void getHistory(boolean renew) {
         List<History> items = History.get();
+        if (mFocusedHistory != null && !items.contains(mFocusedHistory)) mFocusedHistory = null;
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0 && (items.isEmpty() || renew)) mAdapter.removeItems(header, 2);
         if (renew) mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
@@ -512,6 +532,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         History.clear(VodConfig.getCid());
         mPresenter.setDelete(false);
         mHistoryAdapter.clear();
+        mFocusedHistory = null;
         updateHero();
         mBinding.more.requestFocus();
     }
@@ -635,8 +656,16 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     @Override
+    public void onItemFocus(History item) {
+        if (mPresenter.isDelete() || item.equals(mFocusedHistory)) return;
+        mFocusedHistory = item;
+        updateHero();
+    }
+
+    @Override
     public void onItemDelete(History item) {
         mHistoryAdapter.remove(item.delete());
+        if (item.equals(mFocusedHistory)) mFocusedHistory = null;
         if (mHistoryAdapter.size() > 0) return;
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0) mAdapter.removeItems(header, 2);

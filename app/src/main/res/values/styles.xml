@@ -5,8 +5,10 @@
     </style>
 
     <style name="Vod.Grid">
-        <item name="cornerSizeTopLeft">8dp</item>
-        <item name="cornerSizeTopRight">8dp</item>
+        <!-- Poster and focus ring must share one geometry; otherwise the
+             enlarged focused card reveals wedges at the top corners. -->
+        <item name="cornerSizeTopLeft">@dimen/tv_radius_card</item>
+        <item name="cornerSizeTopRight">@dimen/tv_radius_card</item>
     </style>
 
     <style name="Vod.Grid.Large">

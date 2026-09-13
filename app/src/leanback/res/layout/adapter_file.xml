@@ -6,6 +6,8 @@
     android:background="@drawable/shape_vod_list"
     android:focusable="true"
     android:focusableInTouchMode="true"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:foreground="@drawable/selector_vod">
 
     <androidx.appcompat.widget.LinearLayoutCompat

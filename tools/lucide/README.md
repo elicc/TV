@@ -1,4 +1,4 @@
-# Lucide navigation icons
+# Lucide TV interface icons
 
 The SVG files in `svg/` are the official Lucide `0.344.0` sources used by the
 TV design prototype. They are pinned to upstream commit

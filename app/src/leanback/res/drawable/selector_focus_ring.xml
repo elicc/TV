@@ -6,8 +6,8 @@
             <corners
                 android:bottomLeftRadius="0dp"
                 android:bottomRightRadius="0dp"
-                android:topLeftRadius="8dp"
-                android:topRightRadius="8dp" />
+                android:topLeftRadius="@dimen/tv_radius_card"
+                android:topRightRadius="@dimen/tv_radius_card" />
             <stroke
                 android:width="2dp"
                 android:color="?attr/tvColorFocus" />

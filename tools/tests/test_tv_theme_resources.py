@@ -25,13 +25,31 @@ class TvThemeTests(unittest.TestCase):
         self.assertTrue(used)
         self.assertFalse(used - defined)
 
-    def test_hero_art_is_clipped(self):
+    def test_hero_uses_full_bleed_atmosphere_without_detached_poster(self):
         android = "{http://schemas.android.com/apk/res/android}"
         root = ET.parse(RES / "layout/adapter_hero.xml").getroot()
-        self.assertEqual("true", root.get(android + "clipChildren"))
-        poster = next(n for n in root.iter("ImageView") if n.get(android + "id") == "@+id/poster")
-        self.assertEqual("true", poster.get(android + "cropToPadding"))
-        self.assertEqual("152dp", poster.get(android + "layout_height"))
+        self.assertEqual("false", root.get(android + "clipChildren"))
+        atmosphere = next(n for n in root.iter() if n.get(android + "id") == "@+id/atmosphere")
+        self.assertEqual("match_parent", atmosphere.get(android + "layout_width"))
+        self.assertEqual("match_parent", atmosphere.get(android + "layout_height"))
+        self.assertFalse(any(n.get(android + "id") == "@+id/poster" for n in root.iter()))
+
+    def test_populated_hero_keeps_real_context_compact_and_readable(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/adapter_hero.xml").getroot()
+        metadata = next(n for n in root.iter() if n.get(android + "id") == "@+id/metadata")
+        secondary = next(n for n in root.iter() if n.get(android + "id") == "@+id/secondary")
+        self.assertEqual("@color/hero_secondary_text_color", secondary.get(android + "textColor"))
+        self.assertEqual("@+id/badgeFrame", metadata.get(android + "layout_toEndOf"))
+
+        hero = (JAVA / "ui/presenter/HeroPresenter.java").read_text()
+        self.assertIn("addMeta(meta, R.string.detail_site", hero)
+        self.assertIn("addMeta(meta, R.string.detail_actor", hero)
+        self.assertIn("vod != null && largeText", hero)
+        self.assertNotIn("vod != null && (!item.history() || largeText)", hero)
+
+        colors = (RES / "color/hero_secondary_text_color.xml").read_text()
+        self.assertIn('android:state_focused="true" android:color="?attr/tvColorTextPrimary"', colors)
 
     def test_keep_empty_transition_has_focus_and_route(self):
         code = (JAVA / "ui/activity/KeepActivity.java").read_text()
@@ -61,9 +79,8 @@ class TvThemeTests(unittest.TestCase):
         hero = (JAVA / "ui/presenter/HeroPresenter.java").read_text()
         self.assertNotIn("CENTER_CROP", hero)
         self.assertNotIn("RequestListener", hero)
-        self.assertIn(".fitCenter().into(b.poster)", hero)
-        self.assertIn("b.poster.getLayoutParams().height = heroHeight", hero)
         self.assertIn("b.atmosphere.setImage(item.sourceKey(), vod.getPic())", hero)
+        self.assertNotIn("b.poster", hero)
 
     def test_large_font_navigation_and_focus_states(self):
         home = (JAVA / "ui/activity/HomeActivity.java").read_text()
@@ -74,8 +91,8 @@ class TvThemeTests(unittest.TestCase):
         self.assertNotIn("1.1f", keep)
         style = next(s for s in ET.parse(RES / "values/tv_home_styles.xml").iter("style") if s.get("name") == "Tv.HeroAction")
         items = {i.get("name"): i.text for i in style}
-        self.assertEqual("8dp", items["android:paddingTop"])
-        self.assertEqual("8dp", items["android:paddingBottom"])
+        self.assertEqual("4dp", items["android:paddingTop"])
+        self.assertEqual("4dp", items["android:paddingBottom"])
 
     def test_targeted_legacy_pages_use_semantic_text(self):
         for name in ["activity_setting_player.xml", "activity_setting_decode.xml", "dialog_config.xml", "dialog_mpv_conf.xml"]:
@@ -140,6 +157,8 @@ class TvThemeTests(unittest.TestCase):
             "ic_nav_search": ("search.svg", 20),
             "ic_nav_more": ("more-horizontal.svg", 20),
             "ic_nav_settings": ("settings.svg", 20),
+            "ic_hero_details": ("info.svg", 18),
+            "ic_hero_library": ("layout-grid.svg", 18),
             "ic_empty_film": ("film.svg", 20),
             "ic_empty_broadcast": ("radio-tower.svg", 20),
             "ic_empty_cloud": ("cloud.svg", 20),
@@ -182,6 +201,16 @@ class TvThemeTests(unittest.TestCase):
             actual.add(view.get(android + "drawableStart"))
         for legacy in ["ic_nav_vod", "ic_action_setting", "ic_widget_play", "ic_empty_cloud", "ic_action_debug"]:
             self.assertNotIn("@drawable/" + legacy, actual)
+
+    def test_hero_actions_use_lucide_icons_on_the_focusable_text_views(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/adapter_hero.xml").getroot()
+        primary = next(n for n in root.iter() if n.get(android + "id") == "@+id/primary")
+        secondary = next(n for n in root.iter() if n.get(android + "id") == "@+id/secondary")
+        self.assertEqual("@drawable/ic_hero_details", primary.get(android + "drawableStart"))
+        self.assertEqual("?attr/tvColorOnAccent", primary.get(android + "drawableTint"))
+        self.assertEqual("@drawable/ic_hero_library", secondary.get(android + "drawableStart"))
+        self.assertEqual("@color/hero_secondary_text_color", secondary.get(android + "drawableTint"))
 
     def test_setting_back_uses_unclipped_lucide_icon(self):
         android = "{http://schemas.android.com/apk/res/android}"
@@ -308,7 +337,7 @@ class TvThemeTests(unittest.TestCase):
         toolbar = next(n for n in root.iter("LinearLayout") if n.get(android + "id") == "@+id/toolbar")
         recycler = next(n for n in root.iter() if n.get(android + "id") == "@+id/recycler")
         self.assertEqual("36dp", toolbar.get(android + "minHeight"))
-        self.assertEqual("28dp", toolbar.get(android + "layout_marginTop"))
+        self.assertEqual("16dp", toolbar.get(android + "layout_marginTop"))
         self.assertEqual("@dimen/tv_safe_horizontal", toolbar.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_horizontal", recycler.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_vertical", recycler.get(android + "paddingBottom"))

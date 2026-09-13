@@ -34,6 +34,10 @@ public class HistoryPresenter extends Presenter {
         void onItemDelete(History item);
 
         boolean onLongClick();
+
+        /** Called when a history card becomes the D-pad focused item. */
+        default void onItemFocus(History item) {
+        }
     }
 
     private void setLayoutSize() {
@@ -53,6 +57,9 @@ public class HistoryPresenter extends Presenter {
     }
 
     private void setClickListener(View root, History item) {
+        root.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus && !delete) listener.onItemFocus(item);
+        });
         root.setOnLongClickListener(view -> listener.onLongClick());
         root.setOnClickListener(view -> {
             if (isDelete()) listener.onItemDelete(item);
@@ -85,6 +92,9 @@ public class HistoryPresenter extends Presenter {
         holder.binding.delete.setVisibility(!delete ? View.GONE : View.VISIBLE);
         holder.binding.remark.setVisibility(delete ? View.INVISIBLE : View.VISIBLE);
         ImgUtil.load(item.getVodName(), item.getVodPic(), holder.binding.image);
+        // Binding can happen after the grid has already restored focus; in
+        // that case Android will not emit a second focus-change callback.
+        if (holder.view.hasFocus() && !delete) listener.onItemFocus(item);
     }
 
     @Override
