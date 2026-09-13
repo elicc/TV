@@ -3,6 +3,8 @@ package com.fongmi.android.tv.ui.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -30,6 +32,7 @@ import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
+import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.DohDialog;
 import com.fongmi.android.tv.ui.dialog.HistoryDialog;
@@ -95,6 +98,8 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.liveUrl.setText(LiveConfig.getDesc());
         mBinding.wallUrl.setText(WallConfig.getDesc());
         mBinding.versionText.setText(BuildConfig.VERSION_NAME);
+        setActiveSourceText();
+        setKeycaps();
         setCacheText();
         setOtherText();
     }
@@ -123,9 +128,37 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         });
     }
 
+    private void setActiveSourceText() {
+        String source = VodConfig.getDesc();
+        boolean configured = !TextUtils.isEmpty(source);
+        mBinding.activeSourceText.setCompoundDrawablesRelativeWithIntrinsicBounds(configured ? R.drawable.tv_setting_status_dot : R.drawable.tv_setting_status_dot_idle, 0, 0, 0);
+        mBinding.activeSourceText.setText(getString(R.string.tv_setting_active_source, configured ? source : getString(R.string.tv_setting_unconfigured), BuildConfig.VERSION_NAME));
+    }
+
+    private void setKeycaps() {
+        TvKeycapsBar.Cap[] caps = {
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_dpad), KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT),
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_ok), KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER),
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_back), KeyEvent.KEYCODE_BACK),
+        };
+        String[] hints = {getString(R.string.tv_setting_hint_navigate), getString(R.string.tv_setting_hint_select), getString(R.string.tv_setting_hint_back)};
+        mBinding.keycaps.setCaps(caps, hints);
+    }
+
+    @Override
+    protected TvKeycapsBar keycaps() {
+        return mBinding.keycaps;
+    }
+
     @Override
     protected void initEvent() {
         mBinding.settingBack.setOnClickListener(view -> finish());
+        bindVerticalNavigation(mBinding.settingBack, mBinding.settingBack, mBinding.navContent);
+        bindVerticalNavigation(mBinding.navContent, mBinding.settingBack, mBinding.navAppearance);
+        bindVerticalNavigation(mBinding.navAppearance, mBinding.navContent, mBinding.navPlayback);
+        bindVerticalNavigation(mBinding.navPlayback, mBinding.navAppearance, mBinding.navData);
+        bindVerticalNavigation(mBinding.navData, mBinding.navPlayback, mBinding.navAbout);
+        bindVerticalNavigation(mBinding.navAbout, mBinding.navData, mBinding.navAbout);
         bindSectionNavigation(mBinding.navContent, mBinding.settingsScroll, mBinding.sectionContent, mBinding.vod);
         bindSectionNavigation(mBinding.navAppearance, mBinding.settingsScroll, mBinding.sectionAppearance, mBinding.skin);
         bindSectionNavigation(mBinding.navPlayback, mBinding.settingsScroll, mBinding.sectionPlayback, mBinding.player);
@@ -160,6 +193,21 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.wallDefault.setOnClickListener(this::setWallDefault);
         mBinding.wallRefresh.setOnClickListener(this::setWallRefresh);
         mBinding.wallRefresh.setOnLongClickListener(this::onWallHistory);
+    }
+
+    private void bindVerticalNavigation(View current, View up, View down) {
+        current.setOnKeyListener((view, keyCode, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                up.requestFocus();
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                down.requestFocus();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void bindSectionNavigation(View navigation, NestedScrollView scroller, View section, View target) {
@@ -198,7 +246,9 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     @Override
     public void setConfig(Config config) {
         if (config.getUrl().startsWith("file")) {
-            PermissionUtil.requestFile(this, allGranted -> load(config));
+            PermissionUtil.requestFile(this, allGranted -> {
+                if (allGranted) load(config);
+            });
         } else {
             load(config);
         }
@@ -421,6 +471,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.vodUrl.setText(VodConfig.getDesc());
         mBinding.liveUrl.setText(LiveConfig.getDesc());
         mBinding.wallUrl.setText(WallConfig.getDesc());
+        setActiveSourceText();
     }
 
 }

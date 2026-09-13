@@ -2,53 +2,57 @@
 <resources>
     <style name="Tv.Setting.Back" parent="">
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:minWidth">96dp</item>
-        <item name="android:background">@drawable/selector_item</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:minWidth">76dp</item>
+        <item name="android:background">@drawable/tv_setting_back_selector</item>
+        <item name="android:drawablePadding">4dp</item>
+        <item name="android:drawableTint">?attr/tvColorAccent</item>
         <item name="android:focusable">true</item>
         <item name="android:gravity">center</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
         <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
         <item name="android:textColor">?attr/tvColorTextPrimary</item>
-        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="Tv.Setting.Nav" parent="">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">58dp</item>
-        <item name="android:layout_marginBottom">10dp</item>
-        <item name="android:background">@drawable/selector_item</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:layout_marginBottom">5dp</item>
+        <item name="android:background">@drawable/tv_setting_nav_selector</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:drawableTint">@color/tv_setting_item_tint</item>
         <item name="android:ellipsize">end</item>
         <item name="android:focusable">true</item>
         <item name="android:gravity">center_vertical</item>
+        <item name="android:lineSpacingExtra">1dp</item>
         <item name="android:maxLines">2</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
         <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
-        <item name="android:textColor">?attr/tvColorTextPrimary</item>
-        <item name="android:textSize">@dimen/tv_text_card_title</item>
+        <item name="android:textColor">@color/tv_setting_item_tint</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="Tv.Setting.Section" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">4dp</item>
-        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
         <item name="android:letterSpacing">0.06</item>
-        <item name="android:textAllCaps">true</item>
         <item name="android:textColor">?attr/tvColorAccent</item>
-        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="Tv.Setting.Row" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">58dp</item>
-        <item name="android:background">@drawable/selector_item</item>
+        <item name="android:minHeight">38dp</item>
+        <item name="android:background">@drawable/tv_setting_row_selector</item>
         <item name="android:clipChildren">false</item>
         <item name="android:focusable">true</item>
         <item name="android:focusableInTouchMode">true</item>
@@ -58,12 +62,12 @@
     </style>
 
     <style name="Tv.Setting.IconAction" parent="">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:background">@drawable/selector_item</item>
+        <item name="android:layout_width">36dp</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:background">@drawable/tv_setting_row_selector</item>
         <item name="android:focusable">true</item>
         <item name="android:focusableInTouchMode">true</item>
-        <item name="android:padding">10dp</item>
+        <item name="android:padding">8dp</item>
         <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
     </style>
 
@@ -74,7 +78,7 @@
         <item name="android:ellipsize">end</item>
         <item name="android:maxLines">2</item>
         <item name="android:textColor">?attr/tvColorTextPrimary</item>
-        <item name="android:textSize">@dimen/tv_text_card_title</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -85,18 +89,18 @@
         <item name="android:gravity">end</item>
         <item name="android:maxLines">1</item>
         <item name="android:textColor">?attr/tvColorTextSecondary</item>
-        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <style name="Tv.Setting.Hint" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">12dp</item>
-        <item name="android:layout_marginTop">8dp</item>
-        <item name="android:layout_marginEnd">12dp</item>
+        <item name="android:layout_marginStart">9dp</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:layout_marginEnd">9dp</item>
         <item name="android:ellipsize">end</item>
         <item name="android:maxLines">2</item>
         <item name="android:textColor">?attr/tvColorTextSecondary</item>
-        <item name="android:textSize">@dimen/tv_text_body</item>
+        <item name="android:textSize">10sp</item>
     </style>
 </resources>

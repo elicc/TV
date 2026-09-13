@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Player OSD reveal: fade plus a 24dp rise so the bar settles into place. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/tv_motion_osd_fade"
+    android:interpolator="@interpolator/tv_interp_decelerate"
+    android:fillEnabled="true"
+    android:fillAfter="true">
+    <translate
+        android:fromYDelta="24dp"
+        android:toYDelta="0dp" />
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>

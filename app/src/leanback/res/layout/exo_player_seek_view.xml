@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App-side override of the AAR's exo_player_seek_view: same ids and structure,
+     but the time bar is TvTimeBar (still a DefaultTimeBar for PlayerSeekView's
+     instanceof check) themed with champagne gold and a glowing scrubber. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@id/exo_position"
+        style="@style/ExoStyledControls.TimeText.Position"
+        android:fontFeatureSettings="tnum"
+        android:paddingHorizontal="0dp"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="@dimen/tv_text_body" />
+
+    <com.fongmi.android.tv.ui.custom.TvTimeBar
+        android:id="@id/exo_progress"
+        style="@style/Tv.SeekBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:nextFocusLeft="@id/exo_progress"
+        android:nextFocusRight="@id/exo_progress" />
+
+    <TextView
+        android:id="@id/exo_duration"
+        style="@style/ExoStyledControls.TimeText.Position"
+        android:fontFeatureSettings="tnum"
+        android:paddingHorizontal="0dp"
+        android:textColor="?attr/tvColorTextSecondary"
+        android:textSize="@dimen/tv_text_body" />
+
+</LinearLayout>

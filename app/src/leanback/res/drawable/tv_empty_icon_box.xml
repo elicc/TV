@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Accent icon box (filled champagne) for the RECOMMENDED card. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/tvColorAccent" />
+    <corners android:radius="16dp" />
+</shape>

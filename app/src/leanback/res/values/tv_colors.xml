@@ -18,6 +18,23 @@
     <color name="tv_focus">#FCD58B</color>
     <color name="tv_focus_ice">#B8E0FF</color>
     <color name="tv_focus_jade">#B8E8D2</color>
+    <!-- Focus halo band at ~28% alpha; drawable-only approximation of the 25px blur. -->
+    <color name="tv_focus_glow_champagne">#47FCD58B</color>
+    <color name="tv_focus_glow_ice">#47B8E0FF</color>
+    <color name="tv_focus_glow_jade">#47B8E8D2</color>
+    <!-- Glass surfaces below API 31 fall back to an opaque-enough tint instead of blur. -->
+    <color name="tv_glass">#D1202024</color>
+    <color name="tv_glass_raised">#F22A2A30</color>
+    <color name="tv_glass_border">#14FFFFFF</color>
+    <!-- Active top-nav item: design uses a neutral white-glass fill, not the
+         champagne selected-surface token used by content chips. -->
+    <color name="tv_nav_selected">#3E3937</color>
+    <color name="tv_nav_selected_border">#0DFFFFFF</color>
+    <!-- Subtle borders on empty/empty-state cards per the Stitch empty_source design. -->
+    <color name="tv_border_subtle">#2E2E35</color>
+    <!-- Accent tints used by empty-state badge pills (25% / 50% alpha variants). -->
+    <color name="tv_accent_quarter">#40E5A958</color>
+    <color name="tv_accent_half">#80E5A958</color>
     <color name="tv_selected_champagne">#3D3328</color>
     <color name="tv_selected_ice">#273845</color>
     <color name="tv_selected_jade">#273E35</color>

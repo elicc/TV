@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Focus surface, halo band and crisp inner champagne ring. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/tvColorSurface" />
+            <corners android:radius="16dp" />
+            <stroke
+                android:width="6dp"
+                android:color="?attr/tvColorFocusGlow" />
+        </shape>
+    </item>
+    <item
+        android:left="3dp"
+        android:top="3dp"
+        android:right="3dp"
+        android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="13dp" />
+            <stroke
+                android:width="2dp"
+                android:color="?attr/tvColorFocus" />
+        </shape>
+    </item>
+</layer-list>

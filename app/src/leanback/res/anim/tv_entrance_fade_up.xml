@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- First-screen entrance: fade in while rising 22dp (Stitch fadeInUpEntrance). -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/tv_motion_entrance"
+    android:interpolator="@interpolator/tv_interp_enter">
+    <translate
+        android:fromYDelta="22dp"
+        android:toYDelta="0dp" />
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>

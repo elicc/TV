@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- First-launch empty state (Stitch fongmi_tv_leanback_1080p_home_empty_source).
+     Fills the home grid slot: ambient flares + FONGMI TV watermark sit behind
+     a centred welcome block and the three configuration cards. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="428dp"
+    android:clipChildren="false">
+
+    <View
+        android:id="@+id/flareWide"
+        android:layout_width="720dp"
+        android:layout_height="200dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="-30dp"
+        android:background="@drawable/tv_accent_flare_wide"
+        android:importantForAccessibility="no" />
+
+    <View
+        android:id="@+id/flareSoft"
+        android:layout_width="500dp"
+        android:layout_height="220dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="60dp"
+        android:alpha="0.5"
+        android:background="@drawable/tv_accent_flare_soft"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/watermark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="80dp"
+        android:alpha="0.035"
+        android:fontFamily="sans-serif"
+        android:fontWeight="900"
+        android:importantForAccessibility="no"
+        android:letterSpacing="-0.05"
+        android:singleLine="true"
+        android:text="FONGMI TV"
+        android:textColor="@android:color/white"
+        android:textSize="160sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="136dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/tv_pill_accent_quarter"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+                android:paddingStart="7dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="7dp"
+                android:paddingBottom="3dp">
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/tv_accent_dot"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.08"
+                android:text="@string/tv_empty_badge"
+                android:textAllCaps="true"
+                android:textColor="?attr/tvColorAccent"
+                android:textSize="9sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/space_grotesk"
+            android:text="@string/tv_empty_welcome_title"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="@string/tv_empty_welcome_subtitle"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:alpha="0.7"
+            android:fontFeatureSettings="tnum"
+            android:letterSpacing="0.05"
+            android:text="@string/tv_empty_welcome_hint"
+            android:textColor="?attr/tvColorTextMuted"
+            android:textSize="7sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cards"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="59dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <include
+            android:id="@+id/cardVod"
+            layout="@layout/view_empty_source_card"
+            android:layout_width="264dp"
+            android:layout_height="112dp"
+            android:layout_marginEnd="16dp" />
+
+        <include
+            android:id="@+id/cardLive"
+            layout="@layout/view_empty_source_card"
+            android:layout_width="264dp"
+            android:layout_height="112dp"
+            android:layout_marginEnd="16dp" />
+
+        <include
+            android:id="@+id/cardDrive"
+            layout="@layout/view_empty_source_card"
+            android:layout_width="264dp"
+            android:layout_height="112dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/auxiliary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="15dp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
+        android:text="@string/tv_empty_auxiliary"
+        android:textColor="?attr/tvColorTextMuted"
+        android:textSize="9sp" />
+
+</FrameLayout>

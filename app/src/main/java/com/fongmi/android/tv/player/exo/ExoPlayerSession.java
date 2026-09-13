@@ -1,7 +1,6 @@
 package com.fongmi.android.tv.player.exo;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +16,7 @@ import androidx.media3.exoplayer.trackselection.DecodeTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelector;
 
 import com.fongmi.android.tv.App;
+import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,13 +92,13 @@ final class ExoPlayerSession {
 
         @Override
         public void onCompleted(@NonNull MediaItem mediaItem) {
-            if (isPreloaded(mediaItem)) Log.d(TAG, "Preload completed");
+            if (isPreloaded(mediaItem)) Logger.t(TAG).d("Preload completed");
         }
 
         @Override
         public void onError(PreloadException exception) {
             if (!isPreloaded(exception.mediaItem)) return;
-            Log.w(TAG, "Preload failed", exception);
+            Logger.t(TAG).e(exception, "Preload failed");
             clearPreload();
         }
     }

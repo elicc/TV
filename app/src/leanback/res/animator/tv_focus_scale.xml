@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Focus lift: 1.05x scale (Stitch Focused state) plus a translationZ bump so the
+     halo ring is never clipped by neighbours. OK press settles to 0.98x first. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:state_focused="true">
+        <set android:ordering="together"
+            android:interpolator="@interpolator/tv_interp_emphasis"
+            android:duration="@integer/tv_motion_focus_on">
+            <objectAnimator android:propertyName="scaleX" android:valueTo="0.98" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="0.98" />
+            <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
+        </set>
+    </item>
     <item android:state_focused="true">
-        <set>
-            <objectAnimator android:propertyName="scaleX" android:valueTo="1.05" android:duration="160" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="1.05" android:duration="160" />
+        <set android:ordering="together"
+            android:interpolator="@interpolator/tv_interp_emphasis"
+            android:duration="@integer/tv_motion_focus_on">
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.05" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.05" />
+            <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
         </set>
     </item>
     <item>
-        <set>
-            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" android:duration="140" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" android:duration="140" />
+        <set android:ordering="together"
+            android:interpolator="@interpolator/tv_interp_emphasis"
+            android:duration="@integer/tv_motion_focus_off">
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="translationZ" android:valueTo="0" />
         </set>
     </item>
 </selector>

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """TV-only resource/source invariants; APK/device tests remain separate."""
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 RES = ROOT / "app/src/leanback/res"
 JAVA = ROOT / "app/src/leanback/java/com/fongmi/android/tv"
+MAIN_JAVA = ROOT / "app/src/main/java/com/fongmi/android/tv"
 
 class TvThemeTests(unittest.TestCase):
     def test_all_xml_parse(self):
@@ -93,11 +96,152 @@ class TvThemeTests(unittest.TestCase):
         styles = (RES / "values/tv_styles.xml").read_text()
         self.assertIn('tvColorFocus">@color/tv_focus_ice', styles)
         self.assertIn('tvColorFocus">@color/tv_focus_jade', styles)
+        self.assertIn('tvColorFocusGlow">@color/tv_focus_glow_ice', styles)
+        self.assertIn('tvColorFocusGlow">@color/tv_focus_glow_jade', styles)
         animator = (RES / "animator/tv_focus_scale.xml").read_text()
         self.assertIn("valueTo=\"1.05\"", animator)
-        self.assertIn("duration=\"160\"", animator)
+        self.assertIn("valueTo=\"0.98\"", animator)
+        self.assertIn("propertyName=\"translationZ\"", animator)
+        self.assertIn("@integer/tv_motion_focus_on", animator)
+        self.assertIn("@interpolator/tv_interp_emphasis", animator)
         home = (RES / "values/tv_home_styles.xml").read_text()
         self.assertIn("@animator/tv_focus_scale", home)
+        # Every focus ring carries the halo band via a second glow stroke.
+        for shape in (RES / "drawable").glob("shape_*_focused.xml"):
+            text = shape.read_text()
+            self.assertIn("tvColorFocusGlow", text, shape.name)
+            self.assertIn("tv_glow_band", text, shape.name)
+        # The hero primary action and the home nav also pick up the halo.
+        for name in ["tv_hero_primary.xml", "tv_home_nav.xml"]:
+            text = (RES / "drawable" / name).read_text()
+            self.assertIn("tvColorFocusGlow", text, name)
+
+    def test_home_nav_selected_state_matches_stitch_glass(self):
+        colors = (RES / "values/tv_colors.xml").read_text()
+        self.assertIn('<color name="tv_nav_selected">#3E3937</color>', colors)
+        self.assertIn('<color name="tv_nav_selected_border">#0DFFFFFF</color>', colors)
+        nav = (RES / "drawable/tv_nav_pill.xml").read_text()
+        self.assertEqual(1, nav.count('@color/tv_nav_selected"'))
+        self.assertEqual(2, nav.count('@color/tv_accent"'))
+        self.assertIn('@color/tv_nav_selected_border', nav)
+        text = (RES / "color/nav_text_color.xml").read_text()
+        icons = (RES / "color/nav_icon_color.xml").read_text()
+        self.assertIn('android:state_focused="true" android:color="?attr/tvColorOnAccent"', text)
+        self.assertIn('android:state_focused="true" android:color="?attr/tvColorOnAccent"', icons)
+        self.assertIn('android:state_selected="true" android:color="?attr/tvColorTextPrimary"', text)
+        self.assertIn('android:state_selected="true" android:color="?attr/tvColorTextPrimary"', icons)
+
+    def test_tv_page_icons_are_generated_from_lucide(self):
+        sources = {
+            "ic_nav_home": ("home.svg", 20),
+            "ic_nav_vod": ("film.svg", 20),
+            "ic_nav_live": ("tv.svg", 20),
+            "ic_nav_keep": ("bookmark.svg", 20),
+            "ic_nav_search": ("search.svg", 20),
+            "ic_nav_more": ("more-horizontal.svg", 20),
+            "ic_nav_settings": ("settings.svg", 20),
+            "ic_empty_film": ("film.svg", 20),
+            "ic_empty_broadcast": ("radio-tower.svg", 20),
+            "ic_empty_cloud": ("cloud.svg", 20),
+            "ic_setting_nav_content": ("database.svg", 24),
+            "ic_setting_nav_appearance": ("palette.svg", 24),
+            "ic_setting_nav_playback": ("play-circle.svg", 24),
+            "ic_setting_nav_data": ("shield-check.svg", 24),
+            "ic_setting_nav_about": ("info.svg", 24),
+            "ic_setting_back": ("chevron-left.svg", 16),
+        }
+        for target, (source, size) in sources.items():
+            vector = (RES / f"drawable/{target}.xml").read_text()
+            self.assertIn(f"Generated from Lucide 0.344.0 {source}", vector)
+            self.assertIn(f'android:width="{size}dp"', vector)
+            self.assertIn(f'android:height="{size}dp"', vector)
+            self.assertIn('android:viewportWidth="24"', vector)
+            self.assertIn('android:strokeWidth="2"', vector)
+            self.assertIn('android:strokeLineCap="round"', vector)
+            self.assertIn('android:strokeLineJoin="round"', vector)
+        subprocess.run(
+            [sys.executable, ROOT / "tools/lucide/generate_android_vectors.py", "--check"],
+            cwd=ROOT,
+            check=True,
+        )
+
+    def test_setting_nav_uses_dedicated_lucide_icons(self):
+        expected = {
+            "navContent": "ic_setting_nav_content",
+            "navAppearance": "ic_setting_nav_appearance",
+            "navPlayback": "ic_setting_nav_playback",
+            "navData": "ic_setting_nav_data",
+            "navAbout": "ic_setting_nav_about",
+        }
+        root = ET.parse(RES / "layout/activity_setting.xml").getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        actual = set()
+        for view_id, drawable in expected.items():
+            view = next(n for n in root.iter() if n.get(android + "id") == "@+id/" + view_id)
+            self.assertEqual("@drawable/" + drawable, view.get(android + "drawableStart"))
+            actual.add(view.get(android + "drawableStart"))
+        for legacy in ["ic_nav_vod", "ic_action_setting", "ic_widget_play", "ic_empty_cloud", "ic_action_debug"]:
+            self.assertNotIn("@drawable/" + legacy, actual)
+
+    def test_setting_back_uses_unclipped_lucide_icon(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/activity_setting.xml").getroot()
+        back = next(n for n in root.iter() if n.get(android + "id") == "@+id/settingBack")
+        self.assertEqual("@drawable/ic_setting_back", back.get(android + "drawableStart"))
+
+        style = next(s for s in ET.parse(RES / "values/tv_setting_styles.xml").iter("style") if s.get("name") == "Tv.Setting.Back")
+        items = {item.get("name"): item.text for item in style}
+        self.assertEqual("@drawable/tv_setting_back_selector", items["android:background"])
+        self.assertEqual("4dp", items["android:drawablePadding"])
+        self.assertEqual("24dp", items["android:layout_height"])
+
+        for folder in ["values", "values-zh-rCN", "values-zh-rTW"]:
+            strings = ET.parse(RES / folder / "tv_settings_strings.xml")
+            label = next(n for n in strings.iter("string") if n.get("name") == "tv_setting_back")
+            self.assertNotIn("‹", label.text)
+
+        selector = (RES / "drawable/tv_setting_back_selector.xml").read_text()
+        self.assertNotIn("<padding", selector)
+
+    def test_leanback_source_confirmation_recovers_after_file_permission(self):
+        dialog = (JAVA / "ui/dialog/ConfigDialog.java").read_text()
+        layout = (RES / "layout/dialog_config.xml").read_text()
+        self.assertIn("PermissionUtil.requestFile(this, allGranted ->", dialog)
+        self.assertIn("if (!allGranted || !isAdded()) return", dialog)
+        self.assertIn("SourceBootstrap.find(type", dialog)
+        self.assertIn("FileChooser.from(launcher).show()", dialog)
+        self.assertIn('ContentResolver.SCHEME_FILE.equalsIgnoreCase(UrlUtil.scheme(text))', dialog)
+        self.assertIn("text.isEmpty() && isSourceType()", dialog)
+        self.assertIn("firstSourceSetup ? View.GONE : View.VISIBLE", dialog)
+        self.assertIn("updatePositiveText(s.toString())", dialog)
+        self.assertIn("TextUtils.isEmpty(text) || TextUtils.isEmpty(text.trim())", dialog)
+        self.assertIn("R.string.tv_config_continue", dialog)
+        self.assertIn("R.string.tv_config_apply", dialog)
+        self.assertIn('android:text="@string/tv_config_browse_local"', layout)
+        self.assertIn('android:layout_weight="2"', layout)
+        self.assertEqual(3, layout.count('android:paddingStart="8dp"'))
+        self.assertEqual(3, layout.count('android:paddingEnd="8dp"'))
+
+        setting = (JAVA / "ui/activity/SettingActivity.java").read_text()
+        self.assertIn("if (allGranted) load(config)", setting)
+
+    def test_source_bootstrap_is_versioned_atomic_and_source_only(self):
+        bootstrap = (MAIN_JAVA / "db/SourceBootstrap.java").read_text()
+        self.assertIn('FILE_NAME = "source-bootstrap.json"', bootstrap)
+        self.assertIn("VERSION = 1", bootstrap)
+        self.assertIn("FileUtil.writeAtomically", bootstrap)
+        self.assertIn("snapshot.add(0)", bootstrap)
+        self.assertIn("snapshot.add(1)", bootstrap)
+        self.assertNotIn("Config.wall()", bootstrap)
+        self.assertIn('Prefers.getString("config_" + type)', bootstrap)
+        self.assertIn("getConfigDao().find(url, type)", bootstrap)
+        self.assertIn("MAX_BYTES", bootstrap)
+
+        base_config = (MAIN_JAVA / "api/config/BaseConfig.java").read_text()
+        self.assertIn("SourceBootstrap.save()", base_config)
+        for name in ["VodConfig.java", "LiveConfig.java"]:
+            config = (MAIN_JAVA / "api/config" / name).read_text()
+            self.assertIn("SourceBootstrap.save()", config, name)
 
     def test_palette_contrast(self):
         colors = {n.get("name"): n.text for n in ET.parse(RES / "values/tv_colors.xml").iter("color")}
@@ -163,18 +307,44 @@ class TvThemeTests(unittest.TestCase):
         root = ET.parse(RES / "layout/activity_home.xml").getroot()
         toolbar = next(n for n in root.iter("LinearLayout") if n.get(android + "id") == "@+id/toolbar")
         recycler = next(n for n in root.iter() if n.get(android + "id") == "@+id/recycler")
-        self.assertEqual("60dp", toolbar.get(android + "minHeight"))
+        self.assertEqual("36dp", toolbar.get(android + "minHeight"))
+        self.assertEqual("28dp", toolbar.get(android + "layout_marginTop"))
         self.assertEqual("@dimen/tv_safe_horizontal", toolbar.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_horizontal", recycler.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_vertical", recycler.get(android + "paddingBottom"))
         source = next(n for n in root.iter("View") if n.get(android + "id") == "@+id/sourceStatus")
-        self.assertEqual("8dp", source.get(android + "layout_width"))
-        remote = next(n for n in root.iter("TextView") if n.get(android + "id") == "@+id/remoteHint")
-        self.assertEqual("24dp", remote.get(android + "layout_height"))
-        self.assertEqual("@string/tv_home_remote_hint", remote.get(android + "text"))
+        self.assertEqual("4dp", source.get(android + "layout_width"))
+        keycaps = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.TvKeycapsBar") if n.get(android + "id") == "@+id/keycaps")
+        self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingStart"))
+        self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingEnd"))
+        self.assertEqual("24dp", keycaps.get(android + "layout_marginBottom"))
         code = (JAVA / "ui/activity/HomeActivity.java").read_text()
-        self.assertIn("!TextUtils.isEmpty(getConfig().getUrl()) && !mConfigFailed", code)
-        self.assertIn("R.color.tv_success : R.color.tv_danger", code)
+        self.assertIn("getString(R.string.tv_source_unconfigured)", code)
+        self.assertIn("TvTheme.color(this, R.attr.tvColorAccent)", code)
+        self.assertIn('.format("HH:mm")', code)
+        self.assertIn("mBinding.clock.setVisibility(View.VISIBLE)", code)
+
+    def test_home_empty_source_uses_reference_geometry_and_initial_focus(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/view_empty_source.xml").getroot()
+        self.assertEqual("428dp", root.get(android + "layout_height"))
+        cards = next(n for n in root.iter("LinearLayout") if n.get(android + "id") == "@+id/cards")
+        self.assertEqual("false", cards.get(android + "clipChildren"))
+        includes = list(cards.iter("include"))
+        self.assertEqual(["264dp"] * 3, [n.get(android + "layout_width") for n in includes])
+        self.assertEqual(["112dp"] * 3, [n.get(android + "layout_height") for n in includes])
+
+        card = ET.parse(RES / "layout/view_empty_source_card.xml").getroot()
+        self.assertEqual("@drawable/selector_empty_card", card.get(android + "background"))
+        self.assertEqual("false", card.get(android + "clipChildren"))
+        icon_box = next(n for n in card.iter("FrameLayout") if n.get(android + "id") == "@+id/iconBox")
+        self.assertEqual("40dp", icon_box.get(android + "layout_width"))
+
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        presenter = (JAVA / "ui/presenter/EmptySourcePresenter.java").read_text()
+        self.assertIn("findViewById(R.id.cardVod)", home)
+        self.assertIn("card.iconBox.setBackgroundResource", presenter)
+        self.assertIn("Action.LIVE, false, true", presenter)
 
     def test_vod_uses_stitch_safe_area_and_card_typography(self):
         android = "{http://schemas.android.com/apk/res/android}"
@@ -273,6 +443,11 @@ class TvThemeTests(unittest.TestCase):
     def test_settings_uses_three_column_focusable_rail_and_preserves_actions(self):
         android = "{http://schemas.android.com/apk/res/android}"
         root = ET.parse(RES / "layout/activity_setting.xml").getroot()
+        self.assertEqual("false", root.get(android + "clipChildren"))
+        self.assertEqual("false", root.get(android + "clipToPadding"))
+        header = list(root)[0]
+        self.assertEqual("false", header.get(android + "clipChildren"))
+        self.assertEqual("false", header.get(android + "clipToPadding"))
         ids = {node.get(android + "id") for node in root.iter() if node.get(android + "id")}
         required = {
             "@+id/vod", "@+id/vodUrl", "@+id/vodHome", "@+id/vodHistory",
@@ -288,8 +463,26 @@ class TvThemeTests(unittest.TestCase):
         for nav in ["navContent", "navAppearance", "navPlayback", "navData", "navAbout"]:
             node = next(n for n in root.iter() if n.get(android + "id") == "@+id/" + nav)
             self.assertEqual("@style/Tv.Setting.Nav", node.get("style"), nav)
-        self.assertIsNotNone(next(n for n in root.iter() if n.get(android + "id") == "@+id/settingsScroll"))
-        self.assertIsNotNone(next(n for n in root.iter() if n.get(android + "id") == "@+id/utilityScroll"))
+        for scroll_id in ["settingsScroll", "utilityScroll"]:
+            scroller = next(n for n in root.iter() if n.get(android + "id") == "@+id/" + scroll_id)
+            self.assertEqual("false", scroller.get(android + "clipChildren"), scroll_id)
+            self.assertEqual("false", scroller.get(android + "clipToPadding"), scroll_id)
+            self.assertEqual("0dp", scroller.get(android + "paddingStart"), scroll_id)
+            self.assertEqual("0dp", scroller.get(android + "paddingEnd"), scroll_id)
+            self.assertEqual("11dp", scroller.get(android + "paddingTop"), scroll_id)
+            self.assertEqual("11dp", scroller.get(android + "paddingBottom"), scroll_id)
+            self.assertEqual("match_parent", scroller.get(android + "layout_width"), scroll_id)
+            self.assertEqual("match_parent", scroller.get(android + "layout_height"), scroll_id)
+            content = list(scroller)[0]
+            self.assertEqual("false", content.get(android + "clipChildren"), scroll_id)
+            self.assertEqual("false", content.get(android + "clipToPadding"), scroll_id)
+            self.assertEqual("11dp", content.get(android + "paddingStart"), scroll_id)
+            self.assertEqual("11dp", content.get(android + "paddingEnd"), scroll_id)
+        for panel_id in ["settingsPanel", "utilityPanel"]:
+            panel = next(n for n in root.iter("FrameLayout") if n.get(android + "id") == "@+id/" + panel_id)
+            self.assertEqual("true", panel.get(android + "clipChildren"), panel_id)
+            self.assertEqual("true", panel.get(android + "clipToPadding"), panel_id)
+            self.assertEqual("@drawable/tv_setting_panel_frame", panel.get(android + "background"), panel_id)
         code = (JAVA / "ui/activity/SettingActivity.java").read_text()
         for method in ["bindSectionNavigation", "bindSectionFocus", "selectNavigation", "scrollToSection"]:
             self.assertIn(method, code)

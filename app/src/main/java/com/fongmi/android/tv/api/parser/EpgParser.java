@@ -1,7 +1,5 @@
 package com.fongmi.android.tv.api.parser;
 
-import android.util.Log;
-
 import com.fongmi.android.tv.bean.Channel;
 import com.fongmi.android.tv.bean.Epg;
 import com.fongmi.android.tv.bean.EpgData;
@@ -12,6 +10,7 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Formatters;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.github.catvod.utils.Path;
+import com.orhanobut.logger.Logger;
 
 import org.simpleframework.xml.core.Persister;
 
@@ -45,7 +44,7 @@ public class EpgParser {
             if (!offset.isEmpty()) return parseOffset(time + " " + offset);
             return LocalDateTime.parse(time, Formatters.EPG_FULL_NO_TZ).atZone(zoneId).toOffsetDateTime();
         } catch (Exception e) {
-            Log.w(TAG, "parseFull failed: " + s + " -> " + e.getMessage());
+            Logger.t(TAG).e(e, "parseFull failed: " + s);
             return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC);
         }
     }
@@ -63,12 +62,12 @@ public class EpgParser {
         File file = Path.epg(UrlUtil.path(url));
         String reason = refreshReason(file);
         boolean refresh = reason != null;
-        Log.i(TAG, "start url=" + url + " file=" + file.getName() + " refresh=" + refresh + (refresh ? " reason=" + reason : ""));
+        Logger.t(TAG).i("start url=" + url + " file=" + file.getName() + " refresh=" + refresh + (refresh ? " reason=" + reason : ""));
         if (refresh) Download.create(url, file).get();
         boolean gzip = isGzip(file);
         if (gzip) readGzip(live, file, refresh);
         else readXml(live, file);
-        Log.i(TAG, "start done elapsed=" + (System.currentTimeMillis() - t0) + "ms");
+        Logger.t(TAG).i("start done elapsed=" + (System.currentTimeMillis() - t0) + "ms");
     }
 
     public static Epg getEpg(String xml, String key, ZoneId zoneId) {
@@ -80,7 +79,7 @@ public class EpgParser {
             tv.getProgramme().forEach(programme -> epg.getList().add(getEpgData(programme, zoneId)));
             return epg;
         } catch (Exception e) {
-            Log.w(TAG, "getEpg parse failed key=" + key + ": " + e.getMessage());
+            Logger.t(TAG).e(e, "getEpg parse failed key=" + key);
             return new Epg();
         }
     }
@@ -107,7 +106,7 @@ public class EpgParser {
     private static void readGzip(Live live, File file, boolean refresh) throws Exception {
         File xml = Path.epg(file.getName() + ".xml");
         boolean needsDecompression = refresh || !Path.exists(xml);
-        if (needsDecompression && !FileUtil.gzipDecompress(file, xml)) Log.w(TAG, "gzip decompress failed file=" + file);
+        if (needsDecompression && !FileUtil.gzipDecompress(file, xml)) Logger.t(TAG).w("gzip decompress failed file=" + file);
         readXml(live, xml);
     }
 
@@ -178,7 +177,7 @@ public class EpgParser {
                 }
             }
         }
-        Log.i(TAG, "processProgramme skipped(no match)=" + skipped + " matched channels=" + epgMap.size());
+        Logger.t(TAG).i("processProgramme skipped(no match)=" + skipped + " matched channels=" + epgMap.size());
         return new ProgrammeResult(epgMap, srcMap);
     }
 
@@ -208,7 +207,7 @@ public class EpgParser {
                         if (src != null) channel.setLogo(src);
                     }
                 });
-        Log.i(TAG, "bindResultsToLive with-epg=" + counts[0] + " without-epg=" + counts[1]);
+        Logger.t(TAG).i("bindResultsToLive with-epg=" + counts[0] + " without-epg=" + counts[1]);
     }
 
     private static EpgData getEpgData(Tv.Programme programme, ZoneId zoneId) {

@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.activity;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Intent;
@@ -56,19 +57,24 @@ import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.CustomRowPresenter;
 import com.fongmi.android.tv.ui.custom.CustomSelector;
 import com.fongmi.android.tv.ui.custom.CustomTitleView;
+import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.ui.presenter.FuncPresenter;
+import com.fongmi.android.tv.ui.presenter.EmptySourcePresenter;
 import com.fongmi.android.tv.ui.presenter.HeaderPresenter;
 import com.fongmi.android.tv.ui.presenter.HeroPresenter;
 import com.fongmi.android.tv.ui.presenter.HistoryPresenter;
 import com.fongmi.android.tv.ui.presenter.ProgressPresenter;
 import com.fongmi.android.tv.ui.presenter.VodPresenter;
+import com.fongmi.android.tv.ui.motion.TvMotion;
+import com.fongmi.android.tv.ui.motion.TvStagger;
 import com.fongmi.android.tv.utils.Clock;
 import com.fongmi.android.tv.utils.FileChooser;
 import com.fongmi.android.tv.utils.KeyUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.github.catvod.net.OkHttp;
@@ -83,7 +89,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener {
+public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener {
 
     private ActivityHomeBinding mBinding;
     private ArrayObjectAdapter mHistoryAdapter;
@@ -92,6 +98,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private SiteViewModel mViewModel;
     private Result mResult;
     private Clock mClock;
+    private ObjectAnimator mPulse;
     private boolean mLoading;
     private boolean mConfigLoading;
     private boolean mConfigFailed;
@@ -136,7 +143,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     protected void initView(Bundle savedInstanceState) {
         mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
         mResult = Result.empty();
-        mClock = Clock.create(mBinding.clock);
+        mClock = Clock.create(mBinding.clock).format("HH:mm");
         mBinding.progressLayout.showProgress();
         PermissionUtil.requestNotify(this);
         DLNARendererService.start(this);
@@ -144,18 +151,49 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         setRecyclerView();
         setViewModel();
         setAdapter();
+        setKeycaps();
+        startSourcePulse();
         initConfig();
         setTitle();
         setLogo();
         adaptToolbar();
-        if (savedInstanceState == null) mBinding.navHome.requestFocus();
+        if (savedInstanceState == null) {
+            TvStagger.activity(mBinding.getRoot(), R.id.toolbar, R.id.progressLayout, R.id.keycaps);
+            TvStagger.firstScreen(mBinding.recycler);
+            mBinding.navHome.requestFocus();
+        }
+    }
+
+    private void setKeycaps() {
+        TvKeycapsBar.Cap[] caps = {
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_dpad), KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT),
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_ok), KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER),
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_menu), KeyEvent.KEYCODE_MENU),
+                TvKeycapsBar.Cap.of(getString(R.string.tv_key_back), KeyEvent.KEYCODE_BACK),
+        };
+        String[] hints = {getString(R.string.tv_hint_dpad), getString(R.string.tv_hint_ok), getString(R.string.tv_hint_menu), getString(R.string.tv_hint_back)};
+        mBinding.keycaps.setCaps(caps, hints);
+    }
+
+    private void startSourcePulse() {
+        if (!TvMotion.motionEnabled(this)) return;
+        mPulse = ObjectAnimator.ofFloat(mBinding.sourceStatus, "alpha", 1f, 0.45f);
+        mPulse.setDuration(1200);
+        mPulse.setRepeatCount(ObjectAnimator.INFINITE);
+        mPulse.setRepeatMode(ObjectAnimator.REVERSE);
+        mPulse.start();
+    }
+
+    @Override
+    protected TvKeycapsBar keycaps() {
+        return mBinding.keycaps;
     }
 
     private void adaptToolbar() {
         boolean largeText = getResources().getConfiguration().fontScale > 1.15f;
         mBinding.toolbar.setOrientation(largeText ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
         mBinding.navSpacer.setVisibility(largeText ? View.GONE : View.VISIBLE);
-        mBinding.clock.setVisibility(largeText ? View.GONE : View.VISIBLE);
+        mBinding.clock.setVisibility(View.VISIBLE);
         if (largeText) {
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mBinding.utilities.getLayoutParams();
             params.gravity = android.view.Gravity.END;
@@ -211,6 +249,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void setRecyclerView() {
         CustomSelector selector = new CustomSelector();
         selector.addPresenter(Integer.class, new HeaderPresenter());
+        selector.addPresenter(EmptySourcePresenter.Item.class, new EmptySourcePresenter(this));
         selector.addPresenter(HeroPresenter.Item.class, new HeroPresenter(this));
         selector.addPresenter(String.class, new ProgressPresenter());
         selector.addPresenter(Vod.class, new VodPresenter(this, Style.list()));
@@ -234,16 +273,40 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void setAdapter() {
         mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
-        mAdapter.add(heroItem());
+        if (showEmptySource()) {
+            mAdapter.add(emptySourceItem());
+        } else {
+            mAdapter.add(heroItem());
+        }
         mAdapter.add(R.string.home_recommend);
     }
 
+    private boolean showEmptySource() {
+        return !hasConfiguredSource()
+                && !mConfigLoading
+                && !mConfigFailed
+                && !mLoading;
+    }
+
+    private boolean hasConfiguredSource() {
+        return !TextUtils.isEmpty(getConfig().getUrl());
+    }
+
+    private EmptySourcePresenter.Item emptySourceItem() {
+        if (mConfigFailed) return EmptySourcePresenter.Item.asFailed();
+        if (mConfigLoading) return EmptySourcePresenter.Item.asLoading();
+        return EmptySourcePresenter.Item.fresh();
+    }
+
     private void setTitle() {
-        List<String> items = Arrays.asList(getHome().getName(), getConfig().getName(), getString(R.string.app_name));
+        boolean configured = hasConfiguredSource();
+        List<String> items = Arrays.asList(getHome().getName(), getConfig().getName());
         Optional<String> optional = items.stream().filter(s -> !TextUtils.isEmpty(s)).findFirst();
-        optional.ifPresent(s -> mBinding.title.setText(s));
-        boolean connected = !TextUtils.isEmpty(getConfig().getUrl()) && !mConfigFailed;
-        mBinding.sourceStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getColor(connected ? R.color.tv_success : R.color.tv_danger)));
+        mBinding.title.setText(configured ? optional.orElse(getString(R.string.tv_source)) : getString(R.string.tv_source_unconfigured));
+        int statusColor = configured && !mConfigFailed
+                ? getColor(R.color.tv_success)
+                : mConfigFailed ? getColor(R.color.tv_danger) : TvTheme.color(this, R.attr.tvColorAccent);
+        mBinding.sourceStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(statusColor));
         mBinding.title.setContentDescription(getString(R.string.tv_source) + "：" + mBinding.title.getText());
     }
 
@@ -311,7 +374,16 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void setFocus() {
         mBinding.title.setSelected(false);
         App.post(() -> mBinding.title.setFocusable(true), 500);
-        if (getCurrentFocus() == null) mBinding.navHome.requestFocus();
+        if (showEmptySource()) {
+            mBinding.recycler.setSelectedPosition(0);
+            mBinding.recycler.post(() -> {
+                View card = mBinding.recycler.findViewById(R.id.cardVod);
+                if (card != null) card.requestFocus();
+                else if (getCurrentFocus() == null) mBinding.navHome.requestFocus();
+            });
+        } else if (getCurrentFocus() == null) {
+            mBinding.navHome.requestFocus();
+        }
     }
 
     private void getVideo() {
@@ -355,7 +427,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void updateHero() {
-        if (mAdapter != null && mAdapter.size() > 0) mAdapter.replace(0, heroItem());
+        if (mAdapter == null || mAdapter.size() == 0) return;
+        Object item = showEmptySource() ? emptySourceItem() : heroItem();
+        mAdapter.replace(0, item);
     }
 
     private void showMore() {
@@ -388,6 +462,20 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     public void onHeroConfigure() {
         SettingActivity.start(this);
+    }
+
+    @Override
+    public void onEmptyAction(EmptySourcePresenter.Action action) {
+        // Empty-source entry cards route to the most relevant setup flow.
+        switch (action) {
+            case VOD:
+                PushActivity.start(this);
+                break;
+            case LIVE:
+            case DRIVE:
+                SettingActivity.start(this);
+                break;
+        }
     }
 
     @Override
@@ -583,6 +671,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        notifyKeycaps(event);
         if (KeyUtil.isActionDown(event) && KeyUtil.isMenuKey(event)) {
             showDialog();
             return true;
@@ -603,12 +692,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     protected void onResume() {
         super.onResume();
         mClock.start();
+        if (mPulse != null) mPulse.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mClock.stop();
+        if (mPulse != null) mPulse.pause();
     }
 
     @Override
@@ -647,6 +738,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     protected void onDestroy() {
+        if (mPulse != null) mPulse.cancel();
         if (!isChangingConfigurations()) {
             DLNARendererService.stop(this);
             LiveConfig.get().clear();

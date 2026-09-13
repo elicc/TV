@@ -1,7 +1,5 @@
 package com.fongmi.android.tv.db;
 
-import android.util.Log;
-
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.bean.Backup;
 import com.fongmi.android.tv.impl.Callback;
@@ -9,6 +7,7 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Formatters;
 import com.fongmi.android.tv.utils.Task;
 import com.github.catvod.utils.Path;
+import com.orhanobut.logger.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +86,7 @@ public final class BackupManager {
         try {
             Path.move(file, target);
         } catch (IOException e) {
-            Log.w(TAG, "Unable to migrate backup file=" + file, e);
+            Logger.t(TAG).e(e, "Unable to migrate backup file=" + file);
         }
     }
 

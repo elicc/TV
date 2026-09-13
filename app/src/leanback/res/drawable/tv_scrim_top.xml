@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Player top scrim: opaque at the top edge fading into the video. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:centerColor="#660E0E10"
+        android:endColor="#000E0E10"
+        android:startColor="#E60E0E10"
+        android:type="linear" />
+</shape>

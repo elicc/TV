@@ -4,11 +4,13 @@
     <style name="Theme.Tv.Ice" parent="Theme.App">
         <item name="tvColorAccent">@color/tv_accent_ice</item>
         <item name="tvColorFocus">@color/tv_focus_ice</item>
+        <item name="tvColorFocusGlow">@color/tv_focus_glow_ice</item>
         <item name="tvColorSelected">@color/tv_selected_ice</item>
     </style>
     <style name="Theme.Tv.Jade" parent="Theme.App">
         <item name="tvColorAccent">@color/tv_accent_jade</item>
         <item name="tvColorFocus">@color/tv_focus_jade</item>
+        <item name="tvColorFocusGlow">@color/tv_focus_glow_jade</item>
         <item name="tvColorSelected">@color/tv_selected_jade</item>
     </style>
     <style name="TextAppearance.Tv.Meta" parent="TextAppearance.Material3.BodyMedium">
@@ -29,11 +31,35 @@
     <style name="TextAppearance.Tv.Title" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:textColor">?attr/tvColorTextPrimary</item>
         <item name="android:textSize">@dimen/tv_text_title</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">@font/space_grotesk</item>
     </style>
     <style name="TextAppearance.Tv.Hero" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:textColor">?attr/tvColorTextPrimary</item>
         <item name="android:textSize">@dimen/tv_text_hero</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">@font/space_grotesk</item>
+    </style>
+
+    <!-- Numeric/clock glyphs in the Stitch spec face; tnum for steady alignment. -->
+    <style name="TextAppearance.Tv.Clock" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/space_grotesk</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Player seek bar: champagne played segment, translucent buffered band and
+         a glowing scrubber; the gradient overlay itself lives in TvTimeBar. -->
+    <style name="Tv.SeekBar" parent="">
+        <item name="bar_height">@dimen/tv_seek_bar_height</item>
+        <item name="bar_gravity">center</item>
+        <item name="played_color">?attr/tvColorAccent</item>
+        <item name="buffered_color">#47FFFFFF</item>
+        <item name="unplayed_color">#26FFFFFF</item>
+        <item name="scrubber_color">#FFE8A3</item>
+        <item name="scrubber_drawable">@drawable/tv_seek_thumb</item>
+        <item name="scrubber_enabled_size">@dimen/tv_seek_scrubber_size</item>
+        <item name="scrubber_dragged_size">22dp</item>
+        <item name="touch_target_height">32dp</item>
     </style>
 </resources>

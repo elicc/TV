@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Side drawer entrance: slide in from the trailing edge (Stitch 250-300ms decelerate). -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/tv_motion_drawer"
+    android:fromXDelta="100%p"
+    android:interpolator="@interpolator/tv_interp_decelerate"
+    android:toXDelta="0%p" />

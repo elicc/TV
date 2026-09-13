@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-item background used INSIDE the menu pill container.
+     Two states matter:
+       focused          → current focus + currently selected page (richest pill)
+       focused (not sel)→ focus on a non-selected tab (still gold ring)
+       selected         → current page pill (subtle solid background)
+       default          → transparent (other tabs)
+     The container already provides the glass + 1dp stroke frame, so we only
+     paint the inner pill; no extra stroke that could clip outside the container. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused + selected: currently focused on the active page.
+         Stitch uses a solid accent pill; keeping the selected glass fill here
+         creates the dark inner core seen inside the focus halo. -->
+    <item android:state_focused="true" android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tv_accent" />
+            <corners android:radius="@dimen/tv_radius_control" />
+            <stroke android:width="2dp" android:color="?attr/tvColorFocus" />
+            <stroke android:width="6dp" android:color="?attr/tvColorFocusGlow" />
+        </shape>
+    </item>
+
+    <!-- Focused (not yet selected): use the same solid accent pill as the
+         design's tv-focus-nav state, with no dark inner fill. -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tv_accent" />
+            <corners android:radius="@dimen/tv_radius_control" />
+            <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+            <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
+        </shape>
+    </item>
+
+    <!-- Selected (current page, not focused right now):
+         Subtle solid pill so the user always knows which tab is active. -->
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tv_nav_selected" />
+            <corners android:radius="@dimen/tv_radius_control" />
+            <stroke android:width="1dp" android:color="@color/tv_nav_selected_border" />
+        </shape>
+    </item>
+
+    <item android:drawable="@android:color/transparent" />
+</selector>

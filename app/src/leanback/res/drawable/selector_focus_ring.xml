@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inner poster ring shown while the card itself is focused (duplicateParentState). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners
+                android:bottomLeftRadius="0dp"
+                android:bottomRightRadius="0dp"
+                android:topLeftRadius="8dp"
+                android:topRightRadius="8dp" />
+            <stroke
+                android:width="2dp"
+                android:color="?attr/tvColorFocus" />
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>

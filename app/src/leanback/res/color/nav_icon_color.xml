@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tint list for top-nav vector icons.
+     Unfocused → muted white (text-secondary); focused → dark on champagne.
+     Applied via app:drawableTint on the nav TextView. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="?attr/tvColorOnAccent" />
+    <item android:state_selected="true" android:color="?attr/tvColorTextPrimary" />
+    <item android:color="?attr/tvColorTextSecondary" />
+</selector>

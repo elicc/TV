@@ -1,0 +1,18 @@
+<resources>
+    <!-- Motion durations in milliseconds. Keep in sync with ui/motion/TvMotion.java,
+         which exposes the same values to Java call sites. Stitch v1.2 spec: focus
+         180-240ms, drawers 250-300ms, page fades 200ms, reduced-motion = 0ms. -->
+    <integer name="tv_motion_focus_on">180</integer>
+    <integer name="tv_motion_focus_off">140</integer>
+    <integer name="tv_motion_entrance">600</integer>
+    <integer name="tv_motion_entrance_step">100</integer>
+    <integer name="tv_motion_drawer">280</integer>
+    <integer name="tv_motion_osd_fade">500</integer>
+    <integer name="tv_motion_osd_timeout">3000</integer>
+    <integer name="tv_motion_keycap">320</integer>
+    <integer name="tv_motion_skip">1500</integer>
+    <integer name="tv_motion_press">350</integer>
+    <integer name="tv_motion_shimmer">4500</integer>
+    <integer name="tv_motion_breath">11000</integer>
+    <integer name="tv_motion_drift">14000</integer>
+</resources>

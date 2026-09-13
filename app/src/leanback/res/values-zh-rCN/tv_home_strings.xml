@@ -3,6 +3,7 @@
     <string name="tv_home">首页</string>
     <string name="tv_more">更多</string>
     <string name="tv_source">切换片源</string>
+    <string name="tv_source_unconfigured">数据源：未配置</string>
     <string name="tv_source_label">来自 %1$s</string>
     <string name="tv_details">查看详情</string>
     <string name="tv_browse">浏览片库</string>
@@ -27,5 +28,31 @@
     <string name="tv_reload_config">重新加载配置</string>
     <string name="tv_config_error_body">暂时无法读取配置。请重新加载，或前往设置检查内容源地址。</string>
     <string name="tv_content_error_body">暂时无法加载推荐。请重试，也可以浏览片库或切换片源。</string>
-    <string name="tv_home_remote_hint">方向键  导航     OK  确认     菜单  更多操作     返回  上一级</string>
+    <string name="tv_key_dpad">方向键</string>
+    <string name="tv_key_ok">OK</string>
+    <string name="tv_key_menu">菜单</string>
+    <string name="tv_key_back">返回</string>
+    <string name="tv_hint_dpad">移动焦点</string>
+    <string name="tv_hint_ok">打开 / 播放</string>
+    <string name="tv_hint_menu">换源 / 更多</string>
+    <string name="tv_hint_back">上一级</string>
+    <!-- 首启动空态引导 -->
+    <string name="tv_empty_badge">首次启动引导 · FIRST-LAUNCH EMPTY STATE</string>
+    <string name="tv_empty_welcome_title">欢迎使用 FongMi TV</string>
+    <string name="tv_empty_welcome_subtitle">先添加影视内容源，约 1 分钟即可开启客厅影院</string>
+    <string name="tv_empty_welcome_hint">注：清空/失败场景动态切换状态文案</string>
+    <string name="tv_empty_recommended">★ RECOMMENDED · 推荐首选</string>
+    <string name="tv_empty_card_vod_title">点播数据源 (VOD)</string>
+    <string name="tv_empty_card_vod_tag">极速</string>
+    <string name="tv_empty_card_vod_subtitle">Spider API · 饭太硬 / 摸鱼 / 多多等接口</string>
+    <string name="tv_empty_qr_hint">同 WiFi 下扫码 1 秒导入</string>
+    <string name="tv_empty_qr_url">http://192.168.x.x:9978</string>
+    <string name="tv_empty_card_vod_desc">支持 JSON / M3U / TXT 链接快速推送</string>
+    <string name="tv_empty_card_live_title">直播数据源 (Live)</string>
+    <string name="tv_empty_card_live_subtitle">M3U / TXT URL · CCTV / 卫视 / 体育频道</string>
+    <string name="tv_empty_card_live_desc">EPG 节目单自动抓取</string>
+    <string name="tv_empty_card_drive_title">网盘 / 局域网挂载</string>
+    <string name="tv_empty_card_drive_subtitle">阿里云盘 · Alist · SMB / WebDAV</string>
+    <string name="tv_empty_card_drive_desc">选片秒播，免下载</string>
+    <string name="tv_empty_auxiliary">也可以按右上角 齿轮图标 → 「配置接口 (API)」中手动导入</string>
 </resources>

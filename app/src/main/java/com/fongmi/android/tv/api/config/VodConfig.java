@@ -10,6 +10,7 @@ import com.fongmi.android.tv.bean.Depot;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Rule;
 import com.fongmi.android.tv.bean.Site;
+import com.fongmi.android.tv.db.SourceBootstrap;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
@@ -289,14 +290,20 @@ public class VodConfig extends BaseConfig {
         this.parse.setSelected(true);
         config.setParse(parse.getName());
         getParses().forEach(item -> item.setSelected(parse));
-        if (save) config.save();
+        if (save) {
+            config.save();
+            SourceBootstrap.save();
+        }
     }
 
     private void setHome(Config config, Site site, boolean save) {
         home = site;
         home.setSelected(true);
         config.setHome(home.getKey());
-        if (save) config.save();
+        if (save) {
+            config.save();
+            SourceBootstrap.save();
+        }
         getSites().forEach(item -> item.setSelected(home));
     }
 

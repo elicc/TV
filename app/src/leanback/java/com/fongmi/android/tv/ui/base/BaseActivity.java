@@ -5,6 +5,7 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -17,6 +18,7 @@ import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.ui.custom.CustomWallView;
 import com.fongmi.android.tv.ui.activity.PlaybackActivity;
+import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
 import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.Util;
 
@@ -86,6 +88,25 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     protected void initEvent() {
+    }
+
+    /** Screens with a remote-hint footer return it here to receive key feedback. */
+    protected TvKeycapsBar keycaps() {
+        return null;
+    }
+
+    /** Read-only tap for the keycap footer; never consumes the event itself. */
+    protected void notifyKeycaps(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            TvKeycapsBar bar = keycaps();
+            if (bar != null) bar.onKeyEvent(event);
+        }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        notifyKeycaps(event);
+        return super.dispatchKeyEvent(event);
     }
 
     protected boolean isVisible(View view) {

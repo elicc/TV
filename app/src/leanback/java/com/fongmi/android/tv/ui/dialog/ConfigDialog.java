@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.dialog;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -17,11 +18,13 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.api.config.WallConfig;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.databinding.DialogConfigBinding;
+import com.fongmi.android.tv.db.SourceBootstrap;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.ui.custom.CustomTextListener;
 import com.fongmi.android.tv.utils.FileChooser;
+import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.QRCode;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.UrlUtil;
@@ -81,7 +84,9 @@ public class ConfigDialog extends BaseAlertDialog {
     protected void initView() {
         binding.text.setText(url = getUrl());
         binding.text.setSelection(TextUtils.isEmpty(url) ? 0 : url.length());
-        binding.positive.setText(edit ? R.string.dialog_edit : R.string.dialog_positive);
+        boolean firstSourceSetup = isSourceType() && !edit && TextUtils.isEmpty(url);
+        binding.choose.setVisibility(firstSourceSetup ? View.GONE : View.VISIBLE);
+        updatePositiveText(url);
         binding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(4), 200, 0));
         binding.info.setText(ResUtil.getString(R.string.push_info, Server.get().getAddress()).replace("\uff0c", "\n"));
     }
@@ -95,6 +100,7 @@ public class ConfigDialog extends BaseAlertDialog {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 detect(s.toString());
+                updatePositiveText(s.toString());
             }
         });
         binding.text.setOnEditorActionListener((textView, actionId, event) -> {
@@ -113,7 +119,7 @@ public class ConfigDialog extends BaseAlertDialog {
     }
 
     private void onChoose(View view) {
-        FileChooser.from(launcher).show();
+        requestFileChooser();
     }
 
     private void detect(String s) {
@@ -136,10 +142,63 @@ public class ConfigDialog extends BaseAlertDialog {
     private void onPositive(View view) {
         String name = binding.name.getText().toString().trim();
         String text = binding.text.getText().toString().trim();
+        if (!edit && text.isEmpty() && isSourceType()) {
+            requestRestoreOrChoose();
+        } else if (ContentResolver.SCHEME_FILE.equalsIgnoreCase(UrlUtil.scheme(text))) {
+            PermissionUtil.requestFile(this, allGranted -> {
+                if (!allGranted || !isAdded()) return;
+                submit(name, text);
+            });
+        } else {
+            submit(name, text);
+        }
+    }
+
+    private void requestRestoreOrChoose() {
+        PermissionUtil.requestFile(this, allGranted -> {
+            if (!allGranted || !isAdded()) return;
+            SourceBootstrap.find(type, config -> {
+                if (!isAdded()) return;
+                if (config == null) FileChooser.from(launcher).show();
+                else applyConfig(config);
+            });
+        });
+    }
+
+    private boolean isSourceType() {
+        return type == 0 || type == 1;
+    }
+
+    private void updatePositiveText(String text) {
+        boolean empty = TextUtils.isEmpty(text) || TextUtils.isEmpty(text.trim());
+        if (!isSourceType()) {
+            binding.positive.setText(edit ? R.string.dialog_edit : R.string.dialog_positive);
+        } else if (!edit && empty) {
+            binding.positive.setText(R.string.tv_config_continue);
+        } else {
+            binding.positive.setText(R.string.tv_config_apply);
+        }
+    }
+
+    private void requestFileChooser() {
+        PermissionUtil.requestFile(this, allGranted -> {
+            if (!allGranted || !isAdded()) return;
+            FileChooser.from(launcher).show();
+        });
+    }
+
+    private void submit(String name, String text) {
         if (edit) Config.find(url, type).url(text).update();
-        if (text.isEmpty()) Config.delete(url, type);
-        if (name.isEmpty()) ((ConfigListener) requireActivity()).setConfig(Config.find(text, type));
-        else ((ConfigListener) requireActivity()).setConfig(Config.find(text, name, type));
+        if (text.isEmpty()) {
+            Config.delete(url, type);
+            SourceBootstrap.save();
+        }
+        Config config = name.isEmpty() ? Config.find(text, type) : Config.find(text, name, type);
+        applyConfig(config);
+    }
+
+    private void applyConfig(Config config) {
+        ((ConfigListener) requireActivity()).setConfig(config);
         dismiss();
     }
 
@@ -172,7 +231,6 @@ public class ConfigDialog extends BaseAlertDialog {
 
     private void setConfig(Uri uri) {
         if (!isAdded()) return;
-        ((ConfigListener) requireActivity()).setConfig(Config.find(UrlUtil.toLocalUrl(uri), type));
-        dismiss();
+        applyConfig(Config.find(UrlUtil.toLocalUrl(uri), type));
     }
 }

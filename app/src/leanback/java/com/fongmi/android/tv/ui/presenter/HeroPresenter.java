@@ -61,8 +61,10 @@ public final class HeroPresenter extends Presenter {
         // Do not let a drawable's intrinsic height expand the wrap-content row.
         b.poster.getLayoutParams().height = heroHeight;
         b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(item.history() && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
-        int emptyTitle = item.loading() ? R.string.tv_loading_title : !item.configured() ? R.string.tv_empty_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
+        int emptyTitle = item.loading() ? R.string.tv_loading_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
         b.name.setText(vod != null ? vod.getName() : b.getRoot().getContext().getString(emptyTitle));
+        bindBadge(b, vod);
+        bindWatermark(b, vod == null ? "" : vod.getName());
         List<String> meta = new ArrayList<>();
         if (vod != null) {
             for (String text : new String[]{vod.getYear(), vod.getTypeName(), vod.getRemarks()}) {
@@ -71,13 +73,13 @@ public final class HeroPresenter extends Presenter {
         }
         b.metadata.setText(TextUtils.join(" · ", meta));
         b.metadata.setVisibility(meta.isEmpty() ? View.GONE : View.VISIBLE);
-        int emptyBody = !item.configured() ? R.string.tv_config_body : item.configFailed() ? R.string.tv_config_error_body : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_body : R.string.tv_empty_body;
+        int emptyBody = item.configFailed() ? R.string.tv_config_error_body : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_body : R.string.tv_empty_body;
         String description = vod == null ? b.getRoot().getContext().getString(emptyBody) : HtmlCompat.fromHtml(vod.getContent(), HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim();
         b.description.setMaxLines(vod == null ? 2 : 1);
         b.description.setText(description);
         b.description.setVisibility(item.loading() || TextUtils.isEmpty(description) || (vod != null && (!item.history() || largeText)) ? View.GONE : View.VISIBLE);
-        b.primary.setText(item.loading() ? R.string.tv_loading_title : vod != null ? R.string.tv_details : !item.configured() ? R.string.tv_configure : item.configFailed() ? R.string.tv_reload_config : R.string.tv_retry);
-        boolean configureSecondary = !item.configured() || item.configFailed();
+        b.primary.setText(item.loading() ? R.string.tv_loading_title : vod != null ? R.string.tv_details : item.configFailed() ? R.string.tv_reload_config : R.string.tv_retry);
+        boolean configureSecondary = item.configFailed();
         b.secondary.setText(configureSecondary ? R.string.home_setting : R.string.tv_browse);
         b.primary.setOnClickListener(v -> {
             if (item.loading()) return;
@@ -99,8 +101,6 @@ public final class HeroPresenter extends Presenter {
         b.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         if (hasImage) {
             if (TvTheme.isAtmosphereEnabled()) b.atmosphere.setImage(item.sourceKey(), vod.getPic());
-            // Source images have no focal-point metadata: never crop the sharp
-            // foreground. The separate low-resolution atmosphere fills the area.
             Glide.with(b.poster).load(ImgUtil.getUrl(vod.getPic())).override(960, 540).fitCenter().into(b.poster);
         }
     }
@@ -110,6 +110,26 @@ public final class HeroPresenter extends Presenter {
         Holder holder = (Holder) viewHolder;
         holder.binding.atmosphere.clear();
         Glide.with(holder.binding.poster).clear(holder.binding.poster);
+    }
+
+    /** Prefer the source remark, then the type name, as the shimmering badge text. */
+    private void bindBadge(AdapterHeroBinding b, Vod vod) {
+        String text = "";
+        if (vod != null) {
+            if (!TextUtils.isEmpty(vod.getRemarks())) text = vod.getRemarks();
+            else if (!TextUtils.isEmpty(vod.getTypeName())) text = vod.getTypeName();
+            else text = vod.getYear();
+        }
+        b.badge.setText(text);
+        b.badge.setVisibility(TextUtils.isEmpty(text) ? View.GONE : View.VISIBLE);
+        b.shimmer.setVisibility(b.badge.getVisibility());
+    }
+
+    /** Giant leading-character watermark anchoring the hero column. */
+    private void bindWatermark(AdapterHeroBinding b, String name) {
+        boolean has = !TextUtils.isEmpty(name);
+        b.watermark.setVisibility(has ? View.VISIBLE : View.GONE);
+        if (has) b.watermark.setText(name.substring(0, Character.charCount(name.codePointAt(0))));
     }
 
     private static final class Holder extends ViewHolder {

@@ -28,6 +28,17 @@ For documentation, use Node.js 22.18+ (22.x) or 24+, then run from `website/`:
 
 Match surrounding code: four-space indentation for Java/Gradle; two spaces, double quotes, and semicolons for TypeScript. Use PascalCase for Java classes and React components, camelCase for methods/variables, and snake_case for Android resources. Website linting uses Next.js ESLint rules. Reuse existing utilities; avoid unrelated formatting changes or new dependencies.
 
+## Android Icon System
+
+- Use official [Lucide](https://lucide.dev/) SVGs for all new or replaced general-purpose Android UI icons. Choose the closest semantic icon instead of reusing an unrelated legacy asset merely to avoid adding a resource.
+- Treat `tools/lucide/VERSION` as the source-version contract. Vendor the unmodified SVG from that exact Lucide version and commit into `tools/lucide/svg/`; keep `tools/lucide/LICENSE` and the pinned provenance intact. Android builds and the running app must never download icon assets.
+- Generate Android `VectorDrawable` resources through `tools/lucide/generate_android_vectors.py`. Add the source/output/size mapping to `ICONS`, run the generator, and commit both the vendored SVG and generated XML. Never hand-edit generated `pathData`, trace an icon manually, or introduce icon fonts, raster copies, Material icon substitutions, or another icon dependency for a symbol Lucide provides.
+- Preserve the Lucide visual language: `24 × 24` viewport, `2`-unit stroke, rounded line caps and joins, transparent fill unless the official SVG explicitly fills a node. Set the drawable size explicitly for its component; use the established `20dp` compact/card/navigation size and `24dp` settings or primary-action size unless the surrounding component defines another size.
+- Keep state colors outside the geometry. Generated vectors use a neutral tintable color; apply theme attributes or Android color selectors for focused, selected, disabled, and default states. Do not create duplicate colored copies of the same icon.
+- Current generated assets target `app/src/leanback/res/drawable/`. If a Lucide icon is needed in `main` or `mobile`, extend the generator with an explicit destination rather than copying or recreating the vector by hand.
+- Brand marks, provider logos, content artwork, QR codes, and platform-mandated graphics are exceptions. When Lucide has no suitable semantic icon, document the exception in the change and prefer a reviewable vector asset; do not silently approximate it with custom path data.
+- After any icon change, run `python3 tools/lucide/generate_android_vectors.py --check`, `python3 -m unittest tools.tests.test_tv_theme_resources`, and the affected Android build/lint tasks. For visible TV changes, verify default and focused states on a 16:9 TV device or emulator and retain screenshot evidence.
+
 ## Testing Guidelines
 
 No automated test suite or coverage threshold is currently configured. Run the relevant checks above and document manual verification. Test affected Android flavors on devices/emulators, especially playback and navigation. For website changes, verify links, search, copying, and responsive layouts in the static preview. If adding Android tests, use `src/test/` or `src/androidTest/` and descriptive `*Test` names.

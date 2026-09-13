@@ -1,6 +1,5 @@
 package com.fongmi.android.tv.ui.adapter;
 
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -80,15 +79,6 @@ public class KeepAdapter extends BaseDiffAdapter<Keep, KeepAdapter.ViewHolder> {
         ImgUtil.load(item.getVodName(), item.getVodPic(), holder.binding.image);
     }
 
-    @Override
-    public void onViewRecycled(@NonNull ViewHolder holder) {
-        holder.itemView.animate().cancel();
-        holder.itemView.setScaleX(1f);
-        holder.itemView.setScaleY(1f);
-        holder.itemView.setTranslationZ(0f);
-        super.onViewRecycled(holder);
-    }
-
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private final AdapterVodBinding binding;
@@ -96,22 +86,6 @@ public class KeepAdapter extends BaseDiffAdapter<Keep, KeepAdapter.ViewHolder> {
         public ViewHolder(@NonNull AdapterVodBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
-            setFocusListener();
-        }
-
-        private void setFocusListener() {
-            itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                float scale = hasFocus ? 1.04f : 1f;
-                v.animate().cancel();
-                if (Settings.Global.getFloat(v.getContext().getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f) {
-                    v.setScaleX(scale);
-                    v.setScaleY(scale);
-                } else {
-                    // ViewPropertyAnimator already applies the system duration scale.
-                    v.animate().scaleX(scale).scaleY(scale).setDuration(150).start();
-                }
-                v.setTranslationZ(hasFocus ? ResUtil.dp2px(4) : 0f);
-            });
         }
     }
 }

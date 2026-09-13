@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Player OSD immersive hide: fade plus a 24dp settle towards the screen edge. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/tv_motion_osd_fade"
+    android:interpolator="@interpolator/tv_interp_decelerate"
+    android:fillEnabled="true"
+    android:fillAfter="true">
+    <translate
+        android:fromYDelta="0dp"
+        android:toYDelta="24dp" />
+    <alpha
+        android:fromAlpha="1"
+        android:toAlpha="0" />
+</set>

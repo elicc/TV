@@ -11,6 +11,7 @@ import android.text.style.ClickableSpan;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -72,6 +73,7 @@ import com.fongmi.android.tv.ui.adapter.QualityAdapter;
 import com.fongmi.android.tv.ui.adapter.QuickAdapter;
 import com.fongmi.android.tv.ui.custom.CustomKeyDownVod;
 import com.fongmi.android.tv.ui.custom.CustomMovement;
+import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.ui.dialog.ChapterDialog;
 import com.fongmi.android.tv.ui.dialog.ContentDialog;
 import com.fongmi.android.tv.ui.dialog.DanmakuDialog;
@@ -1068,15 +1070,22 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showInfo() {
-        mBinding.widget.top.setVisibility(View.VISIBLE);
-        mBinding.widget.center.setVisibility(View.VISIBLE);
         mBinding.widget.duration.setText(player().getDurationTime());
         mBinding.widget.position.setText(player().getPositionTime(0));
+        fadeIn(mBinding.widget.top);
+        fadeIn(mBinding.widget.center);
+    }
+
+    /** Top scrim bar only; the center play/pause badge stays reserved for pausing. */
+    private void showTop() {
+        mBinding.widget.duration.setText(player().getDurationTime());
+        mBinding.widget.position.setText(player().getPositionTime(0));
+        fadeIn(mBinding.widget.top);
     }
 
     private void hideInfo() {
-        mBinding.widget.top.setVisibility(View.GONE);
-        mBinding.widget.center.setVisibility(View.GONE);
+        fadeOut(mBinding.widget.top);
+        fadeOut(mBinding.widget.center);
     }
 
     private void setAdvancedControls(boolean expanded) {
@@ -1099,14 +1108,71 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void showControl(View view) {
         if (isAdvancedControl(view)) setAdvancedControls(true);
-        mBinding.control.getRoot().setVisibility(View.VISIBLE);
+        View osd = mBinding.control.getRoot();
+        boolean arriving = osd.getVisibility() != View.VISIBLE;
+        osd.animate().cancel();
+        osd.setVisibility(View.VISIBLE);
+        osd.setTranslationY(0f);
+        if (arriving && TvMotion.motionEnabled(this)) {
+            osd.setAlpha(0f);
+            osd.setTranslationY(ResUtil.dp2px(24));
+            osd.animate().alpha(1f).translationY(0f).setDuration(TvMotion.OSD_FADE).setInterpolator(osdInterpolator()).start();
+        } else {
+            osd.setAlpha(1f);
+        }
+        // Fullscreen reveals the top scrim bar together with the bottom console.
+        if (isFullscreen()) showTop();
         view.requestFocus();
         setR1Callback();
     }
 
     private void hideControl() {
-        mBinding.control.getRoot().setVisibility(View.GONE);
+        View osd = mBinding.control.getRoot();
         App.removeCallbacks(mR1);
+        osd.animate().cancel();
+        if (osd.getVisibility() == View.VISIBLE && TvMotion.motionEnabled(this)) {
+            osd.animate().alpha(0f).translationY(ResUtil.dp2px(24)).setDuration(TvMotion.OSD_FADE).setInterpolator(osdInterpolator())
+                    .withEndAction(() -> {
+                        osd.setVisibility(View.GONE);
+                        osd.setAlpha(1f);
+                        osd.setTranslationY(0f);
+                    }).start();
+        } else {
+            osd.setVisibility(View.GONE);
+            osd.setAlpha(1f);
+            osd.setTranslationY(0f);
+        }
+        hideInfo();
+    }
+
+    private android.view.animation.Interpolator osdInterpolator() {
+        return AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_decelerate);
+    }
+
+    private void fadeIn(View view) {
+        view.animate().cancel();
+        boolean arriving = view.getVisibility() != View.VISIBLE;
+        view.setVisibility(View.VISIBLE);
+        if (arriving && TvMotion.motionEnabled(this)) {
+            view.setAlpha(0f);
+            view.animate().alpha(1f).setDuration(TvMotion.OSD_FADE).setInterpolator(osdInterpolator()).start();
+        } else {
+            view.setAlpha(1f);
+        }
+    }
+
+    private void fadeOut(View view) {
+        view.animate().cancel();
+        if (view.getVisibility() == View.VISIBLE && TvMotion.motionEnabled(this)) {
+            view.animate().alpha(0f).setDuration(TvMotion.OSD_FADE).setInterpolator(osdInterpolator())
+                    .withEndAction(() -> {
+                        view.setVisibility(View.GONE);
+                        view.setAlpha(1f);
+                    }).start();
+        } else {
+            view.setVisibility(View.GONE);
+            view.setAlpha(1f);
+        }
     }
 
     private void hideCenter() {
@@ -1121,7 +1187,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setR1Callback() {
         if (isScrubbing()) return;
-        App.post(mR1, Constant.INTERVAL_HIDE);
+        App.post(mR1, TvMotion.OSD_TIMEOUT);
     }
 
     @Override
@@ -1391,18 +1457,23 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onSeeking(long time) {
-        mBinding.widget.center.setVisibility(View.VISIBLE);
         mBinding.widget.duration.setText(player().getDurationTime());
         mBinding.widget.position.setText(player().getPositionTime(time));
         mBinding.widget.action.setImageResource(time > 0 ? R.drawable.ic_widget_forward : R.drawable.ic_widget_rewind);
+        fadeIn(mBinding.widget.center);
+        App.removeCallbacks(mR5);
+        App.post(mR5, TvMotion.SKIP);
         hideProgress();
     }
 
     @Override
     public void onSeekEnd(long time) {
         if (seekTo(time)) hideCenter();
+        App.removeCallbacks(mR5);
         mKeyDown.reset();
     }
+
+    private Runnable mR5 = this::hideCenter;
 
     @Override
     public void onSpeedUp() {

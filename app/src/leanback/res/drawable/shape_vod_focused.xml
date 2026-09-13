@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Focus ring with an inner champagne halo stroke. The halo sits at half
+     thickness outside the focus stroke so it is never cropped by the parent
+     group's clipping path. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-
     <corners android:radius="@dimen/tv_radius_card" />
-
+    <stroke
+        android:width="@dimen/tv_glow_band"
+        android:color="?attr/tvColorFocusGlow" />
     <stroke
         android:width="@dimen/tv_focus_width"
         android:color="?attr/tvColorFocus" />
-
 </shape>

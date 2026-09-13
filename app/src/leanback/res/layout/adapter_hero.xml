@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="152dp"
@@ -20,6 +21,22 @@
         android:cropToPadding="true"
         android:scaleType="fitCenter"
         android:importantForAccessibility="no"/>
+    <TextView
+        android:id="@+id/watermark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="-22dp"
+        android:alpha="0.05"
+        android:importantForAccessibility="no"
+        android:singleLine="true"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="120sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="沙"
+        tools:visibility="visible" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,6 +48,34 @@
         android:orientation="vertical"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical">
+        <FrameLayout
+            android:id="@+id/badgeFrame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp">
+            <TextView
+                android:id="@+id/badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/tv_hero_badge"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:singleLine="true"
+                android:textColor="?attr/tvColorAccent"
+                android:textSize="@dimen/tv_text_caption"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="1080P"
+                tools:visibility="visible" />
+            <com.fongmi.android.tv.ui.custom.ShimmerView
+                android:id="@+id/shimmer"
+                android:layout_width="32dp"
+                android:layout_height="match_parent"
+                android:rotation="-20"
+                android:visibility="gone" />
+        </FrameLayout>
         <TextView
             android:id="@+id/name"
             android:layout_width="match_parent"
@@ -74,4 +119,8 @@
                 android:nextFocusLeft="@id/primary"/>
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Stitch first-launch empty state lives in a dedicated presenter that
+         owns its own slot in Home's vertical grid; Hero only renders real
+         posters when the configuration exists. -->
 </FrameLayout>

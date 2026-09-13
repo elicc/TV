@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet entrance: rise from below the fold (episode strip, dialogs). -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/tv_motion_drawer"
+    android:fromYDelta="100%p"
+    android:interpolator="@interpolator/tv_interp_decelerate"
+    android:toYDelta="0%p" />

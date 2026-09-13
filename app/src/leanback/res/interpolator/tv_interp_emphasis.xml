@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Focus transitions: cubic-bezier(0.2, 0.8, 0.2, 1) from the Stitch motion spec.
+     PathInterpolator requires the path to start at (0,0) and end at (1,1). -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:pathData="M0,0 C0.2,0.8 0.2,1 1,1" />

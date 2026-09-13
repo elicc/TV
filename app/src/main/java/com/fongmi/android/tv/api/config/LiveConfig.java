@@ -14,6 +14,7 @@ import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Live;
 import com.fongmi.android.tv.bean.Rule;
 import com.fongmi.android.tv.db.AppDatabase;
+import com.fongmi.android.tv.db.SourceBootstrap;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.setting.LiveSetting;
@@ -272,7 +273,10 @@ public class LiveConfig extends BaseConfig {
         home = live;
         home.setSelected(true);
         config.setHome(home.getName());
-        if (save) config.save();
+        if (save) {
+            config.save();
+            SourceBootstrap.save();
+        }
         getLives().forEach(item -> item.setSelected(home));
         if (!save && (home.isBoot() || LiveSetting.isBoot())) ConfigEvent.boot();
     }

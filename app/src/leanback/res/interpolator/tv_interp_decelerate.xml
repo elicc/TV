@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawer and overlay entrances: cubic-bezier(0, 0, 0.2, 1) decelerate. -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:pathData="M0,0 C0,0 0.2,1 1,1" />

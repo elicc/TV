@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Center soft radial glow layered behind the empty-source hero (4.5% alpha). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:centerColor="#0BE5A958"
+        android:endColor="#00E5A958"
+        android:gradientRadius="160dp"
+        android:startColor="#14E5A958"
+        android:type="radial" />
+</shape>

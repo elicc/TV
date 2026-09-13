@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compact header control: content spacing belongs to Tv.Setting.Back so the
+     icon is never squeezed by drawable-provided padding. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/tvColorSurfaceRaised" />
+            <corners android:radius="7dp" />
+            <stroke
+                android:width="2dp"
+                android:color="?attr/tvColorFocus" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/tvColorSurface" />
+            <corners android:radius="7dp" />
+            <stroke
+                android:width="0.5dp"
+                android:color="@color/tv_border_subtle" />
+        </shape>
+    </item>
+</selector>
