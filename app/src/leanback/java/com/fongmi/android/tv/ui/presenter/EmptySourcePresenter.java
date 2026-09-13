@@ -83,6 +83,7 @@ public final class EmptySourcePresenter extends Presenter {
     }
 
     private void bindCard(ViewEmptySourceCardBinding card, int iconRes, Action action, boolean showRecommended, boolean mutedIcon) {
+        card.getRoot().setNextFocusDownId(card.getRoot().getId());
         card.icon.setImageResource(iconRes);
         card.iconBox.setBackgroundResource(mutedIcon ? R.drawable.tv_empty_icon_box_muted : R.drawable.tv_empty_icon_box);
         card.icon.setImageTintList(ColorStateList.valueOf(mutedIcon ? TvTheme.color(card.getRoot().getContext(), R.attr.tvColorAccent) : Color.BLACK));

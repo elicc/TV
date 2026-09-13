@@ -159,7 +159,6 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         adaptToolbar();
         if (savedInstanceState == null) {
             TvStagger.activity(mBinding.getRoot(), R.id.toolbar, R.id.progressLayout, R.id.keycaps);
-            TvStagger.firstScreen(mBinding.recycler);
             mBinding.navHome.requestFocus();
         }
     }
@@ -273,19 +272,13 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void setAdapter() {
         mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
-        if (showEmptySource()) {
-            mAdapter.add(emptySourceItem());
-        } else {
-            mAdapter.add(heroItem());
-        }
-        mAdapter.add(R.string.home_recommend);
+        boolean empty = showEmptySource();
+        mAdapter.add(empty ? emptySourceItem() : heroItem());
+        if (!empty) mAdapter.add(R.string.home_recommend);
     }
 
     private boolean showEmptySource() {
-        return !hasConfiguredSource()
-                && !mConfigLoading
-                && !mConfigFailed
-                && !mLoading;
+        return !hasConfiguredSource();
     }
 
     private boolean hasConfiguredSource() {
@@ -359,6 +352,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             checkAction(getIntent());
         }
         setFocus();
+        TvStagger.firstScreen(mBinding.recycler);
     }
 
     private void loadLive(String url) {
@@ -427,9 +421,13 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void updateHero() {
-        if (mAdapter == null || mAdapter.size() == 0) return;
-        Object item = showEmptySource() ? emptySourceItem() : heroItem();
-        mAdapter.replace(0, item);
+        if (mAdapter == null) return;
+        boolean empty = showEmptySource();
+        Object item = empty ? emptySourceItem() : heroItem();
+        if (mAdapter.size() == 0) mAdapter.add(item);
+        else mAdapter.replace(0, item);
+        if (empty && mAdapter.size() > 1) mAdapter.removeItems(1, mAdapter.size() - 1);
+        else if (!empty && mAdapter.indexOf(R.string.home_recommend) < 0) mAdapter.add(R.string.home_recommend);
     }
 
     private void showMore() {

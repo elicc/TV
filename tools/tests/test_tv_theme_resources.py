@@ -343,7 +343,11 @@ class TvThemeTests(unittest.TestCase):
         home = (JAVA / "ui/activity/HomeActivity.java").read_text()
         presenter = (JAVA / "ui/presenter/EmptySourcePresenter.java").read_text()
         self.assertIn("findViewById(R.id.cardVod)", home)
+        self.assertIn("return !hasConfiguredSource();", home)
+        self.assertIn("if (!empty) mAdapter.add(R.string.home_recommend);", home)
+        self.assertIn("if (empty && mAdapter.size() > 1) mAdapter.removeItems(1, mAdapter.size() - 1);", home)
         self.assertIn("card.iconBox.setBackgroundResource", presenter)
+        self.assertIn("card.getRoot().setNextFocusDownId(card.getRoot().getId());", presenter)
         self.assertIn("Action.LIVE, false, true", presenter)
 
     def test_vod_uses_stitch_safe_area_and_card_typography(self):
