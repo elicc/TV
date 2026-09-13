@@ -52,6 +52,12 @@ public final class HeroPresenter extends Presenter {
         AdapterHeroBinding b = holder.binding;
         Item item = (Item) object;
         Vod vod = item.vod();
+        // RecyclerView may rebind this holder after the first-screen entrance
+        // animation has set its alpha to zero. Restore the presenter's own
+        // visibility so async content updates cannot leave the Hero invisible.
+        b.getRoot().animate().cancel();
+        b.getRoot().setAlpha(1f);
+        b.getRoot().setTranslationY(0f);
         boolean largeText = b.getRoot().getResources().getConfiguration().fontScale > 1.15f;
         // History selections need the taller hero so the focused title and its
         // atmosphere backdrop remain visible above the recent-watch row.

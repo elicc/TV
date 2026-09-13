@@ -281,6 +281,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         boolean empty = showEmptySource();
         mAdapter.add(empty ? emptySourceItem() : heroItem());
         if (!empty) mAdapter.add(R.string.home_recommend);
+        // Load persisted playback entries on the first render. Previously the
+        // history row was only refreshed after an EventBus notification, so a
+        // cold start (or a history created before this Activity was resumed)
+        // silently omitted the recent-watch module.
+        getHistory();
     }
 
     private boolean showEmptySource() {
