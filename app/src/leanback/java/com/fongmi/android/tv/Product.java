@@ -15,6 +15,10 @@ public class Product {
     }
 
     public static int getColumn(Style style) {
+        // The VOD replica uses the seven-column square grid from the 1080p
+        // reference. Other pages continue to honour the user's card-size
+        // preference.
+        if (style.isRect() && style.getRatio() == 1.0f) return 7;
         return style.isLand() ? getColumn() - 1 : getColumn();
     }
 

@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,12 +34,16 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Optional;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class VodActivity extends BaseActivity implements TypeAdapter.OnClickListener {
 
     private ActivityVodBinding mBinding;
     private TypeAdapter mAdapter;
     private View mOldView;
+    private final Handler mClockHandler = new Handler();
 
     public static void start(Activity activity, Result result) {
         start(activity, VodConfig.get().getHome().getKey(), result);
@@ -75,9 +80,22 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        mBinding.back.setOnClickListener(v -> finish());
+        String source = Optional.ofNullable(VodConfig.get().getHome())
+                .map(site -> site.getName())
+                .filter(name -> !name.isEmpty())
+                .orElse("饭太硬");
+        mBinding.source.setText("●  活跃源: " + source);
+        updateClock();
         setRecyclerView();
         setTypes();
         setPager();
+    }
+
+    private void updateClock() {
+        if (mBinding == null) return;
+        mBinding.clock.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date()));
+        mClockHandler.postDelayed(this::updateClock, 30_000);
     }
 
     @Override
@@ -171,6 +189,12 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
         else if (getFragment().moveToTop()) return;
         else if (getFragment().canBack()) getFragment().goBack();
         else super.onBackInvoked();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mClockHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 
     class PageAdapter extends FragmentStatePagerAdapter {

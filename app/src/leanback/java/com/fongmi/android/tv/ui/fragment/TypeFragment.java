@@ -80,8 +80,14 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
         return getArguments().getBoolean("folder");
     }
 
-    private Style getStyle() {
-        return isFolder() ? Style.list() : getSite().getStyle(getArguments().getParcelable("style"));
+    /**
+     * The VOD landing page is intentionally a square poster grid.  Providers
+     * often omit a style (or return the legacy list style), so normalize the
+     * visual presentation here without changing the API result or navigation
+     * semantics.
+     */
+    private Style getDisplayStyle() {
+        return new Style("rect", 1.0f);
     }
 
     private HashMap<String, String> getExtend() {
@@ -129,7 +135,7 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16), VodPresenter.class);
         selector.addPresenter(ListRow.class, new CustomRowPresenter(8, FocusHighlight.ZOOM_FACTOR_NONE, HorizontalGridView.FOCUS_SCROLL_ALIGNED), FilterPresenter.class);
         mBinding.recycler.setAdapter(new ItemBridgeAdapter(mAdapter = new ArrayObjectAdapter(selector)));
-        mBinding.recycler.setHeader(getActivity(), R.id.recycler);
+        mBinding.recycler.setHeader(getActivity(), R.id.categoryBar, R.id.recycler);
         mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(16));
     }
 
@@ -173,13 +179,14 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
         mBinding.progressLayout.showContent(first & flag, size);
         mBinding.swipeLayout.setRefreshing(false);
         mScroller.endLoading(result);
-        if (size > 0) addVideo(result);
+        if (size > 0) {
+            addVideo(result);
+            if (first) mBinding.recycler.post(() -> mBinding.recycler.requestFocus());
+        }
     }
 
     private void addVideo(Result result) {
-        Style style = result.getStyle(getStyle());
-        if (style.isList()) mAdapter.addAll(mAdapter.size(), result.getList());
-        else addGrid(result.getList(), style);
+        addGrid(result.getList(), getDisplayStyle());
         checkMore();
     }
 

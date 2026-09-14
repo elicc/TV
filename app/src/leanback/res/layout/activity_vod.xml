@@ -1,25 +1,249 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/tvColorBackground"
+    android:clipChildren="false"
+    android:paddingTop="24dp"
     android:orientation="vertical">
 
-    <androidx.leanback.widget.HorizontalGridView
-        android:id="@+id/recycler"
+    <!-- The VOD screen uses a compact, two-tier navigation shelf.  Keeping the
+         category RecyclerView intact preserves the existing dynamic API types,
+         while the surrounding chrome mirrors the 1080p Stitch reference. -->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/vodHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:background="@drawable/selector_button"
+            android:fontFamily="monospace"
+            android:minWidth="0dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="←  返回  Back"
+            android:textAllCaps="false"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="12sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="首页  /  点播大厅"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/tv_accent_dot" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/source"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:background="@drawable/tv_glass_pill"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="12sp"
+            tools:text="●  活跃源: 饭太硬" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:fontFamily="monospace"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="20:45" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/categoryBar"
+        android:layout_width="match_parent"
+        android:layout_height="26dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal">
+
+        <androidx.leanback.widget.HorizontalGridView
+            android:id="@+id/recycler"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:paddingEnd="@dimen/tv_gap_md"
+            app:focusOutEnd="false"
+            app:focusOutFront="false" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/sort"
+            android:layout_width="wrap_content"
+            android:layout_height="26dp"
+            android:background="@drawable/tv_glass_pill"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="☷  排序: 最近添加"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="12sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="26dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/tv_glass_pill"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="▦  网格"
+            android:textColor="?attr/tvColorFocus"
+            android:textSize="12sp" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_marginBottom="4dp"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:paddingStart="@dimen/tv_safe_horizontal"
-        android:paddingTop="@dimen/tv_safe_vertical"
         android:paddingEnd="@dimen/tv_safe_horizontal"
-        app:focusOutEnd="false"
-        app:focusOutFront="false" />
+        android:scrollbars="none">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:fontFamily="monospace"
+                android:text="FILTER:"
+                android:textColor="?attr/tvColorTextMuted"
+                android:textSize="10sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:background="@drawable/vod_filter_chip_selected"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="全部  •"
+                android:textColor="?attr/tvColorTextPrimary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/tv_glass_pill"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="年代 ⌄"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="11sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/tv_glass_pill"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="地区 ⌄"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="11sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/vod_filter_chip_active"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="质量 ⌄"
+                android:textColor="?attr/tvColorAccent"
+                android:textSize="11sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/tv_glass_pill"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="评分 ⌄"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="11sp" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </HorizontalScrollView>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/tv_safe_horizontal"
+        android:paddingEnd="@dimen/tv_safe_horizontal">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⇩  影片列表"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="·  由当前点播源提供"
+            android:textColor="?attr/tvColorTextMuted"
+            android:textSize="10sp" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <com.fongmi.android.tv.ui.custom.CustomViewPager
         android:id="@+id/pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>
