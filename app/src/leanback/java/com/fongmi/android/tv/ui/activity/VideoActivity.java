@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +33,7 @@ import androidx.viewbinding.ViewBinding;
 
 import com.bumptech.glide.request.transition.Transition;
 import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.BuildConfig;
 import com.fongmi.android.tv.Constant;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.api.DanmakuApi;
@@ -105,6 +108,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
+
+    private static final String TRACE_TAG = "PlaybackTrace";
 
     private ActivityVideoBinding mBinding;
     private VideoViewModel mViewModel;
@@ -1538,14 +1543,17 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onStop() {
+        trace("VIDEO_ON_STOP_BEGIN");
         mBinding.atmosphere.clear();
         super.onStop();
-        saveHistory(false);
+        if (!isFinishing()) saveHistory(false);
         if (PlayerSetting.isBackgroundOff()) mClock.stop();
+        trace("VIDEO_ON_STOP_END");
     }
 
     @Override
     protected void onBackInvoked() {
+        trace("BACK_INVOKED");
         if (isVisible(mBinding.control.getRoot()) && isVisible(mBinding.control.action.advanced)) {
             setAdvancedControls(false);
             mBinding.control.action.more.requestFocus();
@@ -1557,14 +1565,19 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         } else if (isFullscreen()) {
             exitFullscreen();
         } else {
+            trace("BACK_STOP_SEARCH_BEGIN");
             mViewModel.stopSearch();
+            trace("BACK_STOP_SEARCH_END");
             if (isTaskRoot()) startActivity(new Intent(this, HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+            trace("BACK_FINISH_BEGIN");
             super.onBackInvoked();
+            trace("BACK_FINISH_END");
         }
     }
 
     @Override
     protected void onDestroy() {
+        trace("VIDEO_ON_DESTROY_BEGIN");
         mBinding.atmosphere.clear();
         mClock.release();
         saveHistory(true);
@@ -1572,5 +1585,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         RefreshEvent.keep();
         App.removeCallbacks(mR1, mR2, mR3, mR4);
         super.onDestroy();
+        trace("VIDEO_ON_DESTROY_END");
+    }
+
+    private void trace(String event) {
+        if (BuildConfig.DEBUG) Log.d(TRACE_TAG, event + " t=" + SystemClock.uptimeMillis());
     }
 }

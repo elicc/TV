@@ -7,6 +7,8 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -29,6 +31,7 @@ import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.TimeBar;
 import androidx.media3.ui.danmaku.DanmakuConfig;
 
+import com.fongmi.android.tv.BuildConfig;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.playback.PlaybackIntent;
@@ -49,6 +52,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PlaybackActivity extends BaseActivity implements MediaController.Listener, Player.Listener, ServiceConnection {
+
+    private static final String TRACE_TAG = "PlaybackTrace";
 
     private final List<ServiceReadyObserver<?>> serviceReadyObservers = new ArrayList<>();
     private final List<Runnable> foreverObserverRemovers = new ArrayList<>();
@@ -427,15 +432,23 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     }
 
     private void releasePlaybackService() {
-        if (mService != null) releaseService(isOwner());
+        trace("RELEASE_SERVICE_BEGIN");
+        PlaybackService shutdownService = null;
+        if (mService != null) {
+            PlaybackService service = mService;
+            boolean playbackOwner = isOwner();
+            service.removePlayerCallback(mPlayerCallback);
+            if (service.releaseBinding(getNavigationCallback())) {
+                if (shouldKeepServiceAlive()) keepServiceAlive(playbackOwner);
+                else shutdownService = service;
+            }
+        }
         detach();
-    }
-
-    private void releaseService(boolean playbackOwner) {
-        mService.removePlayerCallback(mPlayerCallback);
-        if (!mService.releaseBinding(getNavigationCallback())) return;
-        if (shouldKeepServiceAlive()) keepServiceAlive(playbackOwner);
-        else mService.shutdown();
+        // Release the MediaController/local binding first. This lets
+        // MediaLibraryService observe its final unbind before stopSelf(), avoiding
+        // a stale start intent recreating the player during Activity teardown.
+        if (shutdownService != null) shutdownService.shutdown();
+        trace("RELEASE_SERVICE_END");
     }
 
     private boolean shouldKeepServiceAlive() {
@@ -605,17 +618,25 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     @Override
     protected void onStop() {
+        trace("PLAYBACK_ON_STOP_BEGIN");
         super.onStop();
         if (isOwner() && (isFinishing() || PlayerSetting.isBackgroundOff())) pausePlayback();
         if (!isInPictureInPictureMode()) detachPlayerView();
+        trace("PLAYBACK_ON_STOP_END");
     }
 
     @Override
     protected void onDestroy() {
+        trace("PLAYBACK_ON_DESTROY_BEGIN");
         clearObservers();
         detachPlayerView();
         super.onDestroy();
         releasePlaybackService();
+        trace("PLAYBACK_ON_DESTROY_END");
+    }
+
+    private void trace(String event) {
+        if (BuildConfig.DEBUG) Log.d(TRACE_TAG, event + " t=" + SystemClock.uptimeMillis());
     }
 
     private final class ServiceReadyObserver<T> implements Observer<T> {

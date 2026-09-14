@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +59,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
 
     private static final SessionCommand COMMAND_REPEAT = new SessionCommand(ActionEvent.REPEAT, Bundle.EMPTY);
     private static final String ACTION_MEDIA_BROWSER_SERVICE = "android.media.browse.MediaBrowserService";
+    private static final String TRACE_TAG = "PlaybackTrace";
 
     private static volatile boolean running;
 
@@ -136,7 +141,11 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) handleAction(intent.getAction());
-        return super.onStartCommand(intent, flags, startId);
+        // The Activity explicitly starts this service for each playback session. Do
+        // not let an in-flight media start intent recreate the service after an
+        // intentional shutdown when the Activity is finishing.
+        super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
     private void handleAction(String action) {
@@ -185,6 +194,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
 
     @Override
     public void onDestroy() {
+        trace("SERVICE_DESTROY_BEGIN");
         running = false;
         releaseSession();
         player.release();
@@ -192,6 +202,7 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
         Server.get().setService(null);
         EventBus.getDefault().unregister(this);
         super.onDestroy();
+        trace("SERVICE_DESTROY_END");
     }
 
     private void stopAndClear() {
@@ -208,8 +219,18 @@ public class PlaybackService extends MediaLibraryService implements MediaLibrary
     public void shutdown() {
         if (!running) return;
         running = false;
-        stopAndClear();
-        stopSelf();
+        // Media3 teardown is completed from onDestroy(). Avoid synchronously stopping
+        // and clearing the player here while the finishing Activity is still on the
+        // main thread; this used to duplicate the work done by onDestroy().
+        trace("SERVICE_SHUTDOWN");
+        // Let any in-flight MediaSession start intent finish before requesting the
+        // stop. Calling stopSelf() in the same callback can make Media3 recreate the
+        // service from that stale intent immediately after onDestroy().
+        new Handler(Looper.getMainLooper()).postDelayed(this::stopSelf, 100);
+    }
+
+    private void trace(String event) {
+        if (BuildConfig.DEBUG) Log.d(TRACE_TAG, event + " t=" + SystemClock.uptimeMillis());
     }
 
     private void tryShutdown() {
