@@ -47,15 +47,31 @@ public class VodHistoryPolicy {
     }
 
     public void saveProgress(History history, boolean exit, long time, long position, long duration) {
+        // Some VOD responses do not expose a duration immediately (for
+        // example, a live HLS manifest while its first segment is loading).
+        // Keep the visit in history even when a resumable progress sample is
+        // not available yet. Previously this path returned without writing
+        // anything, so opening and watching such a title left the home page
+        // history row empty forever.
+        if (position < 0 || duration <= 0) {
+            saveTouch(history, exit, time);
+            return;
+        }
         applyProgress(history, time, position, duration);
         save(history, exit);
     }
 
     public void saveVisit(History history, boolean exit, long time) {
         if (history == null || Setting.isIncognito()) return;
-        history.setCreateTime(time);
         history.setPosition(C.TIME_UNSET);
         history.setDuration(C.TIME_UNSET);
+        saveTouch(history, exit, time);
+    }
+
+    /** Persist a visit timestamp without discarding an existing resume point. */
+    private void saveTouch(History history, boolean exit, long time) {
+        if (history == null || Setting.isIncognito()) return;
+        history.setCreateTime(time);
         History copy = copyForSave(history);
         Task.executeSerial(() -> {
             copy.save();
@@ -67,6 +83,11 @@ public class VodHistoryPolicy {
         if (history == null || Setting.isIncognito()) return;
         History copy = copyForSave(history);
         Task.executeSerial(copy::save);
+    }
+
+    /** Record that a VOD playback session actually started. */
+    public void saveStarted(History history, long time) {
+        saveTouch(history, false, time);
     }
 
     public void updateEpisode(History history, Flag flag, Episode episode) {

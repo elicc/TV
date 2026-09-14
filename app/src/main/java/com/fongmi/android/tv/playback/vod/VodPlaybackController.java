@@ -117,6 +117,10 @@ public class VodPlaybackController {
         renderPlaybackResult(result);
         updatePlaybackPosition(result);
         host.loadDanmaku(result, state.getHistory(), episode);
+        // Persist the visit as soon as the source returns a playable result.
+        // Some streams report an unknown duration until later; waiting for a
+        // progress callback would otherwise leave no history row at all.
+        historyPolicy.saveStarted(state.getHistory(), System.currentTimeMillis());
         startPlayback(result, startPositionMs(), episode);
         preloader.update(result);
     }
