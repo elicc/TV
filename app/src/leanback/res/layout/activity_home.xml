@@ -92,29 +92,28 @@
                 android:background="@drawable/tv_nav_container"
                 android:paddingStart="3dp"
                 android:paddingEnd="3dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp">
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp">
 
                 <TextView
                     android:id="@+id/navHome" style="@style/Tv.HomeNav"
+                    android:letterSpacing="0.02"
+                    android:textStyle="bold"
                     app:drawableStartCompat="@drawable/ic_nav_home"
                     android:text="@string/tv_home" />
                 <TextView
                     android:id="@+id/navVod" style="@style/Tv.HomeNav"
                     android:layout_marginStart="2dp"
-                    android:layout_marginEnd="2dp"
                     app:drawableStartCompat="@drawable/ic_nav_vod"
                     android:text="@string/home_vod" />
                 <TextView
                     android:id="@+id/navLive" style="@style/Tv.HomeNav"
                     android:layout_marginStart="2dp"
-                    android:layout_marginEnd="2dp"
                     app:drawableStartCompat="@drawable/ic_nav_live"
                     android:text="@string/home_live" />
                 <TextView
                     android:id="@+id/navKeep" style="@style/Tv.HomeNav"
                     android:layout_marginStart="2dp"
-                    android:layout_marginEnd="2dp"
                     app:drawableStartCompat="@drawable/ic_nav_keep"
                     android:text="@string/home_keep" />
                 <TextView

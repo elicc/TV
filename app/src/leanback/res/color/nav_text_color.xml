@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Color state list for top-nav item text.
-     Drives both textColor and drawableTint (via separate list in nav_icon_color.xml). -->
+<!-- Resting labels use the design's dark gray; keyboard focus raises only
+     the label contrast. Icon focus color is handled independently. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_focused="true" android:color="?attr/tvColorOnAccent" />
-    <item android:state_selected="true" android:color="?attr/tvColorTextPrimary" />
-    <item android:color="?attr/tvColorTextSecondary" />
+    <item android:state_focused="true" android:color="@color/tv_nav_text_focused" />
+    <item android:color="@color/tv_nav_text_inactive" />
 </selector>

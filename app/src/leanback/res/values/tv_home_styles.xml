@@ -3,14 +3,16 @@
     <style name="Tv.HomeNav" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">28dp</item>
+        <item name="android:minHeight">30dp</item>
         <item name="android:gravity">center_vertical</item>
-        <!-- Keep the five tabs compact like the Stitch pill; the 20dp Lucide
-             icon remains the visual anchor while the labels stay readable. -->
-        <item name="android:paddingStart">3dp</item>
-        <item name="android:paddingEnd">3dp</item>
+        <!-- code.html: px-5 py-2 on the 1920px reference, converted for the
+             emulator's 2x density. All tabs inherit the exact same inset. -->
+        <item name="android:paddingStart">17dp</item>
+        <item name="android:paddingEnd">17dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
         <item name="android:focusable">true</item>
-        <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
+        <item name="android:stateListAnimator">@animator/tv_nav_focus_scale</item>
         <item name="android:background">@drawable/tv_nav_pill</item>
         <item name="android:textColor">@color/nav_text_color</item>
         <item name="android:textAppearance">@style/TextAppearance.Tv.Navigation</item>
@@ -18,7 +20,7 @@
         <!-- Vector icon plumbing: the nav TextView carries its own drawableStart
              so focus/click/scale stays on a single view (no ImageView nesting).
              The tint list mirrors the text color state list. -->
-        <item name="android:drawablePadding">4dp</item>
+        <item name="android:drawablePadding">7dp</item>
         <item name="android:drawableTint">@color/nav_icon_color</item>
     </style>
 

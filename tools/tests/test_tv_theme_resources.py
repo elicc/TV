@@ -168,18 +168,20 @@ class TvThemeTests(unittest.TestCase):
 
     def test_home_nav_selected_state_matches_stitch_glass(self):
         colors = (RES / "values/tv_colors.xml").read_text()
-        self.assertIn('<color name="tv_nav_selected">#3E3937</color>', colors)
-        self.assertIn('<color name="tv_nav_selected_border">#0DFFFFFF</color>', colors)
+        self.assertIn('<color name="tv_nav_selected">#1AFFFFFF</color>', colors)
+        self.assertIn('<color name="tv_nav_selected_border">#26FFFFFF</color>', colors)
+        self.assertIn('<color name="tv_nav_text_inactive">#FF66666D</color>', colors)
         nav = (RES / "drawable/tv_nav_pill.xml").read_text()
-        self.assertEqual(1, nav.count('@color/tv_nav_selected"'))
-        self.assertEqual(2, nav.count('@color/tv_accent"'))
+        self.assertEqual(2, nav.count('@color/tv_nav_selected"'))
         self.assertIn('@color/tv_nav_selected_border', nav)
         text = (RES / "color/nav_text_color.xml").read_text()
         icons = (RES / "color/nav_icon_color.xml").read_text()
-        self.assertIn('android:state_focused="true" android:color="?attr/tvColorOnAccent"', text)
-        self.assertIn('android:state_focused="true" android:color="?attr/tvColorOnAccent"', icons)
-        self.assertIn('android:state_selected="true" android:color="?attr/tvColorTextPrimary"', text)
-        self.assertIn('android:state_selected="true" android:color="?attr/tvColorTextPrimary"', icons)
+        self.assertIn('android:state_focused="true" android:color="@color/tv_nav_text_focused"', text)
+        self.assertIn('android:state_focused="true" android:color="?attr/tvColorAccent"', icons)
+        self.assertNotIn("state_selected", text)
+        self.assertNotIn("state_selected", icons)
+        self.assertIn('android:color="@color/tv_nav_text_inactive"', text)
+        self.assertIn('android:color="@color/tv_nav_text_inactive"', icons)
 
     def test_tv_page_icons_are_generated_from_lucide(self):
         sources = {

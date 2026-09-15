@@ -5,6 +5,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -196,6 +198,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         initConfig();
         setTitle();
         setLogo();
+        sizeNavigationIcons();
         adaptToolbar();
         if (savedInstanceState == null) mBinding.navHome.requestFocus();
     }
@@ -234,6 +237,27 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mBinding.utilities.getLayoutParams();
             params.gravity = android.view.Gravity.END;
             mBinding.utilities.setLayoutParams(params);
+        }
+    }
+
+    /**
+     * code.html gives every top-nav SVG the same w-5/h-5 box. Android compound
+     * drawables otherwise use the vector's 20dp source size, which renders twice
+     * as large as the 1920px reference on the 2x-density TV canvas. Keep the
+     * generated Lucide resources untouched and size only these five instances.
+     */
+    private void sizeNavigationIcons() {
+        int size = ResUtil.dp2px(12);
+        sizeNavigationIcons(size, mBinding.navHome, mBinding.navVod, mBinding.navLive, mBinding.navKeep, mBinding.navSearch, mBinding.more);
+    }
+
+    private void sizeNavigationIcons(int size, TextView... items) {
+        for (TextView item : items) {
+            Drawable[] drawables = item.getCompoundDrawablesRelative();
+            Drawable icon = drawables[0];
+            if (icon == null) continue;
+            icon.setBounds(0, 0, size, size);
+            item.setCompoundDrawablesRelative(icon, drawables[1], drawables[2], drawables[3]);
         }
     }
 

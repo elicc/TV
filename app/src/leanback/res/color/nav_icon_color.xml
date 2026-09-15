@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Tint list for top-nav vector icons.
-     Unfocused → muted white (text-secondary); focused → dark on champagne.
-     Applied via app:drawableTint on the nav TextView. -->
+<!-- Tint list for the Lucide top-nav vectors. The icon carries the active
+     theme color only while focused; every resting item stays muted. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_focused="true" android:color="?attr/tvColorOnAccent" />
-    <item android:state_selected="true" android:color="?attr/tvColorAccent" />
-    <item android:color="?attr/tvColorTextSecondary" />
+    <item android:state_focused="true" android:color="?attr/tvColorAccent" />
+    <item android:color="@color/tv_nav_text_inactive" />
 </selector>

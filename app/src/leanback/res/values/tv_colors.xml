@@ -26,10 +26,17 @@
     <color name="tv_glass">#D1202024</color>
     <color name="tv_glass_raised">#F22A2A30</color>
     <color name="tv_glass_border">#14FFFFFF</color>
-    <!-- Active top-nav item: design uses a neutral white-glass fill, not the
-         champagne selected-surface token used by content chips. -->
-    <color name="tv_nav_selected">#3E3937</color>
-    <color name="tv_nav_selected_border">#0DFFFFFF</color>
+    <!-- Top navigation, translated directly from code.html:
+         bg-white/5, border-white/10, selected bg-white/10 and border-white/15. -->
+    <!-- Opaque rendered equivalents sampled from the checked-in Stitch screen.
+         Using the raw translucent CSS values here compounded twice through the
+         View backgrounds and made Android visibly brighter than the reference. -->
+    <color name="tv_nav_surface">#FF121213</color>
+    <color name="tv_nav_border">#FF1C1C1D</color>
+    <color name="tv_nav_selected">#FF232324</color>
+    <color name="tv_nav_selected_border">#FF2E2E30</color>
+    <color name="tv_nav_text_focused">#FFF3F3F6</color>
+    <color name="tv_nav_text_inactive">#FF66666D</color>
     <!-- Subtle borders on empty/empty-state cards per the Stitch empty_source design. -->
     <color name="tv_border_subtle">#2E2E35</color>
     <!-- Accent tints used by empty-state badge pills (25% / 50% alpha variants). -->
