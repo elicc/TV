@@ -42,6 +42,17 @@ public class Server {
         return "http://" + (local ? "127.0.0.1" : Util.getIp()) + ":" + Proxy.getPort();
     }
 
+    /**
+     * Returns the loopback URL for the embedded NanoHTTPD. This is only
+     * useful when the host running the emulator has set up `adb forward`
+     * (or the emulator is bridged to the host loopback), because the
+     * NanoHTTPD lives inside the emulator process and its port is not
+     * directly reachable from the LAN otherwise.
+     */
+    public String getLocalAddress() {
+        return "http://127.0.0.1:" + Proxy.getPort();
+    }
+
     public synchronized void start() {
         if (nano != null) return;
         for (int i = 9978; i < 9999; i++) {

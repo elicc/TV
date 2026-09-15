@@ -47,18 +47,21 @@ import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.Callback;
+import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.model.VideoViewModel;
 import com.fongmi.android.tv.player.extractor.Source;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.DLNARendererService;
 import com.fongmi.android.tv.service.PlaybackService;
+import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.adapter.BaseDiffCallback;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.CustomRowPresenter;
 import com.fongmi.android.tv.ui.custom.CustomSelector;
 import com.fongmi.android.tv.ui.custom.CustomTitleView;
 import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
+import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.ui.presenter.FuncPresenter;
 import com.fongmi.android.tv.ui.presenter.EmptySourcePresenter;
@@ -90,7 +93,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener {
+public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener, ConfigListener {
 
     private ActivityHomeBinding mBinding;
     private ArrayObjectAdapter mHistoryAdapter;
@@ -144,7 +147,19 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen.installSplashScreen(this);
+        // Always keep the splash screen condition false so the splash exits
+        // the moment the first frame is drawn; on some Android TV emulators the
+        // default "keep until pre-draw" path leaves the starting_reveal
+        // animation leash hanging and prevents the activity surface from
+        // invalidating, which would render the hero/empty-source row as black.
+        // Once the splash exit animation completes we also force a redraw so
+        // the activity surface is guaranteed to commit at least one frame.
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        splash.setKeepOnScreenCondition(() -> false);
+        splash.setOnExitAnimationListener(provider -> {
+            provider.remove();
+            if (!isFinishing() && !isDestroyed()) mBinding.getRoot().invalidate();
+        });
         super.onCreate(savedInstanceState);
     }
 
@@ -153,6 +168,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
         mResult = Result.empty();
         mClock = Clock.create(mBinding.clock).format("HH:mm");
+        // The focused-poster backdrop replaces the hero-scoped atmosphere; hide it
+        // entirely when the user opted for their own wallpaper (customWall).
+        mBinding.atmosphere.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         mBinding.progressLayout.showProgress();
         PermissionUtil.requestNotify(this);
         DLNARendererService.start(this);
@@ -234,6 +252,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
                     mFocusedHistory = null;
                     updateHero();
                 }
+                syncBackdropFromSelection(child);
             }
         });
     }
@@ -470,6 +489,56 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         else mAdapter.replace(0, item);
         if (empty && mAdapter.size() > 1) mAdapter.removeItems(1, mAdapter.size() - 1);
         else if (!empty && mAdapter.indexOf(R.string.home_recommend) < 0) mAdapter.add(R.string.home_recommend);
+        syncBackdrop(item);
+    }
+
+    /**
+     * Pushes the hero's poster into the activity-level backdrop. Called from
+     * {@link #applyHeroUpdate()} so every config / history / result change
+     * re-syncs the atmosphere without needing the inner hero presenter.
+     */
+    private void syncBackdrop(Object heroOrEmpty) {
+        if (mBinding == null) return;
+        if (heroOrEmpty instanceof HeroPresenter.Item) {
+            HeroPresenter.Item h = (HeroPresenter.Item) heroOrEmpty;
+            updateBackdrop(h.vod(), h.sourceKey());
+        } else {
+            clearBackdrop();
+        }
+    }
+
+    /**
+     * Extracts the focused item from the outer recycler selection and pushes
+     * its poster to the backdrop. Header / function / empty-source rows are
+     * ignored so the previous backdrop sticks until a real movie gains focus.
+     */
+    private void syncBackdropFromSelection(@Nullable RecyclerView.ViewHolder child) {
+        if (mBinding == null || child == null) return;
+        if (!(child instanceof ItemBridgeAdapter.ViewHolder)) return;
+        Object item = ((ItemBridgeAdapter.ViewHolder) child).getItem();
+        if (item instanceof Vod) {
+            Vod v = (Vod) item;
+            updateBackdrop(v, v.getSiteKey());
+        } else if (item instanceof HeroPresenter.Item) {
+            HeroPresenter.Item h = (HeroPresenter.Item) item;
+            updateBackdrop(h.vod(), h.sourceKey());
+        }
+        // History, Header, Func, EmptySource, Progress → keep current backdrop.
+    }
+
+    /** Pushes a poster to the full-screen atmosphere view, or clears it. */
+    private void updateBackdrop(Vod vod, String sourceKey) {
+        if (mBinding == null) return;
+        if (vod == null || TextUtils.isEmpty(vod.getPic())) {
+            clearBackdrop();
+            return;
+        }
+        mBinding.atmosphere.setImage(sourceKey, vod.getPic());
+    }
+
+    private void clearBackdrop() {
+        if (mBinding == null) return;
+        mBinding.atmosphere.clear();
     }
 
     private void showMore() {
@@ -512,11 +581,35 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // Empty-source entry cards route to the most relevant setup flow.
         switch (action) {
             case VOD:
-                PushActivity.start(this);
+                // Mirror the Settings → 配置接口 (API) flow: a single dialog
+                // exposes the QR for the H5 panel and a local URL input, and
+                // an H5 submission auto-applies so users on the couch do not
+                // have to walk back to the TV for a second confirm click.
+                ConfigDialog.create().vod().show(this);
                 break;
             case LIVE:
             case DRIVE:
                 SettingActivity.start(this);
+                break;
+        }
+    }
+
+    @Override
+    public void setConfig(Config config) {
+        if (isFinishing() || isDestroyed()) return;
+        // Empty-source setup only opens the VOD dialog, but ConfigDialog is
+        // type-aware; route every source type through its own loader so the
+        // behaviour stays consistent if a future entry card reuses this path.
+        switch (config.getType()) {
+            case 0:
+                VodConfig.load(config, getCallback());
+                break;
+            case 1:
+                LiveConfig.load(config, getCallback());
+                break;
+            case 2:
+                Setting.putWall(0);
+                WallConfig.load(config, getCallback());
                 break;
         }
     }
@@ -676,6 +769,18 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         return true;
     }
 
+    /**
+     * Receives focus events from any {@link VodPresenter} card (history rows,
+     * recommend grid, etc.). The holder publishes this when the card gains
+     * D-pad focus; here we mirror the poster into the activity-level
+     * atmosphere so the blurred background tracks navigation within a row.
+     */
+    @Override
+    public void onItemFocus(Vod item) {
+        if (item == null) return;
+        updateBackdrop(item, item.getSiteKey());
+    }
+
     @Override
     public void onItemClick(History item) {
         VideoActivity.start(this, item.getSiteKey(), item.getVodId(), item.getVodName(), item.getVodPic());
@@ -686,6 +791,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mPresenter.isDelete() || item.equals(mFocusedHistory)) return;
         mFocusedHistory = item;
         updateHero();
+        // History cards reuse the activity-level atmosphere: convert the
+        // history record into a Vod projection so the backdrop tracks the
+        // focused history card the same way it tracks any other Vod.
+        Vod projected = new Vod();
+        projected.setPic(item.getVodPic());
+        updateBackdrop(projected, item.getSiteKey());
         scheduleDetailPrefetch(item);
     }
 
@@ -759,6 +870,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         super.onResume();
         mClock.start();
         if (mPulse != null) mPulse.start();
+        // Defensive: on some Android TV emulators the activity surface is
+        // left with invalidate=0 after the splash exit animation finishes,
+        // so the empty-source / hero row would stay black even though the
+        // adapter has items. Forcing a redraw on resume guarantees the
+        // content area paints once focus returns to the activity.
+        mBinding.getRoot().post(mBinding.getRoot()::invalidate);
     }
 
     @Override

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Class;
 import com.fongmi.android.tv.bean.Result;
+import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.ActivityVodBinding;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.ui.adapter.TypeAdapter;
@@ -29,6 +31,7 @@ import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.fragment.FolderFragment;
 import com.fongmi.android.tv.utils.KeyUtil;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.TvTheme;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -80,6 +83,9 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        // Follow the global film-atmosphere preference; the activity recreates on
+        // change, so a one-shot visibility gate is sufficient.
+        mBinding.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         mBinding.back.setOnClickListener(v -> finish());
         String source = Optional.ofNullable(VodConfig.get().getHome())
                 .map(site -> site.getName())
@@ -175,6 +181,27 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
     @Override
     public void onRefresh(Class item) {
         getFragment().onRefresh();
+    }
+
+    /**
+     * Pushes a focused Vod's poster to the activity-level backdrop so the
+     * atmosphere view follows D-pad focus across the VOD grid. Invoked by
+     * the child {@link com.fongmi.android.tv.ui.fragment.TypeFragment} and
+     * by any VOD holder that surfaces focus events.
+     */
+    public void updateBackdrop(Vod vod, String sourceKey) {
+        if (isFinishing() || isDestroyed() || mBinding == null) return;
+        if (vod == null || TextUtils.isEmpty(vod.getPic())) {
+            clearBackdrop();
+            return;
+        }
+        mBinding.atmosphere.setImage(sourceKey, vod.getPic());
+    }
+
+    /** Releases the backdrop bitmap, e.g. when the VOD list becomes empty. */
+    public void clearBackdrop() {
+        if (isFinishing() || isDestroyed() || mBinding == null) return;
+        mBinding.atmosphere.clear();
     }
 
     @Override

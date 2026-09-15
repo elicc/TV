@@ -16,5 +16,6 @@
     <!-- Push -->
     <string name="push_clip">Push clipboard content</string>
     <string name="push_info">Scan QR Code or enter the URL in browser\n<xliff:g name="name">%s</xliff:g></string>
+    <string name="push_info_emulator">Scan QR Code or enter the URL in browser\n<xliff:g name="name">%1$s</xliff:g>\n\nEmulator detected — to access from host browser, run:\nadb forward tcp:9978 tcp:9978\nthen open\n<xliff:g name="local">%2$s</xliff:g></string>
 
 </resources>

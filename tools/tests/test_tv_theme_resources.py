@@ -29,10 +29,19 @@ class TvThemeTests(unittest.TestCase):
         android = "{http://schemas.android.com/apk/res/android}"
         root = ET.parse(RES / "layout/adapter_hero.xml").getroot()
         self.assertEqual("false", root.get(android + "clipChildren"))
-        atmosphere = next(n for n in root.iter() if n.get(android + "id") == "@+id/atmosphere")
+        # The focused-poster backdrop was promoted from the hero card to a
+        # full-screen activity-level layer; the hero itself stays poster-free.
+        self.assertFalse(any(n.get(android + "id") == "@+id/atmosphere" for n in root.iter()))
+        self.assertFalse(any(n.get(android + "id") == "@+id/poster" for n in root.iter()))
+        home = ET.parse(RES / "layout/activity_home.xml").getroot()
+        atmosphere = next(n for n in home.iter() if n.get(android + "id") == "@+id/atmosphere")
         self.assertEqual("match_parent", atmosphere.get(android + "layout_width"))
         self.assertEqual("match_parent", atmosphere.get(android + "layout_height"))
-        self.assertFalse(any(n.get(android + "id") == "@+id/poster" for n in root.iter()))
+        self.assertEqual("com.fongmi.android.tv.ui.custom.FilmAtmosphereView", atmosphere.tag)
+        vod = ET.parse(RES / "layout/activity_vod.xml").getroot()
+        vod_atmosphere = next(n for n in vod.iter() if n.get(android + "id") == "@+id/atmosphere")
+        self.assertEqual("match_parent", vod_atmosphere.get(android + "layout_width"))
+        self.assertEqual("match_parent", vod_atmosphere.get(android + "layout_height"))
 
     def test_populated_hero_keeps_real_context_compact_and_readable(self):
         android = "{http://schemas.android.com/apk/res/android}"
@@ -79,8 +88,15 @@ class TvThemeTests(unittest.TestCase):
         hero = (JAVA / "ui/presenter/HeroPresenter.java").read_text()
         self.assertNotIn("CENTER_CROP", hero)
         self.assertNotIn("RequestListener", hero)
-        self.assertIn("b.atmosphere.setImage(item.sourceKey(), vod.getPic())", hero)
+        self.assertNotIn("b.atmosphere", hero)
+        self.assertNotIn("FilmAtmosphereView", hero)
         self.assertNotIn("b.poster", hero)
+        # The activity-level backdrop owns artwork now; the hero publishes
+        # identity only via HeroPresenter.Item and the activity syncs it.
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        self.assertIn("mBinding.atmosphere.setImage(sourceKey, vod.getPic())", home)
+        vod = (JAVA / "ui/activity/VodActivity.java").read_text()
+        self.assertIn("mBinding.atmosphere.setImage(sourceKey, vod.getPic())", vod)
 
     def test_large_font_navigation_and_focus_states(self):
         home = (JAVA / "ui/activity/HomeActivity.java").read_text()

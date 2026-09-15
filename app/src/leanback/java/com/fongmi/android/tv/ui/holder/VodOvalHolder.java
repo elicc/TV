@@ -40,16 +40,24 @@ public class VodOvalHolder extends BaseVodHolder {
             binding.name.animate().cancel();
             binding.name.animate().translationY(hasFocus ? -ResUtil.dp2px(2) : 0f).setDuration(TvMotion.FOCUS_ON).start();
             binding.name.setTextColor(hasFocus ? TvTheme.color(v.getContext(), R.attr.tvColorFocus) : ContextCompat.getColor(v.getContext(), R.color.tv_text_primary));
+            // Surface focus to the activity-level backdrop so the focused-poster
+            // atmosphere follows D-pad navigation between cards in a row.
+            if (hasFocus && current != null) listener.onItemFocus(current);
         });
     }
 
+    /** Tracks the most recently bound Vod so the focus listener can publish it. */
+    private Vod current;
+
     @Override
     public void initView(Vod item) {
+        current = item;
         binding.name.setText(item.getName());
         binding.name.setVisibility(item.getNameVisible());
         binding.getRoot().setOnClickListener(v -> listener.onItemClick(item));
         binding.getRoot().setOnLongClickListener(v -> listener.onLongClick(item));
         ImgUtil.load(item.getName(), item.getPic(), binding.image);
+        if (binding.getRoot().hasFocus()) listener.onItemFocus(item);
     }
 
     @Override

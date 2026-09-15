@@ -22,6 +22,7 @@ import com.fongmi.android.tv.db.SourceBootstrap;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.server.Server;
+import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.ui.custom.CustomTextListener;
 import com.fongmi.android.tv.utils.FileChooser;
 import com.fongmi.android.tv.utils.PermissionUtil;
@@ -88,7 +89,18 @@ public class ConfigDialog extends BaseAlertDialog {
         binding.choose.setVisibility(firstSourceSetup ? View.GONE : View.VISIBLE);
         updatePositiveText(url);
         binding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(4), 200, 0));
-        binding.info.setText(ResUtil.getString(R.string.push_info, Server.get().getAddress()).replace("\uff0c", "\n"));
+        String mainAddress = Server.get().getAddress();
+        String info;
+        if (Util.isEmulator()) {
+            // On the emulator `getIp()` returns 10.0.2.15, which only routes
+            // from inside the VM. Surface the localhost alternative plus
+            // the `adb forward` incantation so a developer running the
+            // emulator can test the H5 form from the host browser.
+            info = ResUtil.getString(R.string.push_info_emulator, mainAddress, Server.get().getLocalAddress());
+        } else {
+            info = ResUtil.getString(R.string.push_info, mainAddress).replace("\uff0c", "\n");
+        }
+        binding.info.setText(info);
     }
 
     @Override
@@ -209,9 +221,17 @@ public class ConfigDialog extends BaseAlertDialog {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onServerEvent(ServerEvent event) {
         if (event.type() != ServerEvent.Type.SETTING) return;
+        String text = event.text();
+        if (TextUtils.isEmpty(text) || !isAdded()) return;
+        // The H5 panel posts the URL+name the user confirmed on their phone.
+        // Apply it straight away instead of just filling the input and
+        // requiring a redundant confirm click on the TV; the same flow now
+        // serves both the first-launch empty-source dialog and the Settings
+        // edit dialog.
         binding.name.setText(event.name());
-        binding.text.setText(event.text());
+        binding.text.setText(text);
         binding.text.setSelection(binding.text.getText().length());
+        submit(event.name(), text);
     }
 
     @Override

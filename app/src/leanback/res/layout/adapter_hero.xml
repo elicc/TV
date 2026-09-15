@@ -7,11 +7,10 @@
     android:minHeight="152dp"
     android:clipChildren="false"
     android:clipToPadding="false">
-    <com.fongmi.android.tv.ui.custom.FilmAtmosphereView
-        android:id="@+id/atmosphere"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:importantForAccessibility="no"/>
+    <!-- The poster-blur atmosphere lives at HomeActivity-level now
+         (see activity_home.xml) so it can cover the whole screen
+         and follow focus across rows; only the hero poster and meta
+         stay inside this card. -->
     <TextView
         android:id="@+id/watermark"
         android:layout_width="wrap_content"

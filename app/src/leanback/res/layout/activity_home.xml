@@ -9,6 +9,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:importantForAccessibility="no" />
+    <!-- Full-screen focused-poster backdrop. Sits below every row so the
+         cover art can fill the entire viewport instead of being clipped
+         to a single hero card. The atmosphere view is sourced from the
+         currently-focused Vod / History card and follows D-pad focus. -->
+    <com.fongmi.android.tv.ui.custom.FilmAtmosphereView
+        android:id="@+id/atmosphere"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

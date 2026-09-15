@@ -161,6 +161,27 @@ public class Util {
         return model.startsWith(manufacturer) ? model : manufacturer + " " + model;
     }
 
+    /**
+     * Detects whether the app is running inside an Android emulator (AVD,
+     * Genymotion, …). Used to decide whether to surface the
+     * `adb forward` → `http://localhost:<port>/` alternative alongside
+     * the QR code's normal LAN address; on the emulator the latter resolves
+     * to the special 10.0.2.15 alias which is only routable from inside
+     * the emulator itself.
+     */
+    public static boolean isEmulator() {
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.PRODUCT.contains("sdk")
+                || Build.PRODUCT.contains("vbox")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.BRAND.startsWith("generic");
+    }
+
     public static String substring(String text) {
         return substring(text, 1);
     }

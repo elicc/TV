@@ -1,31 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:padding="24dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/code"
-        android:layout_width="180dp"
-        android:layout_height="180dp"
-        android:scaleType="centerCrop" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/info"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_toEndOf="@+id/code"
-        android:ellipsize="end"
-        android:focusable="true"
-        android:lineSpacingExtra="4dp"
-        android:maxLines="3"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="18sp"
-        tools:text="@string/push_info" />
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/code"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:ellipsize="end"
+            android:focusable="true"
+            android:lineSpacingExtra="2dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="14sp"
+            tools:text="@string/push_info" />
+
+    </LinearLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/name"
@@ -37,9 +44,7 @@
         android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/bottom"
-        android:layout_alignStart="@+id/info"
-        android:layout_marginBottom="10dp"
+        android:layout_marginTop="12dp"
         android:hint="@string/dialog_config_hint"
         android:imeOptions="actionDone"
         android:importantForAutofill="no"
@@ -54,8 +59,7 @@
         android:id="@+id/bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/info"
-        android:layout_alignBottom="@+id/code"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <com.google.android.material.textview.MaterialTextView
@@ -115,4 +119,5 @@
             android:textSize="14sp" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
-</RelativeLayout>
+
+</LinearLayout>

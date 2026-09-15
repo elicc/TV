@@ -13,7 +13,6 @@ import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.AdapterHeroBinding;
 import com.fongmi.android.tv.utils.ResUtil;
-import com.fongmi.android.tv.utils.TvTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,18 +104,16 @@ public final class HeroPresenter extends Presenter {
         });
         b.primary.setNextFocusUpId(R.id.navHome);
         b.secondary.setNextFocusUpId(R.id.navVod);
-        boolean hasImage = vod != null && !TextUtils.isEmpty(vod.getPic());
-        b.atmosphere.clear();
-        b.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
-        if (hasImage) {
-            if (TvTheme.isAtmosphereEnabled()) b.atmosphere.setImage(item.sourceKey(), vod.getPic());
-        }
+        // The blurred poster backdrop now lives at HomeActivity-level (see
+        // activity_home.xml). The owning activity syncs it from applyHeroUpdate()
+        // and from its focus listener, so this presenter stays artwork-free.
     }
 
     @Override
     public void onUnbindViewHolder(@NonNull ViewHolder viewHolder) {
-        Holder holder = (Holder) viewHolder;
-        holder.binding.atmosphere.clear();
+        // Intentionally empty: the activity-level backdrop survives hero
+        // rebinds (history focus changes, config reloads, etc.) so the
+        // previously focused poster stays visible until the next selection.
     }
 
     /** Prefer the source remark, then the type name, as the shimmering badge text. */

@@ -39,6 +39,16 @@ public class VodPresenter extends Presenter {
         void onItemClick(Vod item);
 
         boolean onLongClick(Vod item);
+
+        /**
+         * Fired when this presenter card gains D-pad focus. Implemented by
+         * screens that own a focused-poster backdrop (Home, Vod list) so the
+         * activity-level {@link com.fongmi.android.tv.ui.custom.FilmAtmosphereView}
+         * can follow focus across rows. Default is no-op so existing callers
+         * that only care about click/long-click do not need to override it.
+         */
+        default void onItemFocus(Vod item) {
+        }
     }
 
     @NonNull

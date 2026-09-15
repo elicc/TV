@@ -54,8 +54,12 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
     private Bitmap bitmap;
     private RequestManager requests;
     private CustomTarget<Bitmap> target;
+    /** Identity of the artwork currently on screen (updated only on load success). */
     private String sourceKey = "";
     private String imageUrl = "";
+    /** Identity of the most recent setImage request, satisfied or not. */
+    private String requestSource = "";
+    private String requestUrl = "";
     private long generation;
     private boolean pending;
 
@@ -80,14 +84,26 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
-    /** Main-thread API. Full request identity is retained, including source-provided headers. */
+    /**
+     * Main-thread API. Full request identity is retained, including source-provided headers.
+     * The previously displayed artwork stays on screen until the new one is ready, so
+     * focus-driven swaps never flash the fallback background.
+     */
     public void setImage(@Nullable String sourceKey, @Nullable String url) {
         String nextSource = sourceKey == null ? "" : sourceKey;
         String nextUrl = url == null ? "" : url;
-        if (this.sourceKey.equals(nextSource) && imageUrl.equals(nextUrl) && (bitmap != null || target != null || pending)) return;
-        releaseRequest();
-        this.sourceKey = nextSource;
-        imageUrl = nextUrl;
+        if (requestSource.equals(nextSource) && requestUrl.equals(nextUrl)) return;
+        // Supersede any in-flight request for the previous identity without dropping
+        // the displayed bitmap; the stale target fails its generation check and is
+        // discarded when it lands.
+        generation++;
+        pending = false;
+        removeCallbacks(load);
+        CustomTarget<Bitmap> old = target;
+        target = null;
+        if (old != null && requests != null) requests.clear(old);
+        requestSource = nextSource;
+        requestUrl = nextUrl;
         schedule();
     }
 
@@ -95,14 +111,16 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
     public void clear() {
         imageUrl = "";
         sourceKey = "";
+        requestSource = "";
+        requestUrl = "";
         releaseRequest();
     }
 
     private void schedule() {
         removeCallbacks(load);
         pending = false;
-        if (target != null || bitmap != null) return;
-        if (isAttachedToWindow() && getWindowVisibility() == VISIBLE && isShown() && !TextUtils.isEmpty(imageUrl)) pending = postDelayed(load, 300);
+        if (bitmap != null && sourceKey.equals(requestSource) && imageUrl.equals(requestUrl)) return;
+        if (isAttachedToWindow() && getWindowVisibility() == VISIBLE && isShown() && !TextUtils.isEmpty(requestUrl)) pending = postDelayed(load, 300);
     }
 
     private void releaseRequest() {
@@ -118,18 +136,25 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
 
     private void loadImage() {
         pending = false;
-        if (!isAttachedToWindow() || getWindowVisibility() != VISIBLE || !isShown() || TextUtils.isEmpty(imageUrl)) return;
+        if (!isAttachedToWindow() || getWindowVisibility() != VISIBLE || !isShown() || TextUtils.isEmpty(requestUrl)) return;
         final long expected = generation;
+        // Retire a still-pending target for this same request (e.g. re-attach) before
+        // issuing a duplicate; detach the field first so its callbacks self-discard.
+        CustomTarget<Bitmap> previous = target;
+        target = null;
+        if (previous != null && requests != null) requests.clear(previous);
         try {
-            Object model = ImgUtil.getUrl(imageUrl);
+            Object model = ImgUtil.getUrl(requestUrl);
             if (model == null) return;
-            ObjectKey signature = signature(sourceKey, imageUrl, model);
+            ObjectKey signature = signature(requestSource, requestUrl, model);
             requests = Glide.with(this);
             target = new CustomTarget<Bitmap>(AtmosphereTransformation.WIDTH, AtmosphereTransformation.HEIGHT) {
                 @Override
                 public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                     if (expected != generation || target != this || !isAttachedToWindow()) return;
                     bitmap = resource;
+                    sourceKey = requestSource;
+                    imageUrl = requestUrl;
                     invalidate();
                 }
 
@@ -143,8 +168,9 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
                 @Override
                 public void onLoadFailed(@Nullable Drawable errorDrawable) {
                     if (expected != generation || target != this) return;
-                    bitmap = null;
-                    invalidate();
+                    // A failed fetch keeps the previously displayed artwork; blanking
+                    // the whole screen over one broken poster is the worse failure.
+                    target = null;
                 }
             };
             requests.asBitmap().load(model).signature(signature)
@@ -204,8 +230,10 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
         int save = canvas.save();
         try {
             canvas.clipRect(0, 0, getWidth(), getHeight());
-            canvas.drawColor(background);
+            // With no artwork this decorative layer stays fully transparent so
+            // underlying chrome (e.g. Home's ambient glow) remains visible.
             if (bitmap == null || bounds.isEmpty()) return;
+            canvas.drawColor(background);
             float scale = Math.max((float) getWidth() / bitmap.getWidth(), (float) getHeight() / bitmap.getHeight());
             int width = Math.min(bitmap.getWidth(), Math.round(getWidth() / scale));
             int height = Math.min(bitmap.getHeight(), Math.round(getHeight() / scale));

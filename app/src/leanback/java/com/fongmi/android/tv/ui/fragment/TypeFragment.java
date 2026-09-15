@@ -12,7 +12,9 @@ import androidx.leanback.widget.FocusHighlight;
 import androidx.leanback.widget.HorizontalGridView;
 import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.OnChildViewHolderSelectedListener;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewbinding.ViewBinding;
 
@@ -30,6 +32,7 @@ import com.fongmi.android.tv.databinding.FragmentTypeBinding;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.ui.activity.CollectActivity;
 import com.fongmi.android.tv.ui.activity.VideoActivity;
+import com.fongmi.android.tv.ui.activity.VodActivity;
 import com.fongmi.android.tv.ui.base.BaseFragment;
 import com.fongmi.android.tv.ui.custom.CustomRowPresenter;
 import com.fongmi.android.tv.ui.custom.CustomScroller;
@@ -126,6 +129,29 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
     protected void initEvent() {
         mBinding.swipeLayout.setOnRefreshListener(this);
         mBinding.recycler.addOnScrollListener(mScroller);
+        mBinding.recycler.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
+            @Override
+            public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
+                syncBackdropFromSelection(child);
+            }
+        });
+    }
+
+    /**
+     * Pushes the selected row's poster (when it carries a Vod payload) to the
+     * activity-level backdrop. Filter rows have no poster and intentionally
+     * leave the last backdrop in place; clearing it would flicker on every
+     * filter-chip navigation.
+     */
+    private void syncBackdropFromSelection(@Nullable RecyclerView.ViewHolder child) {
+        if (child == null) return;
+        if (!(child instanceof ItemBridgeAdapter.ViewHolder)) return;
+        Object item = ((ItemBridgeAdapter.ViewHolder) child).getItem();
+        if (item instanceof Vod) {
+            Vod v = (Vod) item;
+            VodActivity host = (VodActivity) getActivity();
+            if (host != null) host.updateBackdrop(v, getKey());
+        }
     }
 
     @SuppressLint("RestrictedApi")
@@ -277,6 +303,20 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
         if (item.isAction() || item.isFolder()) return false;
         CollectActivity.start(requireActivity(), item.getName());
         return true;
+    }
+
+    /**
+     * Receives focus events from {@link VodPresenter} holders inside this
+     * fragment. Bubbles them up to the parent {@link VodActivity} so the
+     * activity-level atmosphere tracks D-pad navigation between cards in a
+     * row — the outer recycler listener only fires when focus moves
+     * between rows, not between cards inside the same row.
+     */
+    @Override
+    public void onItemFocus(Vod item) {
+        if (item == null) return;
+        VodActivity host = (VodActivity) getActivity();
+        if (host != null) host.updateBackdrop(item, getKey());
     }
 
     @Override
