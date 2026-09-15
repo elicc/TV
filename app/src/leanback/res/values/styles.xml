@@ -59,7 +59,11 @@
     <style name="Theme.Splash" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.App</item>
         <item name="windowSplashScreenBackground">@color/tv_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Splash mark, not the launcher tile: the platform renders this inside a
+             192/288-safe circle on the dark splash background, so it must be a padded
+             transparent mark. Pointed at a plain PNG on purpose — a <bitmap> wrapper
+             has no intrinsic size the platform splash will accept and renders blank. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
     </style>
 
     <style name="Theme.App" parent="Theme.Base" />

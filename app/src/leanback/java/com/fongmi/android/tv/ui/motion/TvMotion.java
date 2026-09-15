@@ -21,6 +21,12 @@ public final class TvMotion {
     public static final long SHIMMER = 4500;
     public static final long BREATH = 11000;
     public static final long DRIFT = 14000;
+    /** Cold-start brand splash: mark settles in, holds, then cross-fades into the home. */
+    public static final long SPLASH_MARK = 560;
+    public static final long SPLASH_HOLD = 900;
+    public static final long SPLASH_OUT = 420;
+    /** Hard cap so the overlay can never outlive a config that never settles. */
+    public static final long SPLASH_MAX = 2600;
 
     private TvMotion() {
     }

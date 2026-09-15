@@ -26,6 +26,5 @@
     <color name="white_80">#CCFFFFFF</color>
     <color name="white_90">#E6FFFFFF</color>
 
-    <color name="icon_background">#080D1C</color>
-    <color name="banner_background">#179EC8</color>
+    <color name="icon_background">#FDF4EF</color>
 </resources>

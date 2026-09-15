@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Active app logo. Change the ic_logo_active alias in values/logo.xml to switch variants. -->
+<!-- In-app brand mark (home toolbar / VOD toolbar). Uses the transparent-background ribbon
+     so it composites over any screen background. The launcher icon keeps the full-bleed tile
+     via the ic_logo_active alias in values/logo.xml. -->
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="fill"
-    android:src="@drawable/ic_logo_active" />
+    android:src="@drawable/ic_logo_mark" />

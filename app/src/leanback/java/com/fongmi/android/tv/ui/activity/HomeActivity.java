@@ -5,9 +5,11 @@ import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -113,6 +115,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private boolean mOwnConfigEvent;
     private String mConfigError = "";
     private boolean mActionHandled;
+    /** True once the cold-start brand overlay has been handed off (or skipped). */
+    private boolean mSplashDone;
+    private long mSplashShownAt;
     /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
     private boolean mHeroUpdatePending;
     /** Pending coalesced updateHero runnable; retained so onDestroy can cancel it. */
@@ -165,6 +170,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        // Brand first: raise the overlay before any home setup runs so the viewer never
+        // catches a half-built grid behind the fade.
+        if (savedInstanceState == null) playSplash();
         mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
         mResult = Result.empty();
         mClock = Clock.create(mBinding.clock).format("HH:mm");
@@ -184,10 +192,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         setTitle();
         setLogo();
         adaptToolbar();
-        if (savedInstanceState == null) {
-            TvStagger.activity(mBinding.getRoot(), R.id.toolbar, R.id.progressLayout, R.id.keycaps);
-            mBinding.navHome.requestFocus();
-        }
+        if (savedInstanceState == null) mBinding.navHome.requestFocus();
     }
 
     private void setKeycaps() {
@@ -382,8 +387,57 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         };
     }
 
+    /**
+     * Cold-start brand moment. The platform splash is unreliable on TV: it is torn down the
+     * moment the first frame lands, so a slow cold start leaves the viewer on a bare
+     * background for seconds with nothing to look at. The mark is therefore choreographed
+     * inside the activity and handed off to the home entrance once the config settles.
+     */
+    private void playSplash() {
+        View splash = mBinding.splash;
+        if (!TvMotion.motionEnabled(splash)) {
+            mSplashDone = true;
+            return;
+        }
+        mSplashShownAt = SystemClock.uptimeMillis();
+        splash.setVisibility(View.VISIBLE);
+        View logo = mBinding.splashLogo;
+        logo.setAlpha(0f);
+        logo.setScaleX(0.90f);
+        logo.setScaleY(0.90f);
+        logo.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(TvMotion.SPLASH_MARK)
+                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_enter)).start();
+        View wordmark = mBinding.splashWordmark;
+        wordmark.setAlpha(0f);
+        wordmark.setTranslationY(ResUtil.dp2px(10));
+        wordmark.animate().alpha(1f).translationY(0f).setStartDelay(TvMotion.SPLASH_MARK / 3)
+                .setDuration(TvMotion.SPLASH_MARK)
+                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_enter)).start();
+        splash.postDelayed(this::dismissSplash, TvMotion.SPLASH_MAX);
+    }
+
+    /** Cross-fade the brand out, then walk the home screen in underneath it. */
+    private void dismissSplash() {
+        if (mSplashDone) return;
+        mSplashDone = true;
+        View splash = mBinding.splash;
+        long delay = Math.max(0L, TvMotion.SPLASH_HOLD - (SystemClock.uptimeMillis() - mSplashShownAt));
+        splash.animate().alpha(0f).setStartDelay(delay).setDuration(TvMotion.SPLASH_OUT)
+                .withEndAction(() -> {
+                    splash.setVisibility(View.GONE);
+                    splash.setAlpha(1f);
+                }).start();
+        splash.postDelayed(this::runEntrance, delay);
+    }
+
+    private void runEntrance() {
+        if (isFinishing() || isDestroyed()) return;
+        TvStagger.activity(mBinding.getRoot(), R.id.toolbar, R.id.progressLayout, R.id.keycaps);
+    }
+
     private void showContent() {
         mBinding.progressLayout.showContent();
+        dismissSplash();
         if (!mActionHandled) {
             mActionHandled = true;
             checkAction(getIntent());
