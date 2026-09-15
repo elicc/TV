@@ -264,13 +264,16 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     }
 
     private void startPlayerInternal(String key, Result result, boolean useParse, long timeout, long startPositionMs, MediaMetadata metadata) {
+        trace("PLAYER_START_BEGIN key=" + key + " parse=" + (result.needParse() || useParse));
         attachPlayerView();
         updateNavigationKey(key);
         if (result.needParse() || useParse) player().parse(key, result, useParse, metadata, startPositionMs);
         else player().start(PlaySpec.from(result, key, metadata), timeout, startPositionMs);
+        trace("PLAYER_START_END");
     }
 
     private void bindPlaybackService() {
+        trace("SERVICE_BIND_BEGIN");
         startService(new Intent(this, PlaybackService.class));
         bindService(new Intent(this, PlaybackService.class).setAction(PlaybackService.LOCAL_BIND_ACTION), this, BIND_AUTO_CREATE);
         buildControllerAsync();
@@ -286,6 +289,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     private void onControllerConnected() {
         try {
             mController = mControllerFuture.get();
+            trace("CONTROLLER_CONNECTED");
             getSeekView().setPlayer(mController);
             mController.addListener(this);
             updateKeyIncrement();
@@ -553,10 +557,12 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        trace("PLAYBACK_INIT_BEGIN");
         super.initView(savedInstanceState);
         configurePlayerView();
         bindPlaybackService();
         addSeekListener();
+        trace("PLAYBACK_INIT_END");
     }
 
     @Override
@@ -574,7 +580,13 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     @Override
     public void onPlaybackStateChanged(int state) {
+        trace("PLAYER_STATE state=" + state);
         if (isOwner()) onStateChanged(state);
+    }
+
+    @Override
+    public void onRenderedFirstFrame() {
+        if (isOwner()) trace("PLAYER_FIRST_FRAME");
     }
 
     @Override
@@ -585,6 +597,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     @Override
     public void onServiceConnected(ComponentName name, IBinder binder) {
         mService = ((PlaybackService.LocalBinder) binder).getService();
+        trace("SERVICE_CONNECTED");
         mService.addPlayerCallback(mPlayerCallback);
         activateService();
     }

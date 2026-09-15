@@ -71,8 +71,83 @@
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="@dimen/tv_text_display"
+        android:textSize="@dimen/tv_text_hero"
         tools:text="慶餘年第二季" />
+
+    <com.fongmi.android.tv.ui.custom.SkeletonLayout
+        android:id="@+id/skeletonMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/name"
+        android:layout_above="@+id/row2"
+        android:layout_alignStart="@+id/name"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="24dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <View
+            android:layout_width="140dp"
+            android:layout_height="16dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/shape_skeleton_bar"
+            android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="110dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_skeleton_bar"
+                android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+            <View
+                android:layout_width="90dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_skeleton_bar"
+                android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+            <View
+                android:layout_width="90dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_skeleton_bar"
+                android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+            <View
+                android:layout_width="80dp"
+                android:layout_height="16dp"
+                android:background="@drawable/shape_skeleton_bar"
+                android:backgroundTint="?attr/tvColorSurfaceRaised" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <View
+            android:layout_width="300dp"
+            android:layout_height="16dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/shape_skeleton_bar"
+            android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+        <View
+            android:layout_width="320dp"
+            android:layout_height="16dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/shape_skeleton_bar"
+            android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+        <View
+            android:layout_width="260dp"
+            android:layout_height="16dp"
+            android:background="@drawable/shape_skeleton_bar"
+            android:backgroundTint="?attr/tvColorSurfaceRaised" />
+    </com.fongmi.android.tv.ui.custom.SkeletonLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/remark"
@@ -280,6 +355,134 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:paddingBottom="8dp">
+
+            <com.fongmi.android.tv.ui.custom.SkeletonLayout
+                android:id="@+id/skeletonEpisode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/shape_skeleton_bar"
+                        android:backgroundTint="?attr/tvColorSurfaceRaised" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
+            </com.fongmi.android.tv.ui.custom.SkeletonLayout>
 
             <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/flag"

@@ -71,6 +71,18 @@ public class ProgressLayout extends RelativeLayout {
         switchState(State.PROGRESS);
     }
 
+    /**
+     * Shows the loading indicator without hiding already available content.
+     * This is useful for detail screens that can render a lightweight
+     * placeholder while their full metadata is fetched asynchronously.
+     */
+    public void showProgressOverlay() {
+        mState = State.PROGRESS;
+        mEmptyView.setVisibility(GONE);
+        mProgressView.setVisibility(VISIBLE);
+        setContentVisibility(true);
+    }
+
     public void showEmpty() {
         switchState(State.EMPTY);
     }

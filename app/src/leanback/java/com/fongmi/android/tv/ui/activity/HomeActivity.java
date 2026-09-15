@@ -48,6 +48,7 @@ import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.model.SiteViewModel;
+import com.fongmi.android.tv.model.VideoViewModel;
 import com.fongmi.android.tv.player.extractor.Source;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.DLNARendererService;
@@ -99,6 +100,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private Result mResult;
     /** History card currently under the D-pad; null means the source hero is active. */
     private History mFocusedHistory;
+    /** History card whose detail prefetch is pending after focus settles. */
+    private History mPrefetchTarget;
     private Clock mClock;
     private ObjectAnimator mPulse;
     private boolean mLoading;
@@ -107,6 +110,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private boolean mOwnConfigEvent;
     private String mConfigError = "";
     private boolean mActionHandled;
+    /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
+    private boolean mHeroUpdatePending;
+    /** Pending coalesced updateHero runnable; retained so onDestroy can cancel it. */
+    private final Runnable mHeroUpdate = this::applyHeroUpdate;
     private final ActivityResultLauncher<Intent> mFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> FileChooser.getUri(result, uri -> VideoActivity.file(this, uri)));
 
     @Override
@@ -204,7 +211,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     protected void initEvent() {
-        mBinding.title.setOnClickListener(v -> showDialog());
+        mBinding.sourceRow.setOnClickListener(v -> showDialog());
         mBinding.navHome.setSelected(true);
         mBinding.navHome.setOnClickListener(v -> {
             mBinding.recycler.setSelectedPosition(0);
@@ -377,8 +384,6 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void setFocus() {
-        mBinding.title.setSelected(false);
-        App.post(() -> mBinding.title.setFocusable(true), 500);
         if (showEmptySource()) {
             mBinding.recycler.setSelectedPosition(0);
             mBinding.recycler.post(() -> {
@@ -442,6 +447,22 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void updateHero() {
+        // Coalesce same-frame invocations: config start/success/error, the
+        // SiteViewModel observer and getHistory() all fire during startup and
+        // each would issue mAdapter.replace(0, item) plus optional add/remove
+        // notifications back-to-back. ItemBridgeAdapter forwards those as
+        // pending RecyclerView updates; the layout pass then tries to re-attach
+        // a ViewHolder that the previous replace left half-detached, raising
+        // IllegalArgumentException ("Called attach on a child which is not
+        // detached") in GridLayoutManager.createItem. Posting the actual
+        // mutation collapses every queued call into a single, atomic swap.
+        if (mAdapter == null || mHeroUpdatePending) return;
+        mHeroUpdatePending = true;
+        App.post(mHeroUpdate);
+    }
+
+    private void applyHeroUpdate() {
+        mHeroUpdatePending = false;
         if (mAdapter == null) return;
         boolean empty = showEmptySource();
         Object item = empty ? emptySourceItem() : heroItem();
@@ -665,7 +686,20 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mPresenter.isDelete() || item.equals(mFocusedHistory)) return;
         mFocusedHistory = item;
         updateHero();
+        scheduleDetailPrefetch(item);
     }
+
+    /** Warms the detail cache after focus settles so opening the card skips the network round-trip. */
+    private void scheduleDetailPrefetch(History item) {
+        App.removeCallbacks(mPrefetch);
+        mPrefetchTarget = item;
+        App.post(mPrefetch, 250);
+    }
+
+    private final Runnable mPrefetch = () -> {
+        History item = mPrefetchTarget;
+        if (item != null) VideoViewModel.prefetchDetail(item.getSiteKey(), item.getVodId());
+    };
 
     @Override
     public void onItemDelete(History item) {
@@ -710,7 +744,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         }
         if (KeyUtil.isActionDown(event) && KeyUtil.isDownKey(event) && mBinding.toolbar.hasFocus()) {
             if (getResources().getConfiguration().fontScale > 1.15f && !mBinding.utilities.hasFocus()) {
-                mBinding.title.requestFocus();
+                mBinding.sourceRow.requestFocus();
                 return true;
             }
             mBinding.recycler.setSelectedPosition(0);
@@ -771,6 +805,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void onDestroy() {
         if (mPulse != null) mPulse.cancel();
+        App.removeCallbacks(mPrefetch);
+        App.removeCallbacks(mHeroUpdate);
         if (!isChangingConfigurations()) {
             DLNARendererService.stop(this);
             LiveConfig.get().clear();

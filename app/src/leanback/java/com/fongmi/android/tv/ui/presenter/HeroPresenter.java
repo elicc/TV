@@ -59,11 +59,13 @@ public final class HeroPresenter extends Presenter {
         b.getRoot().setAlpha(1f);
         b.getRoot().setTranslationY(0f);
         boolean largeText = b.getRoot().getResources().getConfiguration().fontScale > 1.15f;
-        // History selections need the taller hero so the focused title and its
-        // atmosphere backdrop remain visible above the recent-watch row.
-        int heroHeight = ResUtil.dp2px(vod != null && (!item.history() || largeText) ? 152 : 216);
+        // The FrameLayout already declares wrap_content in XML and a 152dp
+        // minHeight covers empty/error states. History focus naturally grows
+        // the hero via the larger name (tv_text_hero) and the 2-line
+        // description; forcing an additional minHeight here would leave the
+        // centered inner content floating inside empty padding and push the
+        // recent-watch row down by ~64dp.
         b.getRoot().getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        b.getRoot().setMinimumHeight(heroHeight);
         b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(item.history() && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
         int emptyTitle = item.loading() ? R.string.tv_loading_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
         b.name.setText(vod != null ? vod.getName() : b.getRoot().getContext().getString(emptyTitle));

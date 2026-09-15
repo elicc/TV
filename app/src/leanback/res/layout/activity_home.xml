@@ -141,13 +141,16 @@
                     android:layout_marginEnd="10dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:background="@drawable/tv_nav_container"
+                    android:background="@drawable/tv_source_pill"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"
-                    android:focusable="false"
-                    android:clickable="false">
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:nextFocusLeft="@id/navSearch"
+                    android:nextFocusRight="@id/settings"
+                    android:nextFocusDown="@id/recycler">
                     <View
                         android:id="@+id/sourceStatus"
                         android:layout_width="4dp"
@@ -162,7 +165,10 @@
                         android:text="@string/tv_source_unconfigured"
                         android:textColor="?attr/tvColorTextSecondary"
                         android:textAppearance="@style/TextAppearance.Tv.Meta"
-                        android:textSize="8sp" />
+                        android:textSize="8sp"
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:duplicateParentState="true" />
                 </LinearLayout>
 
                 <ImageView

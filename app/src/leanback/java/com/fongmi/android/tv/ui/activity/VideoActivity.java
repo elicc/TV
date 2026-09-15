@@ -278,6 +278,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mVod.reset();
         setIntent(intent);
         updateNavigationKey();
+        renderInitialPlaceholder();
+        showSkeleton(true);
+        mBinding.progressLayout.showProgressOverlay();
         checkId();
     }
 
@@ -288,6 +291,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        trace("VIDEO_INIT_BEGIN");
         super.initView(savedInstanceState);
         mFrameParams = mBinding.video.getLayoutParams();
         mBinding.atmosphere.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
@@ -303,6 +307,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setViewModel();
         checkCast();
         checkId();
+        trace("VIDEO_INIT_END");
     }
 
     @Override
@@ -507,6 +512,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onPlaybackRequested() {
+        trace("VIDEO_PLAYBACK_REQUESTED");
         showProgress();
     }
 
@@ -562,7 +568,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderDetail(Vod item, History history) {
+        trace("VIDEO_DETAIL_RENDER_BEGIN");
         mHistory = history;
+        showSkeleton(false);
         mBinding.progressLayout.showContent();
         mBinding.name.setText(item.getName());
         mBinding.video.requestFocus();
@@ -571,6 +579,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         checkKeepImg();
         setText(item);
         updateKeep();
+        trace("VIDEO_DETAIL_RENDER_END");
     }
 
     @Override
@@ -735,7 +744,24 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void checkCast() {
         if (isCast() && !isFullscreen()) enterFullscreen();
-        else mBinding.progressLayout.showProgress();
+        else {
+            renderInitialPlaceholder();
+            showSkeleton(true);
+            mBinding.progressLayout.showProgressOverlay();
+        }
+    }
+
+    private void renderInitialPlaceholder() {
+        String name = getName();
+        String pic = getPic();
+        if (!name.isEmpty()) mBinding.name.setText(name);
+        if (isFilmAtmosphereEnabled() && !pic.isEmpty()) mBinding.atmosphere.setImage(getKey(), pic);
+        if (!pic.isEmpty()) loadArtwork(pic);
+    }
+
+    private void showSkeleton(boolean show) {
+        mBinding.skeletonMeta.setVisibility(show ? View.VISIBLE : View.GONE);
+        mBinding.skeletonEpisode.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void checkId() {
@@ -743,6 +769,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showEmpty() {
+        showSkeleton(false);
         mBinding.progressLayout.showEmpty();
     }
 
@@ -1213,13 +1240,23 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void updateAtmosphere() {
         boolean visible = isFilmAtmosphereEnabled() && !isFullscreen();
         mBinding.atmosphere.setVisibility(visible ? View.VISIBLE : View.GONE);
-        if (visible && mHistory != null) mBinding.atmosphere.setImage(getSite().getKey(), mHistory.getVodPic());
+        if (visible) mBinding.atmosphere.setImage(getSite().getKey(), currentArtwork());
         else mBinding.atmosphere.clear();
+    }
+
+    /** Detail artwork when fetched, otherwise the poster passed through the entry intent. */
+    private String currentArtwork() {
+        if (mHistory != null && !mHistory.getVodPic().isEmpty()) return mHistory.getVodPic();
+        return getPic();
     }
 
     private void setArtwork() {
         updateAtmosphere();
-        ImgUtil.load(this, mHistory.getVodPic(), new CustomTarget<>() {
+        loadArtwork(mHistory.getVodPic());
+    }
+
+    private void loadArtwork(String url) {
+        ImgUtil.load(this, url, new CustomTarget<>() {
             @Override
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 mBinding.player.setDefaultArtwork(resource);
@@ -1299,6 +1336,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onPrepare() {
+        trace("VIDEO_PLAYER_PREPARE");
         setPlaybackMode();
     }
 

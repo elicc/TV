@@ -1,9 +1,13 @@
 package com.fongmi.android.tv.playback.vod;
 
+import android.os.SystemClock;
+import android.util.Log;
+
 import androidx.media3.common.C;
 import androidx.media3.common.MediaMetadata;
 
 import com.fongmi.android.tv.api.config.VodConfig;
+import com.fongmi.android.tv.BuildConfig;
 import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
@@ -17,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class VodPlaybackController {
+
+    private static final String TRACE_TAG = "PlaybackTrace";
 
     private static final String PUSH_PREFIX = "push://";
     private static final String SEARCH_PREFIX = "msearch:";
@@ -59,12 +65,14 @@ public class VodPlaybackController {
     public void requestDetail() {
         String key = host.getVodKey();
         String id = host.getVodId();
+        trace("DETAIL_REQUEST_BEGIN key=" + key + " id=" + id);
         state.setDetailRequest(key, id);
         dataSource.detailContent(key, id);
     }
 
     public void onDetailResult(VodDetailResult detail) {
         if (detail == null || !detail.matches(host.getVodKey(), host.getVodId())) return;
+        trace("DETAIL_RESULT key=" + detail.key() + " id=" + detail.id() + " items=" + detail.result().getList().size());
         Result result = detail.result();
         if (result.getList().isEmpty()) detailEmpty(result.hasMsg());
         else detailLoaded(result.getVod());
@@ -113,6 +121,7 @@ public class VodPlaybackController {
     private void applyPlaybackResult(Result result, VodPlayRequest request) {
         Episode episode = findEpisode(request);
         if (episode == null) return;
+        trace("PLAY_RESULT key=" + request.getKey() + " flag=" + request.getFlag() + " idLen=" + request.getId().length());
         applyPlaybackState(result, request);
         renderPlaybackResult(result);
         updatePlaybackPosition(result);
@@ -424,6 +433,7 @@ public class VodPlaybackController {
         VodPlayRequest request = VodPlayRequest.create(host.getVodKey(), flag, episode);
         state.setPendingRequest(request);
         publishPlaybackMetadata(episode);
+        trace("PLAY_REQUEST_BEGIN key=" + request.getKey() + " flag=" + request.getFlag() + " idLen=" + request.getId().length());
         dataSource.playerContent(request);
         host.onPlaybackRequested();
     }
@@ -437,6 +447,10 @@ public class VodPlaybackController {
         state.setPlaybackMetadata(metadata);
         host.renderPlaybackMetadata(metadata);
         return metadata;
+    }
+
+    private void trace(String event) {
+        if (BuildConfig.DEBUG) Log.d(TRACE_TAG, event + " t=" + SystemClock.uptimeMillis());
     }
 
     private void seamless(Flag flag) {
