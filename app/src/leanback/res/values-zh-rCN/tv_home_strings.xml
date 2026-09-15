@@ -76,4 +76,12 @@
     <string name="tv_vault_status_on">已开启 · %1$s</string>
     <string name="tv_vault_status_io">已开启 · 上次失败：存储写入错误</string>
     <string name="tv_vault_write_failed">配置备份写入失败，请在设置中查看</string>
+
+    <!-- 点播大厅: 条件筛选入口 -->
+    <string name="tv_vod_filter">筛选</string>
+    <string name="tv_vod_filter_count">筛选 · %1$d</string>
+
+    <!-- 点播大厅: 底部按键提示 -->
+    <string name="tv_hint_vod_ok">打开 · 长按刷新</string>
+    <string name="tv_hint_filter">筛选</string>
 </resources>

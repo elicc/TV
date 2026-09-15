@@ -24,6 +24,12 @@ public class FolderFragment extends BaseFragment {
 
     private FragmentFolderBinding mBinding;
     private Class mType;
+    /**
+     * The panel state this category wants. Held here rather than read back off {@link Class},
+     * because the child fragment — which actually owns the panel — is created a frame later than
+     * the request to open one can arrive.
+     */
+    private boolean mFilterVisible;
 
     public static FolderFragment newInstance(String key, Class type) {
         Bundle args = new Bundle();
@@ -42,7 +48,16 @@ public class FolderFragment extends BaseFragment {
         return getArguments().getParcelable("type");
     }
 
+    /**
+     * The condition panel's owner, or null while this page is not attached yet.
+     *
+     * <p>A page handed back by the pager adapter exists before its transaction commits, and such a
+     * fragment has no parent manager to ask for children — touching it throws. Callers here all
+     * treat "no child yet" as "nothing to do", which is also the truth: it has no panel, and
+     * {@link #mFilterVisible} is what it will be built with when it does arrive.
+     */
     private TypeFragment getChild() {
+        if (!isAdded()) return null;
         return (TypeFragment) getChildFragmentManager().findFragmentById(R.id.container);
     }
 
@@ -77,8 +92,31 @@ public class FolderFragment extends BaseFragment {
         ft.commit();
     }
 
-    public void toggleFilter(boolean visible) {
-        Optional.ofNullable(getChild()).ifPresent(f -> f.toggleFilter(visible));
+    /** Flips this category's condition panel. @return its state after the call. */
+    public boolean toggleFilter() {
+        return setFilterVisible(!mFilterVisible);
+    }
+
+    /**
+     * Applies {@code visible} now when the child exists; otherwise records the wish, which the
+     * child picks up when it is finally created. The child's answer wins, so the two can never
+     * disagree about whether the panel is on screen.
+     *
+     * @return the panel's state after the call
+     */
+    public boolean setFilterVisible(boolean visible) {
+        mFilterVisible = visible;
+        TypeFragment child = getChild();
+        if (child != null) mFilterVisible = child.toggleFilter(visible);
+        return mFilterVisible;
+    }
+
+    public boolean isFilterVisible() {
+        return mFilterVisible;
+    }
+
+    public int getActiveFilterCount() {
+        return Optional.ofNullable(getChild()).map(TypeFragment::getActiveFilterCount).orElse(0);
     }
 
     public void onRefresh() {
@@ -90,11 +128,11 @@ public class FolderFragment extends BaseFragment {
     }
 
     public boolean canBack() {
-        return getChildFragmentManager().getBackStackEntryCount() > 0;
+        return isAdded() && getChildFragmentManager().getBackStackEntryCount() > 0;
     }
 
     public void goBack() {
-        getChildFragmentManager().popBackStack();
+        if (isAdded()) getChildFragmentManager().popBackStack();
     }
 
     @Override

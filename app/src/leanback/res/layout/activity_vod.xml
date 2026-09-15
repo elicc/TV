@@ -95,142 +95,52 @@
                 tools:text="20:45" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
+        <!-- Category strip plus the one genuine control that belongs beside it. The 排序 / 网格
+             pills that used to live here were decoration: no ids, no listeners, and text that
+             never matched the active source. The filter entry replaces them and is driven by the
+             source's own conditions, so it appears only where there is something to filter. -->
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/categoryBar"
             android:layout_width="match_parent"
-            android:layout_height="26dp"
+            android:layout_height="36dp"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="4dp"
+            android:clipChildren="false"
             android:gravity="center_vertical"
             android:paddingStart="@dimen/tv_safe_horizontal"
             android:paddingEnd="@dimen/tv_safe_horizontal">
 
+            <!-- focusOutEnd must stay true: with it false the grid answers a rightward search with
+                 the focused view itself, so focus bounces and the filter entry is unreachable. -->
             <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/recycler"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="26dp"
+                android:layout_gravity="center_vertical"
                 android:layout_weight="1"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingEnd="@dimen/tv_gap_md"
-                app:focusOutEnd="false"
+                app:focusOutEnd="true"
                 app:focusOutFront="false" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/sort"
+                android:id="@+id/vodFilter"
                 android:layout_width="wrap_content"
-                android:layout_height="26dp"
-                android:background="@drawable/tv_glass_pill"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="☷  排序: 最近添加"
-                android:textColor="?attr/tvColorTextSecondary"
-                android:textSize="12sp" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="26dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/tv_glass_pill"
+                android:background="@drawable/selector_button"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="▦  网格"
-                android:textColor="?attr/tvColorFocus"
-                android:textSize="12sp" />
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:text="@string/tv_vod_filter"
+                android:textColor="?attr/tvColorTextPrimary"
+                android:textSize="12sp"
+                android:visibility="gone" />
         </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:layout_marginBottom="4dp"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:paddingStart="@dimen/tv_safe_horizontal"
-            android:paddingEnd="@dimen/tv_safe_horizontal"
-            android:scrollbars="none">
-
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:fontFamily="monospace"
-                    android:text="FILTER:"
-                    android:textColor="?attr/tvColorTextMuted"
-                    android:textSize="10sp" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:background="@drawable/vod_filter_chip_selected"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="全部  •"
-                    android:textColor="?attr/tvColorTextPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/tv_glass_pill"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="年代 ⌄"
-                    android:textColor="?attr/tvColorTextSecondary"
-                    android:textSize="11sp" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/tv_glass_pill"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="地区 ⌄"
-                    android:textColor="?attr/tvColorTextSecondary"
-                    android:textSize="11sp" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/tv_glass_pill"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="质量 ⌄"
-                    android:textColor="?attr/tvColorAccent"
-                    android:textSize="11sp" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/tv_glass_pill"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="评分 ⌄"
-                    android:textColor="?attr/tvColorTextSecondary"
-                    android:textSize="11sp" />
-            </androidx.appcompat.widget.LinearLayoutCompat>
-        </HorizontalScrollView>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
@@ -262,6 +172,19 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <!-- Remote hints. This screen used to advertise nothing while hiding two of its own
+             actions behind bare keys; the Menu hint is what makes the filter entry discoverable
+             to someone who never presses it by accident. -->
+        <com.fongmi.android.tv.ui.custom.TvKeycapsBar
+            android:id="@+id/keycaps"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center_vertical"
+            android:importantForAccessibility="no"
+            android:paddingStart="@dimen/tv_safe_horizontal"
+            android:paddingEnd="@dimen/tv_safe_horizontal" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
