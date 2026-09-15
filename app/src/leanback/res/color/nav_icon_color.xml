@@ -4,6 +4,6 @@
      Applied via app:drawableTint on the nav TextView. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true" android:color="?attr/tvColorOnAccent" />
-    <item android:state_selected="true" android:color="?attr/tvColorTextPrimary" />
+    <item android:state_selected="true" android:color="?attr/tvColorAccent" />
     <item android:color="?attr/tvColorTextSecondary" />
 </selector>

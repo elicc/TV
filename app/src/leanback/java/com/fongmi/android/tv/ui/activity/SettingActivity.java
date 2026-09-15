@@ -137,7 +137,9 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
      * mechanism's real condition rather than just offering a button.
      */
     private void setVaultText() {
-        if (!ConfigVault.isWritable()) {
+        if (PermissionUtil.allFilesAccess(this) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
+            mBinding.vaultText.setText(R.string.tv_vault_status_unsupported);
+        } else if (!ConfigVault.isWritable()) {
             mBinding.vaultText.setText(R.string.tv_vault_status_off);
         } else if (ConfigVault.state() == VaultPolicy.State.IO_ERROR) {
             mBinding.vaultText.setText(R.string.tv_vault_status_io);
@@ -159,6 +161,11 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     private void requestVault(Runnable onGranted) {
         if (ConfigVault.isWritable()) {
             onGranted.run();
+            return;
+        }
+        if (PermissionUtil.allFilesAccess(this) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
+            setVaultText();
+            Notify.show(R.string.tv_vault_unsupported);
             return;
         }
         mVaultOnGranted = onGranted;

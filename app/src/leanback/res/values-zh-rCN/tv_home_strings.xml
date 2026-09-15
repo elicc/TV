@@ -71,6 +71,9 @@
     <string name="tv_vault_restore_missing">未找到可恢复的配置</string>
     <string name="tv_vault_enabled">配置备份已开启</string>
     <string name="tv_vault_denied">未获得文件访问权限</string>
+    <string name="tv_vault_unsupported">此设备不提供文件授权页；请使用受管安装工具开启跨卸载恢复</string>
+    <string name="tv_vault_unsupported_source">此设备不提供文件授权页；网络源仍可配置，本地浏览不受备份状态阻塞</string>
+    <string name="tv_vault_status_unsupported">设备不支持授权 · 网络源仍可配置</string>
     <string name="tv_vault_status_off">未开启 · 按 OK 开启</string>
     <string name="tv_vault_status_idle">已开启 · 尚未写入</string>
     <string name="tv_vault_status_on">已开启 · %1$s</string>

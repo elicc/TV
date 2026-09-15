@@ -18,6 +18,12 @@ import java.util.function.Consumer;
 
 public class PermissionUtil {
 
+    public enum AllFilesAccess {
+        GRANTED,
+        REQUESTABLE,
+        UNSUPPORTED
+    }
+
     public static void requestAudio(FragmentActivity activity, Consumer<Boolean> callback) {
         if (isGranted(activity, Manifest.permission.RECORD_AUDIO)) callback.accept(true);
         else post(activity, () -> PermissionX.init(activity).permissions(Manifest.permission.RECORD_AUDIO).request(new PermissionCallback(callback)));
@@ -56,16 +62,27 @@ public class PermissionUtil {
      * {@code onResume} as well — see the vault grant flow in the leanback activities.
      */
     public static void requestAllFiles(FragmentActivity activity, Consumer<Boolean> callback) {
-        if (!canRequestAllFiles(activity)) {
+        AllFilesAccess access = allFilesAccess(activity);
+        if (access == AllFilesAccess.UNSUPPORTED) {
             callback.accept(false);
             return;
         }
-        if (hasAllFiles()) {
+        if (access == AllFilesAccess.GRANTED) {
             callback.accept(true);
             return;
         }
         post(activity, () -> PermissionX.init(activity).permissions()
                 .requestManageExternalStoragePermissionNow(new PermissionCallback(granted -> callback.accept(hasAllFiles()))));
+    }
+
+    /**
+     * Describe the platform capability instead of collapsing an OEM with no settings screen into
+     * an ordinary viewer denial. Some Android TV firmware keeps the all-files app-op but removes
+     * both standard activities that a third-party app needs to request it.
+     */
+    public static AllFilesAccess allFilesAccess(FragmentActivity activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || hasAllFiles()) return AllFilesAccess.GRANTED;
+        return canRequestAllFiles(activity) ? AllFilesAccess.REQUESTABLE : AllFilesAccess.UNSUPPORTED;
     }
 
     public static void requestNotify(FragmentActivity activity) {

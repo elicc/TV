@@ -287,6 +287,11 @@ class TvThemeTests(unittest.TestCase):
         setting = (JAVA / "ui/activity/SettingActivity.java").read_text()
         self.assertIn("if (allGranted) load(config)", setting)
 
+    def test_tv_alert_dialogs_do_not_dim_the_full_screen(self):
+        dialog = (MAIN_JAVA / "ui/dialog/BaseAlertDialog.java").read_text()
+        self.assertIn("public void onStart()", dialog)
+        self.assertIn("getDialog().getWindow().setDimAmount(0f);", dialog)
+
     def test_source_bootstrap_is_versioned_atomic_and_source_only(self):
         bootstrap = (MAIN_JAVA / "db/SourceBootstrap.java").read_text()
         self.assertIn('FILE_NAME = "source-bootstrap.json"', bootstrap)

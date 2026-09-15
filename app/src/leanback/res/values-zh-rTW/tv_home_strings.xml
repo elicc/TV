@@ -70,6 +70,9 @@
     <string name="tv_vault_restore_missing">未找到可恢复的配置</string>
     <string name="tv_vault_enabled">配置备份已开启</string>
     <string name="tv_vault_denied">未获得文件访问权限</string>
+    <string name="tv_vault_unsupported">此裝置不提供檔案授權頁；請使用受管安裝工具開啟跨解除安裝還原</string>
+    <string name="tv_vault_unsupported_source">此裝置不提供檔案授權頁；網路源仍可設定，本機瀏覽不受備份狀態阻擋</string>
+    <string name="tv_vault_status_unsupported">裝置不支援授權 · 網路源仍可設定</string>
     <string name="tv_vault_status_off">未开启 · 按 OK 开启</string>
     <string name="tv_vault_status_idle">已开启 · 尚未写入</string>
     <string name="tv_vault_status_on">已开启 · %1$s</string>

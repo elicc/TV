@@ -5,8 +5,10 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:minHeight">28dp</item>
         <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingStart">10dp</item>
-        <item name="android:paddingEnd">10dp</item>
+        <!-- Keep the five tabs compact like the Stitch pill; the 20dp Lucide
+             icon remains the visual anchor while the labels stay readable. -->
+        <item name="android:paddingStart">3dp</item>
+        <item name="android:paddingEnd">3dp</item>
         <item name="android:focusable">true</item>
         <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
         <item name="android:background">@drawable/tv_nav_pill</item>

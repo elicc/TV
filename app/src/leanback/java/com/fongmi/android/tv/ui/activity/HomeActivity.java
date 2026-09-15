@@ -299,6 +299,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16, FocusHighlight.ZOOM_FACTOR_SMALL, HorizontalGridView.FOCUS_SCROLL_ALIGNED), HistoryPresenter.class);
         mBinding.recycler.setAdapter(new ItemBridgeAdapter(mAdapter = new ArrayObjectAdapter(selector)));
         mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(12));
+        // Mirror the project's other RecyclerViews (KeepActivity, FileActivity, the dialogs):
+        // the outer container's size does not depend on item content, and the first-screen
+        // entrance already runs view-level alpha animations via TvStagger.firstScreen(), so
+        // suppressing RecyclerView's own ItemAnimator stops it from leaving the
+        // GridLayoutManager fastRelayout path with an attached child the next time the
+        // RecyclerView is re-laid out while a fling is still in flight.
+        mBinding.recycler.setHasFixedSize(true);
+        mBinding.recycler.setItemAnimator(null);
     }
 
     private void setViewModel() {
@@ -337,7 +345,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // is reachable the restore has already run, and when it is unreachable we cannot tell
         // whether a snapshot exists — checking would itself need the grant — so offer it and
         // find out after the grant. Cheaper to over-offer than to hide the one path back.
-        boolean restorable = !ConfigVault.isWritable();
+        boolean restorable = !ConfigVault.isWritable()
+                && PermissionUtil.allFilesAccess(this) != PermissionUtil.AllFilesAccess.UNSUPPORTED;
         if (mConfigFailed) return EmptySourcePresenter.Item.asFailed(restorable);
         if (mConfigLoading) return EmptySourcePresenter.Item.asLoading();
         return EmptySourcePresenter.Item.fresh(restorable);
@@ -411,6 +420,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             onGranted.run();
             return;
         }
+        if (PermissionUtil.allFilesAccess(this) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
+            Notify.show(R.string.tv_vault_unsupported);
+            updateHero();
+            return;
+        }
         mVaultOnGranted = onGranted;
         mVaultPending = true;
         PermissionUtil.requestAllFiles(this, granted -> finishVaultRequest());
@@ -443,6 +457,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     /** The one unprompted offer, raised once, and only now that a source is actually loading. */
     private void maybeOfferVault() {
         if (!ConfigVault.shouldPrompt()) return;
+        if (PermissionUtil.allFilesAccess(this) == PermissionUtil.AllFilesAccess.UNSUPPORTED) return;
         if (getSupportFragmentManager().findFragmentByTag(VaultDialog.TAG) != null) return;
         VaultDialog.create().show(this);
     }

@@ -118,8 +118,11 @@ public class ConfigDialog extends BaseAlertDialog {
     private void refreshVaultBanner() {
         if (binding == null) return;
         boolean missing = !ConfigVault.isWritable();
+        boolean unsupported = PermissionUtil.allFilesAccess(requireActivity()) == PermissionUtil.AllFilesAccess.UNSUPPORTED;
         binding.vault.setVisibility(missing ? View.VISIBLE : View.GONE);
-        binding.text.setNextFocusDownId(missing ? R.id.vaultGrant : R.id.positive);
+        binding.vaultText.setText(unsupported ? R.string.tv_vault_unsupported_source : R.string.tv_vault_banner);
+        binding.vaultGrant.setVisibility(unsupported ? View.GONE : View.VISIBLE);
+        binding.text.setNextFocusDownId(missing && !unsupported ? R.id.vaultGrant : R.id.positive);
     }
 
     @Override
@@ -192,10 +195,13 @@ public class ConfigDialog extends BaseAlertDialog {
     }
 
     private void requestRestoreOrChoose() {
+        if (PermissionUtil.allFilesAccess(requireActivity()) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
+            requestFileChooser();
+            return;
+        }
         mVaultPending = true;
-        // Settles immediately when access is already held or when this device exposes no such
-        // settings screen; otherwise the launch is deferred and the viewer's return is what
-        // settles it, because a refusal produces no callback at all.
+        // A supported settings screen completes on grant; a refusal is settled from onResume.
+        // Unsupported firmware took the local chooser path above and never enters this flow.
         PermissionUtil.requestAllFiles(requireActivity(), granted -> resolveRestore());
     }
 
@@ -203,17 +209,15 @@ public class ConfigDialog extends BaseAlertDialog {
         if (!mVaultPending) return;
         mVaultPending = false;
         if (!ConfigVault.isWritable()) {
-            // Previously a silent return, which is exactly how "pressed 继续 and nothing
-            // happened" looked from the couch.
-            Notify.show(R.string.tv_vault_denied);
             refreshVaultBanner();
-            return;
+            Notify.show(R.string.tv_vault_denied);
+        } else {
+            SourceBootstrap.find(type, config -> {
+                if (!isAdded()) return;
+                if (config == null) FileChooser.from(launcher).show();
+                else applyConfig(config);
+            });
         }
-        SourceBootstrap.find(type, config -> {
-            if (!isAdded()) return;
-            if (config == null) FileChooser.from(launcher).show();
-            else applyConfig(config);
-        });
     }
 
     private boolean isSourceType() {
