@@ -11,3 +11,7 @@ lib-*.aar
 .claude
 
 .gpt-imagegen
+
+# Python bytecode from tools/ scripts and tools/tests — build output, never source.
+__pycache__/
+*.pyc
