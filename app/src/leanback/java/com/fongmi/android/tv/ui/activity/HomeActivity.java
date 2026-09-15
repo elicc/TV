@@ -11,7 +11,6 @@ import android.text.TextUtils;
 import android.util.Property;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
@@ -509,17 +508,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         mBinding.splash.setVisibility(View.VISIBLE);
     }
 
-    /** Lets one complete brand frame draw before any animation or dismissal clock starts. */
+    /** Starts on the first animation frame, after attachment makes the overlay drawable. */
     private void scheduleSplashReveal() {
         View splash = mBinding.splash;
-        splash.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                splash.getViewTreeObserver().removeOnPreDrawListener(this);
-                splash.postOnAnimation(HomeActivity.this::revealSplash);
-                return true;
-            }
-        });
+        splash.postOnAnimation(HomeActivity.this::revealSplash);
     }
 
     /**
