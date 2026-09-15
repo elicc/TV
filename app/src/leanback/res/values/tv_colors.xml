@@ -46,4 +46,11 @@
     <color name="tv_live_red">#EF4444</color>
     <color name="tv_error">@color/tv_danger</color>
     <color name="tv_warning">#F59E0B</color>
+    <!-- Cold-start splash is the one light surface in an otherwise dark theme. It is a
+         fixed brand moment rather than a themed surface, so it is deliberately plain
+         @color and not routed through a ?attr/ token. -->
+    <color name="tv_splash_backdrop">#F3EAE6</color>
+    <!-- Slate-indigo sampled from the shadowed face of the brand ribbon. The old
+         tvColorTextSecondary (#9B9BA1) only reached 2.4:1 on the light backdrop. -->
+    <color name="tv_splash_ink">#333F5C</color>
 </resources>

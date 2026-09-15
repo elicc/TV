@@ -227,34 +227,56 @@
             android:importantForAccessibility="no" />
     </LinearLayout>
     <!-- Cold-start brand splash. Opaque and above every other layer so the first
-         frame the viewer sees is the mark rather than an empty grid; HomeActivity
-         fades it out once the source config settles. Deliberately not focusable so
-         it can never intercept a D-pad key from the home rows sitting behind it. -->
-    <LinearLayout
+         frame the viewer sees is the brand artwork rather than an empty grid.
+         HomeActivity raises it before the first activity frame and dissolves it into
+         the home once the source config settles. Deliberately not focusable
+         so it can never intercept a D-pad key from the home rows sitting behind it. -->
+    <FrameLayout
         android:id="@+id/splash"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/tvColorBackground"
-        android:gravity="center"
-        android:orientation="vertical"
+        android:background="@color/tv_splash_backdrop"
         android:visibility="gone"
         android:importantForAccessibility="no">
 
+        <!-- Brand artwork, already centre-cropped to 16:9 and vignetted offline by
+             tools/brand/make_splash_backdrop.py. centerCrop keeps it covering on
+             panels that are not exactly 16:9; the drawable only ever scales down
+             from 1.06 to 1.0, so it can never pull inside its own bounds and
+             expose the container behind it. -->
         <ImageView
-            android:id="@+id/splashLogo"
-            android:layout_width="128dp"
-            android:layout_height="128dp"
+            android:id="@+id/splashBackdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:contentDescription="@null"
-            android:src="@drawable/ic_logo_mark" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_splash_backdrop" />
 
-        <TextView
-            android:id="@+id/splashWordmark"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:letterSpacing="0.22"
-            android:text="FONGMI TV"
-            android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="15sp" />
-    </LinearLayout>
+        <!-- Mark and wordmark are one group so the exit can dissolve them ahead of the
+             artwork, emptying the frame from the centre outward. -->
+        <LinearLayout
+            android:id="@+id/splashContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/splashLogo"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_logo_mark" />
+
+            <TextView
+                android:id="@+id/splashWordmark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:letterSpacing="0.22"
+                android:text="FONGMI TV"
+                android:textColor="@color/tv_splash_ink"
+                android:textSize="15sp" />
+        </LinearLayout>
+    </FrameLayout>
 </FrameLayout>

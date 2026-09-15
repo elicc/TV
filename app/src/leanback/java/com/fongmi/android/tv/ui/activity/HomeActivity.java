@@ -1,22 +1,25 @@
 package com.fongmi.android.tv.ui.activity;
 
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Property;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.splashscreen.SplashScreen;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.FocusHighlight;
 import androidx.leanback.widget.HorizontalGridView;
@@ -117,8 +120,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private boolean mOwnConfigEvent;
     private String mConfigError = "";
     private boolean mActionHandled;
-    /** True once the cold-start brand overlay has been handed off (or skipped). */
+    /** True once the cold-start brand overlay has completed (or been skipped). */
     private boolean mSplashDone;
+    /** A cold start wants the brand moment; the overlay is raised from initView. */
+    private boolean mSplashPending;
+    /** The first activity frame has drawn, so the brand clock can run. */
+    private boolean mSplashRevealed;
+    /** The home content settled before the brand clock started. */
+    private boolean mContentReady;
     private long mSplashShownAt;
     /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
     private boolean mHeroUpdatePending;
@@ -161,28 +170,15 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        // Always keep the splash screen condition false so the splash exits
-        // the moment the first frame is drawn; on some Android TV emulators the
-        // default "keep until pre-draw" path leaves the starting_reveal
-        // animation leash hanging and prevents the activity surface from
-        // invalidating, which would render the hero/empty-source row as black.
-        // Once the splash exit animation completes we also force a redraw so
-        // the activity surface is guaranteed to commit at least one frame.
-        SplashScreen splash = SplashScreen.installSplashScreen(this);
-        splash.setKeepOnScreenCondition(() -> false);
-        splash.setOnExitAnimationListener(provider -> {
-            provider.remove();
-            if (!isFinishing() && !isDestroyed()) mBinding.getRoot().invalidate();
-        });
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     protected void initView(Bundle savedInstanceState) {
-        // Brand first: raise the overlay before any home setup runs so the viewer never
-        // catches a half-built grid behind the fade.
-        if (savedInstanceState == null) playSplash();
+        // The manifest disables the platform preview, so the first app-owned frame must
+        // already contain the complete brand composition. Raise it before the first layout
+        // and start its clock only after that frame has been allowed to draw.
+        if (savedInstanceState == null && TvMotion.motionEnabled(mBinding.splash)) {
+            mSplashPending = true;
+            raiseSplash();
+            scheduleSplashReveal();
+        } else mSplashDone = true;
         mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
         mResult = Result.empty();
         mClock = Clock.create(mBinding.clock).format("HH:mm");
@@ -500,46 +496,92 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     /**
-     * Cold-start brand moment. The platform splash is unreliable on TV: it is torn down the
-     * moment the first frame lands, so a slow cold start leaves the viewer on a bare
-     * background for seconds with nothing to look at. The mark is therefore choreographed
-     * inside the activity and handed off to the home entrance once the config settles.
+     * Puts the brand overlay up. Called from {@code initView} so it is measured, laid out
+     * and drawn during the very first traversal.
+     * Nothing here animates: the composition is complete from the frame it first draws,
+     * because a gradual build-up is read as the backdrop arriving before the mark.
      */
-    private void playSplash() {
-        View splash = mBinding.splash;
-        if (!TvMotion.motionEnabled(splash)) {
-            mSplashDone = true;
-            return;
-        }
-        mSplashShownAt = SystemClock.uptimeMillis();
-        splash.setVisibility(View.VISIBLE);
-        View logo = mBinding.splashLogo;
-        logo.setAlpha(0f);
-        logo.setScaleX(0.90f);
-        logo.setScaleY(0.90f);
-        logo.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(TvMotion.SPLASH_MARK)
-                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_enter)).start();
-        View wordmark = mBinding.splashWordmark;
-        wordmark.setAlpha(0f);
-        wordmark.setTranslationY(ResUtil.dp2px(10));
-        wordmark.animate().alpha(1f).translationY(0f).setStartDelay(TvMotion.SPLASH_MARK / 3)
-                .setDuration(TvMotion.SPLASH_MARK)
-                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_enter)).start();
-        splash.postDelayed(this::dismissSplash, TvMotion.SPLASH_MAX);
+    private void raiseSplash() {
+        // Set before layout so the artwork is already framed correctly on its first draw.
+        View backdrop = mBinding.splashBackdrop;
+        backdrop.setScaleX(TvMotion.SPLASH_BACKDROP_SCALE);
+        backdrop.setScaleY(TvMotion.SPLASH_BACKDROP_SCALE);
+        mBinding.splash.setVisibility(View.VISIBLE);
     }
 
-    /** Cross-fade the brand out, then walk the home screen in underneath it. */
+    /** Lets one complete brand frame draw before any animation or dismissal clock starts. */
+    private void scheduleSplashReveal() {
+        View splash = mBinding.splash;
+        splash.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                splash.getViewTreeObserver().removeOnPreDrawListener(this);
+                splash.postOnAnimation(HomeActivity.this::revealSplash);
+                return true;
+            }
+        });
+    }
+
+    /**
+     * Starts the artwork drift and dismissal clock after the complete composition has drawn.
+     */
+    private void revealSplash() {
+        if (!mSplashPending || isFinishing() || isDestroyed()) return;
+        mSplashPending = false;
+        mSplashRevealed = true;
+        mSplashShownAt = SystemClock.uptimeMillis();
+        Interpolator enter = AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_enter);
+        View backdrop = mBinding.splashBackdrop;
+        animate(backdrop, View.SCALE_X, TvMotion.SPLASH_BACKDROP_SCALE, 1f, TvMotion.SPLASH_BACKDROP, enter);
+        animate(backdrop, View.SCALE_Y, TvMotion.SPLASH_BACKDROP_SCALE, 1f, TvMotion.SPLASH_BACKDROP, enter);
+        mBinding.splash.postDelayed(this::dismissSplash, TvMotion.SPLASH_MAX);
+        // The config may settle before the first brand frame is committed.
+        if (mContentReady) dismissSplash();
+    }
+
+    /**
+     * Dissolve the brand into the home. The frame fades while pushing slightly toward the
+     * viewer, and the mark and wordmark leave ahead of the artwork so it empties from the
+     * centre outward instead of dropping as one card. The home entrance starts on the same
+     * frame, so the two cross-dissolve rather than cutting.
+     */
     private void dismissSplash() {
-        if (mSplashDone) return;
+        // Do not dismiss until the complete brand composition has reached the viewer.
+        if (mSplashDone || !mSplashRevealed) return;
         mSplashDone = true;
         View splash = mBinding.splash;
+        View content = mBinding.splashContent;
         long delay = Math.max(0L, TvMotion.SPLASH_HOLD - (SystemClock.uptimeMillis() - mSplashShownAt));
-        splash.animate().alpha(0f).setStartDelay(delay).setDuration(TvMotion.SPLASH_OUT)
+        splash.postDelayed(this::runEntrance, delay);
+        splash.animate().alpha(0f).scaleX(TvMotion.SPLASH_OUT_SCALE).scaleY(TvMotion.SPLASH_OUT_SCALE)
+                .setStartDelay(delay).setDuration(TvMotion.SPLASH_OUT)
+                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_decelerate))
                 .withEndAction(() -> {
                     splash.setVisibility(View.GONE);
                     splash.setAlpha(1f);
+                    splash.setScaleX(1f);
+                    splash.setScaleY(1f);
+                    mBinding.splashBackdrop.setAlpha(1f);
+                    content.setAlpha(1f);
+                    content.setScaleX(1f);
+                    content.setScaleY(1f);
                 }).start();
-        splash.postDelayed(this::runEntrance, delay);
+        content.animate().alpha(0f)
+                .scaleX(TvMotion.SPLASH_CONTENT_OUT_SCALE).scaleY(TvMotion.SPLASH_CONTENT_OUT_SCALE)
+                .setStartDelay(delay).setDuration(TvMotion.SPLASH_CONTENT_OUT)
+                .setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_decelerate)).start();
+    }
+
+    /**
+     * Drives a single float property. Written out rather than chained because
+     * {@link ValueAnimator#setInterpolator} returns void on current SDKs, unlike the
+     * {@code ViewPropertyAnimator} setters, which do return themselves.
+     */
+    private void animate(View target, Property<View, Float> property, float from, float to, long duration, Interpolator interpolator) {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(target, property, from, to);
+        animator.setDuration(duration);
+        animator.setInterpolator(interpolator);
+        animator.start();
     }
 
     private void runEntrance() {
@@ -549,6 +591,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void showContent() {
         mBinding.progressLayout.showContent();
+        mContentReady = true;
         dismissSplash();
         if (!mActionHandled) {
             mActionHandled = true;

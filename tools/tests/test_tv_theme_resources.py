@@ -16,6 +16,23 @@ class TvThemeTests(unittest.TestCase):
         for path in RES.rglob("*.xml"):
             ET.parse(path)
 
+    def test_home_splash_owns_the_first_app_frame(self):
+        splash = next(
+            style
+            for style in ET.parse(RES / "values/styles.xml").iter("style")
+            if style.get("name") == "Theme.Splash"
+        )
+        items = {item.get("name"): item.text for item in splash}
+        self.assertEqual("Theme.App", splash.get("parent"))
+        self.assertEqual("true", items["android:windowDisablePreview"])
+        self.assertNotIn("windowSplashScreenBackground", items)
+        self.assertNotIn("windowSplashScreenAnimatedIcon", items)
+
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        self.assertNotIn("SplashScreen.installSplashScreen", home)
+        self.assertIn("scheduleSplashReveal();", home)
+        self.assertIn("splash.postOnAnimation(HomeActivity.this::revealSplash)", home)
+
     def test_semantic_attributes_defined(self):
         import re
         defined = {node.get("name") for node in ET.parse(RES / "values/tv_attrs.xml").iter("attr")}

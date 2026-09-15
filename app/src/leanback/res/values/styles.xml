@@ -56,14 +56,11 @@
         <item name="android:windowAnimationStyle">@style/NoAnim</item>
     </style>
 
-    <style name="Theme.Splash" parent="Theme.SplashScreen">
-        <item name="postSplashScreenTheme">@style/Theme.App</item>
-        <item name="windowSplashScreenBackground">@color/tv_background</item>
-        <!-- Splash mark, not the launcher tile: the platform renders this inside a
-             192/288-safe circle on the dark splash background, so it must be a padded
-             transparent mark. Pointed at a plain PNG on purpose — a <bitmap> wrapper
-             has no intrinsic size the platform splash will accept and renders blank. -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_mark</item>
+    <style name="Theme.Splash" parent="Theme.App">
+        <!-- Keep the launcher visible until HomeActivity can draw the complete 16:9 brand
+             composition. The platform preview only supports a flat color plus a constrained
+             icon, which otherwise creates a bright intermediate frame on cold start. -->
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <style name="Theme.App" parent="Theme.Base" />

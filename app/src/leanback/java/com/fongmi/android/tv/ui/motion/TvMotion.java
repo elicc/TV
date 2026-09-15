@@ -21,12 +21,22 @@ public final class TvMotion {
     public static final long SHIMMER = 4500;
     public static final long BREATH = 11000;
     public static final long DRIFT = 14000;
-    /** Cold-start brand splash: mark settles in, holds, then cross-fades into the home. */
-    public static final long SPLASH_MARK = 560;
+    /** Cold-start brand splash: holds, then dissolves into the home. */
     public static final long SPLASH_HOLD = 900;
-    public static final long SPLASH_OUT = 420;
+    /** Dissolve out while pushing slightly toward the viewer, into the home entrance. */
+    public static final long SPLASH_OUT = 560;
+    /** Mark and wordmark leave ahead of the artwork so the frame empties from the centre. */
+    public static final long SPLASH_CONTENT_OUT = 340;
+    /** Exit over-scales. They compound on the content, which pushes out further than the art. */
+    public static final float SPLASH_OUT_SCALE = 1.05f;
+    public static final float SPLASH_CONTENT_OUT_SCALE = 1.06f;
     /** Hard cap so the overlay can never outlive a config that never settles. */
     public static final long SPLASH_MAX = 2600;
+    /** Backdrop settles back from a slight over-scale; runs the overlay's full life. */
+    public static final long SPLASH_BACKDROP = 2400;
+    /** Must stay above 1: the drawable only ever shrinks toward 1, so it can never
+        pull inside its own bounds and expose the container behind it. */
+    public static final float SPLASH_BACKDROP_SCALE = 1.06f;
 
     private TvMotion() {
     }
