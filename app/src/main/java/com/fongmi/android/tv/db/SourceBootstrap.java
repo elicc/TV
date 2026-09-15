@@ -15,12 +15,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Stores only the active VOD/live source metadata in shared storage so a fresh
- * install can recover it after the user grants file access again.
+ * Stores the active VOD/live source metadata in shared storage so a fresh install can recover it
+ * after the viewer grants file access again.
+ *
+ * <p>This class owns the on-disk format and nothing else; whether the write is even possible, and
+ * what a failure means, belongs to {@link ConfigVault}. The format is unchanged from the version
+ * already deployed, so snapshots written by earlier installs still restore.
  */
 public final class SourceBootstrap {
 
@@ -33,7 +38,7 @@ public final class SourceBootstrap {
     }
 
     public static void save() {
-        Task.executeSerial(SourceBootstrap::write);
+        ConfigVault.save();
     }
 
     public static void find(int type, Consumer<Config> callback) {
@@ -43,34 +48,73 @@ public final class SourceBootstrap {
         });
     }
 
-    private static void write() {
+    /**
+     * Persist the snapshot.
+     *
+     * @return whether the file on disk now reflects the active source; {@code false} means the
+     *     caller must not report success. An empty snapshot deletes the file, and that deletion
+     *     is a real result too — reporting it as success without checking is how a vault that
+     *     was never written ends up looking healthy.
+     */
+    static boolean write() {
         File file = getFile();
         try {
             Snapshot snapshot = Snapshot.create();
             if (snapshot.sources.isEmpty()) {
-                Path.clear(file);
-                return;
+                // Nothing to store, so the snapshot file has to go. A file that is simply not
+                // there is ambiguous — "no source configured" and "no access to look" read the
+                // same — so the directory is materialised first: if that works the absence is
+                // real, and if it does not the vault is genuinely out of reach.
+                File dir = file.getParentFile();
+                if (dir != null && !dir.isDirectory() && !dir.mkdirs()) return false;
+                if (file.exists()) return file.delete();
+                return dir != null && dir.isDirectory();
             }
             byte[] data = App.gson().toJson(snapshot).getBytes(StandardCharsets.UTF_8);
             FileUtil.writeAtomically(data, file);
+            return true;
         } catch (IOException | RuntimeException e) {
             Logger.t(TAG).e(e, "Unable to persist source bootstrap");
+            return false;
         }
     }
 
-    private static Source read(int type) {
+    static boolean exists() {
         File file = getFile();
-        if (!file.isFile() || file.length() <= 0 || file.length() > MAX_BYTES) return null;
+        return file.isFile() && file.length() > 0;
+    }
+
+    /**
+     * Write every source in the snapshot back into the database.
+     *
+     * @return how many sources landed, so the caller can tell "restored" from "nothing there".
+     */
+    static int apply() {
+        int count = 0;
+        for (Source source : readAll()) {
+            if (source == null || !source.isValid()) continue;
+            source.toConfig().update();
+            count++;
+        }
+        return count;
+    }
+
+    private static Source read(int type) {
+        for (Source source : readAll()) if (source != null && source.type == type && source.isValid()) return source;
+        return null;
+    }
+
+    private static List<Source> readAll() {
+        File file = getFile();
+        if (!file.isFile() || file.length() <= 0 || file.length() > MAX_BYTES) return Collections.emptyList();
         try {
             Snapshot snapshot = App.gson().fromJson(Path.read(file), Snapshot.class);
-            if (snapshot == null || snapshot.version != VERSION || snapshot.sources == null) return null;
-            for (Source source : snapshot.sources) {
-                if (source != null && source.type == type && source.isValid()) return source;
-            }
+            if (snapshot == null || snapshot.version != VERSION || snapshot.sources == null) return Collections.emptyList();
+            return snapshot.sources;
         } catch (RuntimeException e) {
             Logger.t(TAG).e(e, "Unable to read source bootstrap");
+            return Collections.emptyList();
         }
-        return null;
     }
 
     private static File getFile() {

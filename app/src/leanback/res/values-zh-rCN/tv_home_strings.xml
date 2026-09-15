@@ -55,4 +55,25 @@
     <string name="tv_empty_card_drive_subtitle">阿里云盘 · Alist · SMB / WebDAV</string>
     <string name="tv_empty_card_drive_desc">选片秒播，免下载</string>
     <string name="tv_empty_auxiliary">也可以按右上角 齿轮图标 → 「配置接口 (API)」中手动导入</string>
+    <!-- Config vault: the /storage/emulated/0/TV snapshot that survives an uninstall.
+         Reaching it needs "All files access", which every uninstall revokes, so the copy
+         always explains why the grant is being asked for. -->
+    <string name="tv_vault_row">配置备份</string>
+    <string name="tv_vault_title">开启配置备份</string>
+    <string name="tv_vault_body">把配置源保存到本机存储，卸载重装后可一键恢复。</string>
+    <string name="tv_vault_note">需授予「所有文件访问权限」</string>
+    <string name="tv_vault_enable">开启</string>
+    <string name="tv_vault_later">以后再说</string>
+    <string name="tv_vault_grant">去授权</string>
+    <string name="tv_vault_banner">未开启配置备份 · 重装后无法恢复</string>
+    <string name="tv_vault_restore_hint">重装或换机？恢复上次配置</string>
+    <string name="tv_vault_restored">已恢复上次配置</string>
+    <string name="tv_vault_restore_missing">未找到可恢复的配置</string>
+    <string name="tv_vault_enabled">配置备份已开启</string>
+    <string name="tv_vault_denied">未获得文件访问权限</string>
+    <string name="tv_vault_status_off">未开启 · 按 OK 开启</string>
+    <string name="tv_vault_status_idle">已开启 · 尚未写入</string>
+    <string name="tv_vault_status_on">已开启 · %1$s</string>
+    <string name="tv_vault_status_io">已开启 · 上次失败：存储写入错误</string>
+    <string name="tv_vault_write_failed">配置备份写入失败，请在设置中查看</string>
 </resources>

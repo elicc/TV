@@ -17,6 +17,9 @@
             android:layout_height="180dp"
             android:scaleType="centerCrop" />
 
+        <!-- Reference text, not a control. It was focusable, which put a stop in the D-pad
+             order that showed no focus and did nothing when pressed — from the couch that reads
+             as a broken remote, twice. Focus belongs on the field and the buttons only. -->
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/info"
             android:layout_width="0dp"
@@ -24,7 +27,7 @@
             android:layout_weight="1"
             android:layout_marginStart="12dp"
             android:ellipsize="end"
-            android:focusable="true"
+            android:focusable="false"
             android:lineSpacingExtra="2dp"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
@@ -54,6 +57,50 @@
         android:textSize="18sp"
         android:textColor="?attr/tvColorTextPrimary"
         android:textColorHint="?attr/tvColorTextSecondary" />
+
+    <!-- Inline file-access notice. Shown only while "All files access" is missing, which is
+         exactly when saving the source and recovering a previous one are both impossible.
+         Deliberately a row rather than a second dialog: this one is already open because the
+         viewer opened it, so the notice is context, not an interruption. -->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/vault"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/vaultText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="@string/tv_vault_banner"
+            android:textColor="?attr/tvColorTextMuted"
+            android:textSize="11sp" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/vaultGrant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/selector_button"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:singleLine="true"
+            android:text="@string/tv_vault_grant"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="12sp" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/bottom"

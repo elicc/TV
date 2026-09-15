@@ -36,6 +36,38 @@ public class PermissionUtil {
         else post(fragment, () -> requestFile(PermissionX.init(fragment), requestAllFiles, callback));
     }
 
+    /**
+     * Ask for "All files access" and report whether it is actually held afterwards.
+     *
+     * <p>Two things make this different from {@link #requestFile}, both of which caused silent
+     * failures:
+     *
+     * <ul>
+     *   <li>The answer is read back from the OS ({@link #hasAllFiles()}) rather than taken from
+     *       the callback's boolean.
+     *   <li>When the device exposes no such settings screen the answer is a plain {@code false}.
+     *       The caller must not treat "cannot ask" as "already granted".
+     * </ul>
+     *
+     * <p><b>The callback does not fire when the viewer declines.</b> PermissionX's
+     * manage-external-storage round trip only completes on a granted result; on refusal it falls
+     * through to explain-reason handlers, and with none registered it returns without calling
+     * anything. Callers that must act on a refusal have to re-check {@link #hasAllFiles()} from
+     * {@code onResume} as well — see the vault grant flow in the leanback activities.
+     */
+    public static void requestAllFiles(FragmentActivity activity, Consumer<Boolean> callback) {
+        if (!canRequestAllFiles(activity)) {
+            callback.accept(false);
+            return;
+        }
+        if (hasAllFiles()) {
+            callback.accept(true);
+            return;
+        }
+        post(activity, () -> PermissionX.init(activity).permissions()
+                .requestManageExternalStoragePermissionNow(new PermissionCallback(granted -> callback.accept(hasAllFiles()))));
+    }
+
     public static void requestNotify(FragmentActivity activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
         if (isGranted(activity, PermissionX.permission.POST_NOTIFICATIONS)) return;

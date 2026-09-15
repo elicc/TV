@@ -50,10 +50,20 @@ public final class BackupManager {
         return backups;
     }
 
-    private static boolean save() {
+    /** Package-private for {@link ConfigVault}, which owns classifying the result. */
+    static boolean save() {
         Backup backup = Backup.create();
         File file = new File(Path.backup(), LocalDate.now().format(Formatters.DATE) + BACKUP_EXTENSION);
         return !backup.getConfig().isEmpty() && FileUtil.gzipCompress(backup.toString().getBytes(StandardCharsets.UTF_8), file);
+    }
+
+    /**
+     * Synchronous restore for callers already on the serial task thread. Keeps the validity check
+     * in one place: a corrupt gzip decompresses to an empty snapshot, which {@code restore}
+     * refuses, so a damaged file can never wipe the database.
+     */
+    static boolean restoreNow(File file) {
+        return restore(file);
     }
 
     private static boolean restore(File file) {

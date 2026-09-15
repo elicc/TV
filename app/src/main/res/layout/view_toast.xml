@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hand-drawn toast. The system toast stamps the launcher tile — a solid plate carrying the
+     adaptive app icon — beside the message, which reads as a second, competing brand mark
+     sitting next to the in-app wordmark. Drawing the toast ourselves lets it carry the same
+     transparent ribbon the home toolbar uses. Not focusable and not clickable: on a TV it must
+     never take a D-pad key or swallow a tap meant for what is underneath. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:layout_marginBottom="104dp"
+    android:background="@drawable/shape_toast"
+    android:clickable="false"
+    android:focusable="false"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="11dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="11dp">
+
+    <ImageView
+        android:id="@+id/toastIcon"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_logo_mark" />
+
+    <TextView
+        android:id="@+id/toastText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:maxWidth="560dp"
+        android:textColor="@color/toast_text"
+        android:textSize="14sp"
+        tools:text="已恢复上次配置" />
+
+</LinearLayout>

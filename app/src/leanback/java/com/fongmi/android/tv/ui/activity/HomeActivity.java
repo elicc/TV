@@ -43,7 +43,8 @@ import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Style;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.ActivityHomeBinding;
-import com.fongmi.android.tv.db.BackupManager;
+import com.fongmi.android.tv.db.ConfigVault;
+import com.fongmi.android.tv.db.VaultPolicy;
 import com.fongmi.android.tv.event.CastEvent;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
@@ -65,6 +66,7 @@ import com.fongmi.android.tv.ui.custom.CustomTitleView;
 import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
+import com.fongmi.android.tv.ui.dialog.VaultDialog;
 import com.fongmi.android.tv.ui.presenter.FuncPresenter;
 import com.fongmi.android.tv.ui.presenter.EmptySourcePresenter;
 import com.fongmi.android.tv.ui.presenter.HeaderPresenter;
@@ -95,7 +97,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener, ConfigListener {
+public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener, ConfigListener, VaultDialog.Listener {
 
     private ActivityHomeBinding mBinding;
     private ArrayObjectAdapter mHistoryAdapter;
@@ -120,6 +122,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private long mSplashShownAt;
     /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
     private boolean mHeroUpdatePending;
+    /**
+     * Set while a file-access grant is in flight. PermissionX never calls back on a refusal,
+     * so returning from the system screen is the only signal a denial produces; onResume
+     * re-reads the grant and finishes the flow either way.
+     */
+    private boolean mVaultPending;
+    /** What to do once the grant resolves; null when the request was only to enable backup. */
+    private Runnable mVaultOnGranted;
     /** Pending coalesced updateHero runnable; retained so onDestroy can cancel it. */
     private final Runnable mHeroUpdate = this::applyHeroUpdate;
     private final ActivityResultLauncher<Intent> mFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> FileChooser.getUri(result, uri -> VideoActivity.file(this, uri)));
@@ -328,9 +338,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private EmptySourcePresenter.Item emptySourceItem() {
-        if (mConfigFailed) return EmptySourcePresenter.Item.asFailed();
+        // Offer the recovery link exactly when a silent restore was impossible. When the vault
+        // is reachable the restore has already run, and when it is unreachable we cannot tell
+        // whether a snapshot exists — checking would itself need the grant — so offer it and
+        // find out after the grant. Cheaper to over-offer than to hide the one path back.
+        boolean restorable = !ConfigVault.isWritable();
+        if (mConfigFailed) return EmptySourcePresenter.Item.asFailed(restorable);
         if (mConfigLoading) return EmptySourcePresenter.Item.asLoading();
-        return EmptySourcePresenter.Item.fresh();
+        return EmptySourcePresenter.Item.fresh(restorable);
     }
 
     private void setTitle() {
@@ -349,6 +364,101 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         VodConfig.get().init().load(getCallback());
         LiveConfig.get().init().load();
         WallConfig.get().init();
+        maybeAutoRestore();
+    }
+
+    /**
+     * Recover the previous install's configuration on cold start. Only runs when shared storage
+     * is reachable, no source is configured, and this install has not already tried — an empty
+     * source list is the proof that a restore cannot overwrite anything, since every history
+     * and keep row belongs to a config. A no-op on a normal launch.
+     */
+    private void maybeAutoRestore() {
+        ConfigVault.restoreIfFresh(source -> {
+            if (isFinishing() || isDestroyed()) return;
+            if (source == VaultPolicy.Source.NONE) {
+                // Either there was nothing to restore or the gate refused. Re-render so the
+                // recovery link reflects the vault's real state.
+                updateHero();
+                return;
+            }
+            Notify.show(R.string.tv_vault_restored);
+            VodConfig.get().init().load(getCallback());
+            LiveConfig.get().init().load();
+            updateHero();
+        });
+    }
+
+    /** Explicit restore, after the viewer asked for it and the vault became reachable. */
+    private void restoreFromVault() {
+        ConfigVault.restore(source -> {
+            if (isFinishing() || isDestroyed()) return;
+            if (source == VaultPolicy.Source.NONE) {
+                Notify.show(R.string.tv_vault_restore_missing);
+                updateHero();
+                return;
+            }
+            Notify.show(R.string.tv_vault_restored);
+            VodConfig.get().init().load(getCallback());
+            LiveConfig.get().init().load();
+            WallConfig.get().init();
+        });
+    }
+
+    /**
+     * Ask for file access, then run {@code onGranted}. Safe to call when access is already
+     * held. The permission library stays silent when the viewer declines, so the continuation
+     * is driven from {@link #onResume} as well as from the callback; the pending flag makes the
+     * two paths idempotent.
+     */
+    private void requestVault(Runnable onGranted) {
+        if (ConfigVault.isWritable()) {
+            onGranted.run();
+            return;
+        }
+        mVaultOnGranted = onGranted;
+        mVaultPending = true;
+        PermissionUtil.requestAllFiles(this, granted -> finishVaultRequest());
+    }
+
+    private void finishVaultRequest() {
+        if (!mVaultPending) return;
+        mVaultPending = false;
+        Runnable action = mVaultOnGranted;
+        mVaultOnGranted = null;
+        if (!ConfigVault.isWritable()) {
+            Notify.show(R.string.tv_vault_denied);
+            updateHero();
+            return;
+        }
+        if (action != null) action.run();
+    }
+
+    /**
+     * Say it once when a write failed while storage was reachable — a full disk, a dead card.
+     * A missing grant is the expected fresh-install state and is handled by the offer instead,
+     * so this stays quiet on a healthy or merely un-granted install.
+     */
+    private void reportVaultFailure() {
+        if (!ConfigVault.needsReport()) return;
+        ConfigVault.markReported();
+        Notify.show(R.string.tv_vault_write_failed);
+    }
+
+    /** The one unprompted offer, raised once, and only now that a source is actually loading. */
+    private void maybeOfferVault() {
+        if (!ConfigVault.shouldPrompt()) return;
+        if (getSupportFragmentManager().findFragmentByTag(VaultDialog.TAG) != null) return;
+        VaultDialog.create().show(this);
+    }
+
+    @Override
+    public void onVaultEnable() {
+        requestVault(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            ConfigVault.save();
+            Notify.show(R.string.tv_vault_enabled);
+        });
     }
 
     private Callback getCallback() {
@@ -371,6 +481,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
                 mConfigError = "";
                 updateHero();
                 showContent();
+                reportVaultFailure();
+                maybeOfferVault();
             }
 
             @Override
@@ -644,6 +756,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             case LIVE:
             case DRIVE:
                 SettingActivity.start(this);
+                break;
+            case RESTORE:
+                // Grant first, then recover. A refusal lands in finishVaultRequest and is
+                // reported there rather than leaving the tap with no visible effect.
+                requestVault(this::restoreFromVault);
                 break;
         }
     }
@@ -924,6 +1041,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         super.onResume();
         mClock.start();
         if (mPulse != null) mPulse.start();
+        // Returning from the file-access settings screen is the only completion signal a
+        // refusal produces, so the vault flow is settled here as well as in its callback.
+        finishVaultRequest();
         // Defensive: on some Android TV emulators the activity surface is
         // left with invalidate=0 after the splash exit animation finishes,
         // so the empty-source / hero row would stay black even though the
@@ -982,7 +1102,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             DLNARendererService.stop(this);
             LiveConfig.get().clear();
             VodConfig.get().clear();
-            BackupManager.backup();
+            ConfigVault.backup();
             OkHttp.get().clear();
             Source.get().exit();
             Server.get().stop();

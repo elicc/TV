@@ -27,4 +27,9 @@
     <color name="white_90">#E6FFFFFF</color>
 
     <color name="icon_background">#FDF4EF</color>
+
+    <!-- Hand-drawn toast (view_toast.xml). Translucent so the transparent brand mark reads as
+         a mark on a surface rather than as an icon on a tile. -->
+    <color name="toast_background">#E61A1A1F</color>
+    <color name="toast_text">#F2FFFFFF</color>
 </resources>

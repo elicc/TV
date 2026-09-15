@@ -22,24 +22,24 @@ import com.fongmi.android.tv.utils.TvTheme;
 public final class EmptySourcePresenter extends Presenter {
 
     public enum Action {
-        VOD, LIVE, DRIVE
+        VOD, LIVE, DRIVE, RESTORE
     }
 
     public interface Listener {
         void onEmptyAction(Action action);
     }
 
-    public record Item(boolean loading, boolean configFailed) {
-        public static Item fresh() {
-            return new Item(false, false);
+    public record Item(boolean loading, boolean configFailed, boolean restorable) {
+        public static Item fresh(boolean restorable) {
+            return new Item(false, false, restorable);
         }
 
         public static Item asLoading() {
-            return new Item(true, false);
+            return new Item(true, false, false);
         }
 
-        public static Item asFailed() {
-            return new Item(false, true);
+        public static Item asFailed(boolean restorable) {
+            return new Item(false, true, restorable);
         }
     }
 
@@ -66,16 +66,41 @@ public final class EmptySourcePresenter extends Presenter {
 
         boolean loading = item.loading();
         boolean failed = item.configFailed();
+        // The restore link and the footnote are mutually exclusive: they occupy the same band
+        // below the cards, and they say opposite things ("there may be something to recover"
+        // vs "set it up by hand"). Keeping one visible also keeps the row inside 428dp.
+        boolean restore = item.restorable() && !loading && !failed;
         b.title.setVisibility(loading || failed ? View.GONE : View.VISIBLE);
         b.subtitle.setVisibility(loading || failed ? View.GONE : View.VISIBLE);
         b.hint.setVisibility(loading || failed ? View.GONE : View.VISIBLE);
         b.cards.setVisibility(loading || failed ? View.GONE : View.VISIBLE);
-        b.auxiliary.setVisibility(loading || failed ? View.GONE : View.VISIBLE);
+        b.auxiliary.setVisibility(loading || failed || restore ? View.GONE : View.VISIBLE);
+        b.vaultRestore.setVisibility(restore ? View.VISIBLE : View.GONE);
         b.badge.setText(failed ? R.string.tv_config_error_title : loading ? R.string.tv_loading_title : R.string.tv_empty_badge);
 
         bindCard(b.cardVod, R.drawable.ic_empty_film, Action.VOD, true, false);
         bindCard(b.cardLive, R.drawable.ic_empty_broadcast, Action.LIVE, false, true);
         bindCard(b.cardDrive, R.drawable.ic_empty_cloud, Action.DRIVE, false, true);
+        bindRestore(b, restore);
+    }
+
+    /**
+     * The cards pin DOWN to themselves so focus cannot wander out of the row, which would leave
+     * the recovery link underneath unreachable. While it is offered the row has to hand focus
+     * over; when it is not, the cards keep their self-pin.
+     */
+    private void bindRestore(ViewEmptySourceBinding b, boolean visible) {
+        int downId = visible ? R.id.vaultRestore : R.id.cardVod;
+        b.cardVod.getRoot().setNextFocusDownId(downId);
+        b.cardLive.getRoot().setNextFocusDownId(downId);
+        b.cardDrive.getRoot().setNextFocusDownId(downId);
+        b.vaultRestore.setNextFocusUpId(R.id.cardVod);
+        if (!visible) return;
+        b.vaultRestore.setOnClickListener(v -> listener.onEmptyAction(Action.RESTORE));
+        b.vaultRestore.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) v.animate().scaleX(1.04f).scaleY(1.04f).setDuration(180).start();
+            else v.animate().scaleX(1f).scaleY(1f).setDuration(160).start();
+        });
     }
 
     @Override

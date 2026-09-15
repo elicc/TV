@@ -18,6 +18,7 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.api.config.WallConfig;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.databinding.DialogConfigBinding;
+import com.fongmi.android.tv.db.ConfigVault;
 import com.fongmi.android.tv.db.SourceBootstrap;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.ConfigListener;
@@ -25,6 +26,7 @@ import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.ui.custom.CustomTextListener;
 import com.fongmi.android.tv.utils.FileChooser;
+import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.QRCode;
 import com.fongmi.android.tv.utils.ResUtil;
@@ -42,6 +44,8 @@ public class ConfigDialog extends BaseAlertDialog {
     private boolean edit;
     private String url;
     private int type;
+    /** Set while a file-access grant is in flight; a refusal only surfaces on resume. */
+    private boolean mVaultPending;
 
     public static ConfigDialog create() {
         return new ConfigDialog();
@@ -101,10 +105,31 @@ public class ConfigDialog extends BaseAlertDialog {
             info = ResUtil.getString(R.string.push_info, mainAddress).replace("\uff0c", "\n");
         }
         binding.info.setText(info);
+        refreshVaultBanner();
+    }
+
+    /**
+     * Without "All files access" neither saving this source nor recovering a previous one can
+     * work, and the viewer is already looking at the screen where that matters. The notice is
+     * driven by the grant itself rather than by any callback's opinion of it, so a refusal —
+     * which the permission library does not report at all — simply leaves it standing, which
+     * is the truth.
+     */
+    private void refreshVaultBanner() {
+        if (binding == null) return;
+        boolean missing = !ConfigVault.isWritable();
+        binding.vault.setVisibility(missing ? View.VISIBLE : View.GONE);
+        binding.text.setNextFocusDownId(missing ? R.id.vaultGrant : R.id.positive);
     }
 
     @Override
     protected void initEvent() {
+        binding.vaultGrant.setOnClickListener(v -> PermissionUtil.requestAllFiles(requireActivity(), granted -> {
+            refreshVaultBanner();
+            // Only reachable when the device has no such settings screen — a plain refusal is
+            // never reported — and the viewer deserves to hear why nothing changed.
+            if (!ConfigVault.isWritable()) Notify.show(R.string.tv_vault_denied);
+        }));
         binding.choose.setOnClickListener(this::onChoose);
         binding.positive.setOnClickListener(this::onPositive);
         binding.negative.setOnClickListener(this::onNegative);
@@ -167,13 +192,27 @@ public class ConfigDialog extends BaseAlertDialog {
     }
 
     private void requestRestoreOrChoose() {
-        PermissionUtil.requestFile(this, allGranted -> {
-            if (!allGranted || !isAdded()) return;
-            SourceBootstrap.find(type, config -> {
-                if (!isAdded()) return;
-                if (config == null) FileChooser.from(launcher).show();
-                else applyConfig(config);
-            });
+        mVaultPending = true;
+        // Settles immediately when access is already held or when this device exposes no such
+        // settings screen; otherwise the launch is deferred and the viewer's return is what
+        // settles it, because a refusal produces no callback at all.
+        PermissionUtil.requestAllFiles(requireActivity(), granted -> resolveRestore());
+    }
+
+    private void resolveRestore() {
+        if (!mVaultPending) return;
+        mVaultPending = false;
+        if (!ConfigVault.isWritable()) {
+            // Previously a silent return, which is exactly how "pressed 继续 and nothing
+            // happened" looked from the couch.
+            Notify.show(R.string.tv_vault_denied);
+            refreshVaultBanner();
+            return;
+        }
+        SourceBootstrap.find(type, config -> {
+            if (!isAdded()) return;
+            if (config == null) FileChooser.from(launcher).show();
+            else applyConfig(config);
         });
     }
 
@@ -232,6 +271,14 @@ public class ConfigDialog extends BaseAlertDialog {
         binding.text.setText(text);
         binding.text.setSelection(binding.text.getText().length());
         submit(event.name(), text);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Coming back from the file-access settings screen.
+        resolveRestore();
+        refreshVaultBanner();
     }
 
     @Override

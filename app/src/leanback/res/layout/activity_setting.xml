@@ -519,7 +519,7 @@
                         android:nextFocusLeft="@id/doh"
                         android:nextFocusUp="@id/settingBack"
                         android:nextFocusRight="@id/incognito"
-                        android:nextFocusDown="@id/backup">
+                        android:nextFocusDown="@id/vault">
                         <com.google.android.material.textview.MaterialTextView
                             style="@style/Tv.Setting.RowTitle"
                             android:layout_width="0dp"
@@ -531,12 +531,32 @@
                             android:layout_width="wrap_content"
                             tools:text="Off" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
+                    <!-- Automatic backup into /storage/emulated/0/TV, the one location that
+                         outlives an uninstall. Its value text is the honest status of that
+                         mechanism, which is the only place a write failure becomes visible. -->
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/vault"
+                        style="@style/Tv.Setting.Row"
+                        android:layout_marginTop="5dp"
+                        android:nextFocusLeft="@id/player"
+                        android:nextFocusUp="@id/incognito"
+                        android:nextFocusRight="@id/vault"
+                        android:nextFocusDown="@id/backup">
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/Tv.Setting.RowTitle"
+                            android:text="@string/tv_vault_row" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/vaultText"
+                            style="@style/Tv.Setting.RowValue"
+                            android:layout_width="wrap_content"
+                            tools:text="已开启 · 09-15 12:30" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
                     <androidx.appcompat.widget.LinearLayoutCompat
                         android:id="@+id/backup"
                         style="@style/Tv.Setting.Row"
                         android:layout_marginTop="5dp"
                         android:nextFocusLeft="@id/player"
-                        android:nextFocusUp="@id/incognito"
+                        android:nextFocusUp="@id/vault"
                         android:nextFocusRight="@id/backup"
                         android:nextFocusDown="@id/restore">
                         <com.google.android.material.textview.MaterialTextView

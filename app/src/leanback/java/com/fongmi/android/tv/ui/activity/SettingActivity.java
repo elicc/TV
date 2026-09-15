@@ -26,6 +26,8 @@ import com.fongmi.android.tv.db.BackupManager;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
+import com.fongmi.android.tv.db.ConfigVault;
+import com.fongmi.android.tv.db.VaultPolicy;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.impl.LiveListener;
 import com.fongmi.android.tv.impl.SiteListener;
@@ -44,6 +46,9 @@ import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.TvTheme;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.net.OkHttp;
@@ -61,6 +66,12 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     private AlertDialog themeDialog;
     private int restoreFocusId = View.NO_ID;
     private static final String STATE_FOCUS = "setting_focus";
+
+    private static final SimpleDateFormat TIME = new SimpleDateFormat("MM-dd HH:mm", Locale.getDefault());
+
+    /** Set while a file-access grant is in flight; a refusal only surfaces on resume. */
+    private boolean mVaultPending;
+    private Runnable mVaultOnGranted;
 
     public static void start(Activity activity) {
         activity.startActivity(new Intent(activity, SettingActivity.class));
@@ -102,6 +113,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         setKeycaps();
         setCacheText();
         setOtherText();
+        setVaultText();
     }
 
     @Override
@@ -117,6 +129,66 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(Setting.getSwitch(Setting.isIncognito()));
         mBinding.sizeText.setText((size = ResUtil.getStringArray(R.array.select_size))[PlayerSetting.getSize()]);
+    }
+
+    /**
+     * The only place a vault write failure becomes visible. A silent backup that never lands is
+     * indistinguishable from a working one until the day it is needed, so the row states the
+     * mechanism's real condition rather than just offering a button.
+     */
+    private void setVaultText() {
+        if (!ConfigVault.isWritable()) {
+            mBinding.vaultText.setText(R.string.tv_vault_status_off);
+        } else if (ConfigVault.state() == VaultPolicy.State.IO_ERROR) {
+            mBinding.vaultText.setText(R.string.tv_vault_status_io);
+        } else if (ConfigVault.lastOk() > 0) {
+            mBinding.vaultText.setText(getString(R.string.tv_vault_status_on, TIME.format(new Date(ConfigVault.lastOk()))));
+        } else {
+            mBinding.vaultText.setText(R.string.tv_vault_status_idle);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Coming back from the file-access settings screen is the only completion signal a
+        // refusal produces, so the pending action is settled here as well as in its callback.
+        finishVaultRequest();
+    }
+
+    private void requestVault(Runnable onGranted) {
+        if (ConfigVault.isWritable()) {
+            onGranted.run();
+            return;
+        }
+        mVaultOnGranted = onGranted;
+        mVaultPending = true;
+        PermissionUtil.requestAllFiles(this, granted -> finishVaultRequest());
+    }
+
+    private void finishVaultRequest() {
+        if (!mVaultPending) return;
+        mVaultPending = false;
+        Runnable action = mVaultOnGranted;
+        mVaultOnGranted = null;
+        setVaultText();
+        if (!ConfigVault.isWritable()) {
+            Notify.show(R.string.tv_vault_denied);
+            return;
+        }
+        // onResume settles this too, and the base class can recreate the activity from there,
+        // so the continuation must not open a dialog on a window that is already going away.
+        if (action != null && !isFinishing() && !isDestroyed()) action.run();
+    }
+
+    private void onVault(View view) {
+        requestVault(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            ConfigVault.save();
+            ConfigVault.backup();
+            setVaultText();
+            Notify.show(R.string.tv_vault_enabled);
+        });
     }
 
     private void setCacheText() {
@@ -167,7 +239,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh);
         bindSectionFocus(mBinding.navAppearance, mBinding.skin, mBinding.atmosphere, mBinding.wall, mBinding.wallDefault, mBinding.wallRefresh, mBinding.size);
         bindSectionFocus(mBinding.navPlayback, mBinding.player, mBinding.danmaku);
-        bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.backup, mBinding.restore, mBinding.cache);
+        bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.vault, mBinding.backup, mBinding.restore, mBinding.cache);
         bindSectionFocus(mBinding.navAbout, mBinding.version);
         mBinding.skin.setOnClickListener(this::setSkin);
         mBinding.atmosphere.setOnClickListener(this::setAtmosphere);
@@ -177,6 +249,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.wall.setOnClickListener(this::onWall);
         mBinding.size.setOnClickListener(this::setSize);
         mBinding.cache.setOnClickListener(this::onCache);
+        mBinding.vault.setOnClickListener(this::onVault);
         mBinding.backup.setOnClickListener(this::onBackup);
         mBinding.player.setOnClickListener(this::onPlayer);
         mBinding.danmaku.setOnClickListener(this::onDanmaku);
@@ -430,25 +503,28 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     }
 
     private void onBackup(View view) {
-        PermissionUtil.requestFile(this, allGranted -> BackupManager.backup(new Callback() {
+        requestVault(() -> BackupManager.backup(new Callback() {
             @Override
             public void success() {
                 Notify.show(R.string.backup_success);
+                setVaultText();
             }
 
             @Override
             public void error() {
                 Notify.show(R.string.backup_fail);
+                setVaultText();
             }
         }));
     }
 
     private void onRestore(View view) {
-        PermissionUtil.requestFile(this, allGranted -> RestoreDialog.create().callback(new Callback() {
+        requestVault(() -> RestoreDialog.create().callback(new Callback() {
             @Override
             public void success() {
                 Notify.show(R.string.restore_success);
                 setOtherText();
+                setVaultText();
                 initConfig();
             }
 
