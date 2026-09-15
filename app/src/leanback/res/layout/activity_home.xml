@@ -90,6 +90,8 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:background="@drawable/tv_nav_container"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:paddingStart="3dp"
                 android:paddingEnd="3dp"
                 android:paddingTop="3dp"
