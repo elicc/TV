@@ -1,28 +1,40 @@
 package com.fongmi.android.tv.ui.dialog;
 
+import android.os.Bundle;
+
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewbinding.ViewBinding;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.databinding.DialogVaultBinding;
 import com.fongmi.android.tv.db.ConfigVault;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
- * The single unprompted offer to turn config backup on.
+ * Explains either side of the config-vault grant before opening system settings.
  *
- * <p>Shown once per install, and only after a source has actually loaded — asking for storage on
- * a screen with nothing on it asks the viewer to pay before they have seen the goods. Declining
- * is remembered, so this never returns on its own; the settings row stays as the way back.
+ * <p>A source-less fresh install gets the recovery wording; an install that has just loaded a
+ * source gets the backup wording. Their dismissals are stored separately so declining one offer
+ * never suppresses the other.
  */
 public class VaultDialog extends BaseAlertDialog {
 
     /** Stable tag so the home screen can tell "already showing" from "show another". */
     public static final String TAG = "vault-dialog";
+    private static final String ARG_RESTORE = "restore";
 
     private DialogVaultBinding binding;
 
     public static VaultDialog create() {
         return new VaultDialog();
+    }
+
+    /** Render this instance as the fresh-install recovery prompt. */
+    public VaultDialog restore() {
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_RESTORE, true);
+        setArguments(args);
+        return this;
     }
 
     public void show(FragmentActivity activity) {
@@ -40,15 +52,29 @@ public class VaultDialog extends BaseAlertDialog {
     }
 
     @Override
+    protected void initView() {
+        if (!isRestore()) return;
+        binding.title.setText(R.string.tv_vault_restore_title);
+        binding.body.setText(R.string.tv_vault_restore_body);
+        binding.positive.setText(R.string.tv_vault_grant);
+    }
+
+    @Override
     protected void initEvent() {
         binding.positive.setOnClickListener(v -> {
             dismiss();
-            ((Listener) requireActivity()).onVaultEnable();
+            if (isRestore()) ((Listener) requireActivity()).onVaultRestore();
+            else ((Listener) requireActivity()).onVaultEnable();
         });
         binding.negative.setOnClickListener(v -> {
-            ConfigVault.dismissPrompt();
+            if (isRestore()) ConfigVault.dismissRestorePrompt();
+            else ConfigVault.dismissPrompt();
             dismiss();
         });
+    }
+
+    private boolean isRestore() {
+        return getArguments() != null && getArguments().getBoolean(ARG_RESTORE, false);
     }
 
     @Override
@@ -62,5 +88,7 @@ public class VaultDialog extends BaseAlertDialog {
     public interface Listener {
 
         void onVaultEnable();
+
+        void onVaultRestore();
     }
 }

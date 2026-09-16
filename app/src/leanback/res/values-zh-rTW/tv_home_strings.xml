@@ -32,6 +32,7 @@
     <string name="tv_key_ok">OK</string>
     <string name="tv_key_menu">選單</string>
     <string name="tv_key_back">返回</string>
+    <string name="tv_exit_press_back_again">再按一次返回鍵退出應用程式</string>
     <string name="tv_hint_dpad">移動焦點</string>
     <string name="tv_hint_ok">開啟 / 播放</string>
     <string name="tv_hint_menu">換源 / 更多</string>
@@ -66,6 +67,8 @@
     <string name="tv_vault_grant">去授权</string>
     <string name="tv_vault_banner">未开启配置备份 · 重装后无法恢复</string>
     <string name="tv_vault_restore_hint">重装或换机？恢复上次配置</string>
+    <string name="tv_vault_restore_title">恢復上次配置</string>
+    <string name="tv_vault_restore_body">目前安裝需要檔案存取權限。授權後將自動檢查並恢復資料來源、播放記錄和相關設定。</string>
     <string name="tv_vault_restored">已恢复上次配置</string>
     <string name="tv_vault_restore_missing">未找到可恢复的配置</string>
     <string name="tv_vault_enabled">配置备份已开启</string>

@@ -78,7 +78,7 @@
                 android:layout_height="1dp"
                 android:layout_weight="0" />
 
-            <!-- Single pill wrapping all five top-nav items (Stitch design).
+            <!-- Single pill wrapping the visible destination items (Stitch design).
                  Container owns the glass background + 1dp inner stroke;
                  per-item selector paints only the active focus ring. -->
             <LinearLayout
@@ -99,6 +99,7 @@
 
                 <TextView
                     android:id="@+id/navHome" style="@style/Tv.HomeNav"
+                    android:visibility="gone"
                     android:letterSpacing="0.02"
                     android:textStyle="bold"
                     app:drawableStartCompat="@drawable/ic_nav_home"
@@ -106,6 +107,8 @@
                 <TextView
                     android:id="@+id/navVod" style="@style/Tv.HomeNav"
                     android:layout_marginStart="2dp"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/navSearch"
                     app:drawableStartCompat="@drawable/ic_nav_vod"
                     android:text="@string/home_vod" />
                 <TextView

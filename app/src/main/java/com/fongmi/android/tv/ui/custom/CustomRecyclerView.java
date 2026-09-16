@@ -76,8 +76,20 @@ public class CustomRecyclerView extends RecyclerView {
         return finalSize;
     }
 
+    private int getConstrainedMeasureSpec(int measureSpec, int maxSize) {
+        if (maxSize <= 0) return measureSpec;
+        int mode = MeasureSpec.getMode(measureSpec);
+        int size = MeasureSpec.getSize(measureSpec);
+        if (mode != MeasureSpec.UNSPECIFIED && size <= maxSize) return measureSpec;
+        return MeasureSpec.makeMeasureSpec(maxSize, MeasureSpec.AT_MOST);
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // Cap the specs before RecyclerView measures its children. Clamping only the final
+        // dimensions makes a wrap-content RecyclerView inflate every adapter item first.
+        widthMeasureSpec = getConstrainedMeasureSpec(widthMeasureSpec, maxWidth);
+        heightMeasureSpec = getConstrainedMeasureSpec(heightMeasureSpec, maxHeight);
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int finalWidth = getConstrainedSize(getMeasuredWidth(), minWidth, maxWidth);
         int finalHeight = getConstrainedSize(getMeasuredHeight(), minHeight, maxHeight);

@@ -68,10 +68,14 @@ public final class HeroPresenter extends Presenter {
         b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(item.history() && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
         int emptyTitle = item.loading() ? R.string.tv_loading_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
         b.name.setText(vod != null ? vod.getName() : b.getRoot().getContext().getString(emptyTitle));
-        String badge = bindBadge(b, vod);
+        String badge = getBadge(vod);
         bindWatermark(b, vod == null ? "" : vod.getName());
         List<String> meta = new ArrayList<>();
         if (vod != null) {
+            // Remarks such as "更新至 HD" are passive content metadata, not
+            // actions. Keep them in the same sentence as the remaining facts
+            // so their visual treatment cannot be mistaken for a D-pad button.
+            if (!TextUtils.isEmpty(badge)) meta.add(badge.trim());
             // Surface the same high-value attributes users see on the detail
             // page, while keeping the hero compact and naturally ellipsized.
             addMeta(meta, R.string.detail_site, vod.getSiteName(), badge);
@@ -102,7 +106,7 @@ public final class HeroPresenter extends Presenter {
             if (configureSecondary) listener.onHeroConfigure();
             else listener.onHeroBrowse();
         });
-        b.primary.setNextFocusUpId(R.id.navHome);
+        b.primary.setNextFocusUpId(R.id.navVod);
         b.secondary.setNextFocusUpId(R.id.navVod);
         // The blurred poster backdrop now lives at HomeActivity-level (see
         // activity_home.xml). The owning activity syncs it from applyHeroUpdate()
@@ -116,17 +120,14 @@ public final class HeroPresenter extends Presenter {
         // previously focused poster stays visible until the next selection.
     }
 
-    /** Prefer the source remark, then the type name, as the shimmering badge text. */
-    private String bindBadge(AdapterHeroBinding b, Vod vod) {
+    /** Prefer the source remark, then the type name, as the lead metadata value. */
+    private String getBadge(Vod vod) {
         String text = "";
         if (vod != null) {
             if (!TextUtils.isEmpty(vod.getRemarks())) text = vod.getRemarks();
             else if (!TextUtils.isEmpty(vod.getTypeName())) text = vod.getTypeName();
             else text = vod.getYear();
         }
-        b.badge.setText(text);
-        b.badge.setVisibility(TextUtils.isEmpty(text) ? View.GONE : View.VISIBLE);
-        b.shimmer.setVisibility(b.badge.getVisibility());
         return text;
     }
 

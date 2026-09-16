@@ -52,6 +52,15 @@ public final class VaultPolicy {
     }
 
     /**
+     * A restore grant is useful only while the new install has no source of its own. Its
+     * dismissal is deliberately separate from the later backup offer: declining recovery must
+     * not prevent someone who configures a new source from being offered uninstall-safe backup.
+     */
+    public static boolean shouldPromptRestore(boolean writable, boolean dismissed, boolean hasSource) {
+        return !hasSource && shouldPrompt(writable, dismissed);
+    }
+
+    /**
      * Restore over the current data only when doing so cannot destroy anything: shared storage
      * is reachable, this install has not already tried, and no source is configured. An empty
      * source list is the proof that history/keeps have nothing to point at, since every row

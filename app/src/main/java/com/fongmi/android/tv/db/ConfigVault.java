@@ -42,6 +42,7 @@ public final class ConfigVault {
     private static final String KEY_LAST_OK = "last_ok";
     private static final String KEY_ATTEMPTED = "attempted";
     private static final String KEY_DISMISSED = "dismissed";
+    private static final String KEY_RESTORE_DISMISSED = "restore_dismissed";
     private static final String KEY_REPORTED = "reported";
 
     private ConfigVault() {
@@ -79,6 +80,17 @@ public final class ConfigVault {
     /** The viewer declined the offer; never raise it unprompted again on this install. */
     public static void dismissPrompt() {
         prefs().edit().putBoolean(KEY_DISMISSED, true).apply();
+    }
+
+    /** Whether a fresh install should explain the grant needed to inspect the old vault. */
+    public static boolean shouldPromptRestore(boolean hasSource) {
+        return VaultPolicy.shouldPromptRestore(
+                isWritable(), prefs().getBoolean(KEY_RESTORE_DISMISSED, false), hasSource);
+    }
+
+    /** The viewer declined restore for this install; keep the normal backup offer independent. */
+    public static void dismissRestorePrompt() {
+        prefs().edit().putBoolean(KEY_RESTORE_DISMISSED, true).apply();
     }
 
     /**

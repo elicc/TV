@@ -60,7 +60,6 @@ import com.fongmi.android.tv.model.VideoViewModel;
 import com.fongmi.android.tv.player.extractor.Source;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.DLNARendererService;
-import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.adapter.BaseDiffCallback;
 import com.fongmi.android.tv.ui.base.BaseActivity;
@@ -121,6 +120,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private boolean mOwnConfigEvent;
     private String mConfigError = "";
     private boolean mActionHandled;
+    /** Reassert the requested default after async content binding and the splash have settled. */
+    private boolean mInitialFocusPending;
     /** True once the cold-start brand overlay has completed (or been skipped). */
     private boolean mSplashDone;
     /** A cold start wants the brand moment; the overlay is raised from initView. */
@@ -142,6 +143,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private Runnable mVaultOnGranted;
     /** Pending coalesced updateHero runnable; retained so onDestroy can cancel it. */
     private final Runnable mHeroUpdate = this::applyHeroUpdate;
+    /** Coalesces startup callbacks so the final content bind cannot steal the default focus. */
+    private final Runnable mInitialFocus = () -> {
+        if (!mInitialFocusPending || isFinishing() || isDestroyed()) return;
+        mInitialFocusPending = false;
+        if (!mBinding.navVod.requestFocus()) mBinding.navVod.requestFocusFromTouch();
+    };
     private final ActivityResultLauncher<Intent> mFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> FileChooser.getUri(result, uri -> VideoActivity.file(this, uri)));
 
     @Override
@@ -181,6 +188,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             scheduleSplashReveal();
         } else mSplashDone = true;
         mActionHandled = savedInstanceState != null && savedInstanceState.getBoolean("home.actionHandled");
+        mInitialFocusPending = savedInstanceState == null;
         mResult = Result.empty();
         mClock = Clock.create(mBinding.clock).format("HH:mm");
         // The focused-poster backdrop replaces the hero-scoped atmosphere; hide it
@@ -200,7 +208,6 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         setLogo();
         sizeNavigationIcons();
         adaptToolbar();
-        if (savedInstanceState == null) mBinding.navHome.requestFocus();
     }
 
     private void setKeycaps() {
@@ -241,14 +248,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     /**
-     * code.html gives every top-nav SVG the same w-5/h-5 box. Android compound
+     * code.html gives every visible top-nav SVG the same w-5/h-5 box. Android compound
      * drawables otherwise use the vector's 20dp source size, which renders twice
      * as large as the 1920px reference on the 2x-density TV canvas. Keep the
      * generated Lucide resources untouched and size only these five instances.
      */
     private void sizeNavigationIcons() {
         int size = ResUtil.dp2px(12);
-        sizeNavigationIcons(size, mBinding.navHome, mBinding.navVod, mBinding.navLive, mBinding.navKeep, mBinding.navSearch, mBinding.more);
+        sizeNavigationIcons(size, mBinding.navVod, mBinding.navLive, mBinding.navKeep, mBinding.navSearch, mBinding.more);
     }
 
     private void sizeNavigationIcons(int size, TextView... items) {
@@ -264,11 +271,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void initEvent() {
         mBinding.sourceRow.setOnClickListener(v -> showDialog());
+        // Home remains the current route even though its redundant tab is hidden. Vod is only
+        // the initial focus target, so it must not retain a false selected-route state after
+        // focus moves into the page content.
         mBinding.navHome.setSelected(true);
-        mBinding.navHome.setOnClickListener(v -> {
-            mBinding.recycler.setSelectedPosition(0);
-            mBinding.recycler.requestFocus();
-        });
         mBinding.navVod.setOnClickListener(v -> onItemClick(Func.create(R.string.home_vod)));
         mBinding.navLive.setOnClickListener(v -> {
             if (LiveConfig.hasUrl()) onItemClick(Func.create(R.string.home_live));
@@ -408,6 +414,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
                 // Either there was nothing to restore or the gate refused. Re-render so the
                 // recovery link reflects the vault's real state.
                 updateHero();
+                maybePromptRestorePermission();
                 return;
             }
             Notify.show(R.string.tv_vault_restored);
@@ -486,6 +493,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         VaultDialog.create().show(this);
     }
 
+    /** Explain why an empty fresh install needs access before asking the system for it. */
+    private void maybePromptRestorePermission() {
+        if (!ConfigVault.shouldPromptRestore(hasConfiguredSource())) return;
+        if (PermissionUtil.allFilesAccess(this) != PermissionUtil.AllFilesAccess.REQUESTABLE) return;
+        if (getSupportFragmentManager().findFragmentByTag(VaultDialog.TAG) != null) return;
+        VaultDialog.create().restore().show(this);
+    }
+
     @Override
     public void onVaultEnable() {
         requestVault(() -> {
@@ -493,6 +508,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             ConfigVault.save();
             Notify.show(R.string.tv_vault_enabled);
         });
+    }
+
+    @Override
+    public void onVaultRestore() {
+        requestVault(this::restoreFromVault);
     }
 
     private Callback getCallback() {
@@ -505,6 +525,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
                 mConfigError = "";
                 updateHero();
                 mBinding.progressLayout.showContent();
+                scheduleInitialFocus();
             }
 
             @Override
@@ -628,7 +649,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             mActionHandled = true;
             checkAction(getIntent());
         }
-        setFocus();
+        if (mInitialFocusPending) scheduleInitialFocus();
+        else {
+            setFocus();
+        }
         TvStagger.firstScreen(mBinding.recycler);
     }
 
@@ -643,16 +667,21 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void setFocus() {
+        if (getCurrentFocus() != null) return;
         if (showEmptySource()) {
             mBinding.recycler.setSelectedPosition(0);
             mBinding.recycler.post(() -> {
                 View card = mBinding.recycler.findViewById(R.id.cardVod);
                 if (card != null) card.requestFocus();
-                else if (getCurrentFocus() == null) mBinding.navHome.requestFocus();
+                else mBinding.navVod.requestFocus();
             });
-        } else if (getCurrentFocus() == null) {
-            mBinding.navHome.requestFocus();
+        } else {
+            mBinding.navVod.requestFocus();
         }
+    }
+
+    private void scheduleInitialFocus() {
+        App.post(mInitialFocus, 250);
     }
 
     private void getVideo() {
@@ -1094,7 +1123,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         notifyKeycaps(event);
-        if (KeyUtil.isActionDown(event) && KeyUtil.isMenuKey(event)) {
+        // KeyUtil reports Menu on ACTION_UP so one physical press opens exactly one dialog.
+        // Combining it with ACTION_DOWN would be impossible and made the shortcut inert.
+        if (KeyUtil.isMenuKey(event)) {
             showDialog();
             return true;
         }
@@ -1140,24 +1171,20 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             // Rebinding the Hero while another page is open can leave focus on
             // the invisible grid container. Preserve every real control focus.
             if (hasWindowFocus() && (getCurrentFocus() == null || getCurrentFocus() == mBinding.recycler)) {
-                mBinding.navHome.requestFocus();
+                mBinding.navVod.requestFocus();
             }
         });
     }
 
     @Override
     protected void onBackInvoked() {
-        if (mBinding.progressLayout.isProgress()) {
-            showContent();
-        } else if (mPresenter.isDelete()) {
+        if (mPresenter.isDelete()) {
             setHistoryDelete(false);
-        } else if (mBinding.recycler.getSelectedPosition() != 0) {
-            mBinding.recycler.scrollToPosition(0);
-        } else if (!mBinding.toolbar.hasFocus()) {
-            mBinding.navHome.requestFocus();
         } else {
-            if (PlaybackService.isRunning()) Util.moveToBackground(this);
-            else super.onBackInvoked();
+            // Every normal Home state is already the first navigation level. Do not require
+            // extra Back presses merely to move focus or scroll the content before the shared
+            // task-root exit confirmation can run.
+            super.onBackInvoked();
         }
     }
 
@@ -1172,6 +1199,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mPulse != null) mPulse.cancel();
         App.removeCallbacks(mPrefetch);
         App.removeCallbacks(mHeroUpdate);
+        App.removeCallbacks(mInitialFocus);
         if (!isChangingConfigurations()) {
             DLNARendererService.stop(this);
             LiveConfig.get().clear();

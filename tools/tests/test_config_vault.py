@@ -39,6 +39,12 @@ public class VaultPolicyHarness {
         report("prompt.silent_when_granted", !VaultPolicy.shouldPrompt(true, false));
         report("prompt.silent_when_declined", !VaultPolicy.shouldPrompt(false, true));
 
+        // --- shouldPromptRestore: fresh install recovery has its own one-time offer ---
+        report("restore_prompt.fresh_empty_install", VaultPolicy.shouldPromptRestore(false, false, false));
+        report("restore_prompt.silent_when_granted", !VaultPolicy.shouldPromptRestore(true, false, false));
+        report("restore_prompt.silent_when_declined", !VaultPolicy.shouldPromptRestore(false, true, false));
+        report("restore_prompt.never_over_a_source", !VaultPolicy.shouldPromptRestore(false, false, true));
+
         // --- canAutoRestore: never overwrite without proof it is safe ---
         report("restore.fresh_install", VaultPolicy.canAutoRestore(true, false, false));
         report("restore.needs_access", !VaultPolicy.canAutoRestore(false, false, false));
@@ -117,6 +123,12 @@ class VaultPolicyTests(unittest.TestCase):
         self.assertRule("restore.needs_access")
         self.assertRule("restore.once_only")
         self.assertRule("restore.never_over_a_source")
+
+    def test_restore_offer_only_appears_for_an_empty_ungranted_fresh_install(self):
+        self.assertRule("restore_prompt.fresh_empty_install")
+        self.assertRule("restore_prompt.silent_when_granted")
+        self.assertRule("restore_prompt.silent_when_declined")
+        self.assertRule("restore_prompt.never_over_a_source")
 
     def test_only_a_real_fault_is_ever_reported(self):
         # A missing grant is the ordinary state of a fresh install and already has its own

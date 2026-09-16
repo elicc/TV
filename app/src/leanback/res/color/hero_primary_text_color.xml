@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused accent fill needs the dark on-accent foreground; the idle raised surface uses
+         normal high-contrast text so it remains readable without looking selected. -->
+    <item android:state_focused="true" android:color="?attr/tvColorOnAccent" />
+    <item android:color="?attr/tvColorTextPrimary" />
+</selector>

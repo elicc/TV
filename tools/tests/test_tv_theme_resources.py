@@ -66,9 +66,13 @@ class TvThemeTests(unittest.TestCase):
         metadata = next(n for n in root.iter() if n.get(android + "id") == "@+id/metadata")
         secondary = next(n for n in root.iter() if n.get(android + "id") == "@+id/secondary")
         self.assertEqual("@color/hero_secondary_text_color", secondary.get(android + "textColor"))
-        self.assertEqual("@+id/badgeFrame", metadata.get(android + "layout_toEndOf"))
+        self.assertEqual("?attr/tvColorTextSecondary", metadata.get(android + "textColor"))
+        self.assertIsNone(metadata.get(android + "background"))
+        self.assertFalse(any(n.get(android + "id") == "@+id/badge" for n in root.iter()))
+        self.assertFalse(any(n.get(android + "id") == "@+id/shimmer" for n in root.iter()))
 
         hero = (JAVA / "ui/presenter/HeroPresenter.java").read_text()
+        self.assertIn("meta.add(badge.trim())", hero)
         self.assertIn("addMeta(meta, R.string.detail_site", hero)
         self.assertIn("addMeta(meta, R.string.detail_actor", hero)
         self.assertIn("vod != null && largeText", hero)
@@ -76,6 +80,24 @@ class TvThemeTests(unittest.TestCase):
 
         colors = (RES / "color/hero_secondary_text_color.xml").read_text()
         self.assertIn('android:state_focused="true" android:color="?attr/tvColorTextPrimary"', colors)
+
+        primary = next(n for n in root.iter() if n.get(android + "id") == "@+id/primary")
+        self.assertEqual("@color/hero_primary_text_color", primary.get(android + "textColor"))
+        primary_colors = (RES / "color/hero_primary_text_color.xml").read_text()
+        self.assertIn('android:state_focused="true" android:color="?attr/tvColorOnAccent"', primary_colors)
+        self.assertIn('<item android:color="?attr/tvColorTextPrimary"', primary_colors)
+        primary_background = (RES / "drawable/tv_hero_primary.xml").read_text()
+        self.assertIn('?attr/tvColorSurfaceRaised', primary_background)
+        self.assertEqual(1, primary_background.count('<solid android:color="?attr/tvColorAccent"'))
+
+    def test_movie_rows_size_cards_inside_the_shared_safe_gutters(self):
+        product = (ROOT / "app/src/leanback/java/com/fongmi/android/tv/Product.java").read_text()
+        history = (JAVA / "ui/presenter/HistoryPresenter.java").read_text()
+        safe_gutters = "2 * ResUtil.getDimensionPixelSize(R.dimen.tv_safe_horizontal)"
+        self.assertIn(safe_gutters, product)
+        self.assertIn(safe_gutters, history)
+        self.assertNotIn("ResUtil.dp2px(48)", product)
+        self.assertNotIn("ResUtil.dp2px(48)", history)
 
     def test_keep_empty_transition_has_focus_and_route(self):
         code = (JAVA / "ui/activity/KeepActivity.java").read_text()
@@ -243,7 +265,7 @@ class TvThemeTests(unittest.TestCase):
         primary = next(n for n in root.iter() if n.get(android + "id") == "@+id/primary")
         secondary = next(n for n in root.iter() if n.get(android + "id") == "@+id/secondary")
         self.assertEqual("@drawable/ic_hero_details", primary.get(android + "drawableStart"))
-        self.assertEqual("?attr/tvColorOnAccent", primary.get(android + "drawableTint"))
+        self.assertEqual("@color/hero_primary_text_color", primary.get(android + "drawableTint"))
         self.assertEqual("@drawable/ic_hero_library", secondary.get(android + "drawableStart"))
         self.assertEqual("@color/hero_secondary_text_color", secondary.get(android + "drawableTint"))
 

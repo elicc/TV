@@ -18,6 +18,7 @@ import android.view.animation.AnimationUtils;
 import androidx.annotation.AnimRes;
 import androidx.annotation.ArrayRes;
 import androidx.annotation.ColorRes;
+import androidx.annotation.DimenRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
@@ -92,6 +93,10 @@ public class ResUtil {
 
     public static int dp2px(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getDisplayMetrics());
+    }
+
+    public static int getDimensionPixelSize(@DimenRes int resId) {
+        return App.get().getResources().getDimensionPixelSize(resId);
     }
 
     public static String getString(@StringRes int resId) {

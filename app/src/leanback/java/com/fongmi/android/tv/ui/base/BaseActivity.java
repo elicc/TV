@@ -5,6 +5,7 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +17,11 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.ui.custom.CustomWallView;
 import com.fongmi.android.tv.ui.activity.PlaybackActivity;
 import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
+import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.Util;
 
@@ -30,8 +33,11 @@ import me.jessyan.autosize.AutoSizeCompat;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
+    private static final long EXIT_CONFIRMATION_WINDOW_MS = 2000L;
+
     private int appliedSkin;
     private boolean appliedAtmosphere;
+    private long lastExitBackPressedAt;
 
     protected abstract ViewBinding getBinding();
 
@@ -161,7 +167,21 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     protected void onBackInvoked() {
-        finish();
+        // The launcher activity is the task root. Require a deliberate second press there so a
+        // stray remote Back key cannot immediately close the TV app. Child activities retain the
+        // normal single-press navigation behavior.
+        if (!isTaskRoot()) {
+            finish();
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (lastExitBackPressedAt != 0L && now - lastExitBackPressedAt <= EXIT_CONFIRMATION_WINDOW_MS) {
+            lastExitBackPressedAt = 0L;
+            finish();
+        } else {
+            lastExitBackPressedAt = now;
+            Notify.show(R.string.tv_exit_press_back_again);
+        }
     }
 
     @Override

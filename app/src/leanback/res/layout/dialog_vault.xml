@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The one unprompted ask for file access. It fires once, right after a source has loaded,
-     because that is the first moment the backup is worth anything to the viewer. Both buttons
-     are focusable text views rather than Material buttons so the D-pad reaches them. -->
+<!-- Shared explanation for fresh-install restore and post-configuration backup. Both buttons are
+     focusable text views rather than Material buttons so the D-pad reaches them. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
