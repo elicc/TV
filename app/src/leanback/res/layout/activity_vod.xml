@@ -37,24 +37,9 @@
             android:paddingStart="@dimen/tv_safe_horizontal"
             android:paddingEnd="@dimen/tv_safe_horizontal">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/back"
-                android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:background="@drawable/selector_button"
-                android:fontFamily="monospace"
-                android:minWidth="0dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:text="←  返回  Back"
-                android:textAllCaps="false"
-                android:textColor="?attr/tvColorTextSecondary"
-                android:textSize="12sp" />
-
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
                 android:text="首页  /  点播大厅"
                 android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="18sp"

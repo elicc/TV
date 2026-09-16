@@ -92,7 +92,6 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
         // Follow the global film-atmosphere preference; the activity recreates on
         // change, so a one-shot visibility gate is sufficient.
         mBinding.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
-        mBinding.back.setOnClickListener(v -> finish());
         String source = Optional.ofNullable(VodConfig.get().getHome())
                 .map(site -> site.getName())
                 .filter(name -> !name.isEmpty())

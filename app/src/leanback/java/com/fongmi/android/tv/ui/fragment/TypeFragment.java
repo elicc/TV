@@ -8,8 +8,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.leanback.widget.ArrayObjectAdapter;
-import androidx.leanback.widget.FocusHighlight;
-import androidx.leanback.widget.HorizontalGridView;
 import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
@@ -37,8 +35,9 @@ import com.fongmi.android.tv.ui.base.BaseFragment;
 import com.fongmi.android.tv.ui.custom.CustomRowPresenter;
 import com.fongmi.android.tv.ui.custom.CustomScroller;
 import com.fongmi.android.tv.ui.custom.CustomSelector;
+import com.fongmi.android.tv.ui.presenter.FilterRowPresenter;
+import com.fongmi.android.tv.ui.presenter.FilterRowPresenter.FilterRow;
 import com.fongmi.android.tv.ui.presenter.FilterPresenter;
-import com.fongmi.android.tv.ui.presenter.HeaderPresenter;
 import com.fongmi.android.tv.ui.presenter.VodPresenter;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
@@ -182,11 +181,9 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
     @SuppressLint("RestrictedApi")
     private void setRecyclerView() {
         CustomSelector selector = new CustomSelector();
-        // Condition groups are labelled with the plain String items showFilter() prepends.
-        selector.addPresenter(String.class, new HeaderPresenter());
         selector.addPresenter(Vod.class, new VodPresenter(this, Style.list()));
+        selector.addPresenter(FilterRow.class, new FilterRowPresenter());
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16), VodPresenter.class);
-        selector.addPresenter(ListRow.class, new CustomRowPresenter(8, FocusHighlight.ZOOM_FACTOR_NONE, HorizontalGridView.FOCUS_SCROLL_ALIGNED), FilterPresenter.class);
         mBinding.recycler.setAdapter(new ItemBridgeAdapter(mAdapter = new ArrayObjectAdapter(selector)));
         mBinding.recycler.setHeader(getActivity(), R.id.categoryBar, R.id.recycler);
         mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(16));
@@ -207,7 +204,10 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
     }
 
     private void setClick(ArrayObjectAdapter adapter, String key, Value item) {
-        for (int i = 0; i < adapter.size(); i++) ((Value) adapter.get(i)).setSelected(item);
+        for (int i = 0; i < adapter.size(); i++) {
+            Object candidate = adapter.get(i);
+            if (candidate instanceof Value) ((Value) candidate).setSelected(item);
+        }
         adapter.notifyArrayItemRangeChanged(0, adapter.size());
         if (item.isSelected()) mExtends.put(key, item.getV());
         else mExtends.remove(key);
@@ -286,22 +286,19 @@ public class TypeFragment extends BaseFragment implements CustomScroller.Callbac
         mAdapter.addAll(mAdapter.size(), rows);
     }
 
-    private ListRow getRow(Filter filter) {
+    private FilterRow getRow(Filter filter) {
         FilterPresenter presenter = new FilterPresenter(filter.getKey());
         ArrayObjectAdapter adapter = new ArrayObjectAdapter(presenter);
         presenter.setOnClickListener((key, item) -> setClick(adapter, key, item));
-        adapter.setItems(filter.getValue(), null);
-        return new ListRow(adapter);
+        adapter.addAll(0, filter.getValue());
+        String title = filter.getName().isEmpty() ? filter.getKey() : filter.getName();
+        return new FilterRow(title, adapter);
     }
 
     private void showFilter() {
         if (!mFilterItems.isEmpty()) return;
         List<Object> items = new ArrayList<>();
         for (Filter filter : mFilters) {
-            // Name each group. Without it the panel is a stack of anonymous chip rows and the
-            // viewer cannot tell which one is the genre and which the region; the source supplies
-            // the wording, falling back to its own key when it does not.
-            items.add(filter.getName().isEmpty() ? filter.getKey() : filter.getName());
             items.add(getRow(filter));
         }
         mFilterItems.addAll(items);
