@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Generate the small Android brand mark from the committed raster master.
+"""Convert the committed brand SVG to an Android VectorDrawable.
 
-The master artwork is intentionally preserved for large surfaces.  Home and
-toast icons are different: they render at roughly 48-52 physical pixels on the
-2x TV canvas, so feeding Android a 2048 px ``drawable-nodpi`` bitmap makes the
-GPU minify the artwork about forty times at draw time.  This generator traces
-only the alpha silhouette and reapplies a compact gradient sampled from the
-master.  The result keeps the recognizable ribbon shape and colour movement
-while giving Android a native vector edge at its final size.
+The supplied SVG is the source of truth for the small in-app brand mark. It
+already contains the intended 25 paths and nine gradients, so this generator
+maps those primitives directly instead of retracing a raster image or
+approximating its colours. Keeping the source viewBox and intrinsic aspect
+ratio also prevents square ImageViews from stretching the taller artwork.
 
-Requirements for regeneration (not for an Android build): Pillow, potrace and
-svgpathtools. The generated XML records the source SHA-256 so ordinary unit
-tests can detect a changed master without requiring those tools in CI.
+Only the SVG subset used by ``docs/logo/app-logo.svg`` is accepted on purpose:
+linear gradients, solid RGB fills, paths, and zero translation transforms.
+Unexpected authoring changes fail loudly rather than silently degrading the
+logo during conversion.
 """
 
 from __future__ import annotations
@@ -20,169 +19,127 @@ import argparse
 import hashlib
 import pathlib
 import re
-import subprocess
-import tempfile
+import xml.etree.ElementTree as ET
 
-from PIL import Image
-from svgpathtools import CubicBezier, Line, Path, QuadraticBezier, parse_path
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-MASTER = ROOT / "docs/logo/02-图层 1.png"
+MASTER = ROOT / "docs/logo/app-logo.svg"
 TARGET = ROOT / "app/src/main/res/drawable/ic_logo.xml"
 
-VIEWPORT = 24.0
-PADDING = 1.0
-ALPHA_THRESHOLD = 128
-
-# Alpha-weighted vertical samples from the master.  At 24-26 dp the original
-# micro-shading is below pixel scale, but these stops retain its lavender top,
-# darker fold and steel-blue lower highlight.
-GRADIENT_STOPS = (
-    (0.000, "#BFB7E7"),
-    (0.180, "#A8A7DB"),
-    (0.360, "#8588C1"),
-    (0.500, "#767DB9"),
-    (0.660, "#8797D1"),
-    (0.820, "#A0B2E7"),
-    (1.000, "#9AAEE2"),
-)
+SVG = "{http://www.w3.org/2000/svg}"
+INTRINSIC_HEIGHT_DP = 24.0
 
 
 def source_hash() -> str:
     return hashlib.sha256(MASTER.read_bytes()).hexdigest()
 
 
-def write_mask(path: pathlib.Path) -> None:
-    alpha = Image.open(MASTER).convert("RGBA").getchannel("A")
-    # Potrace traces black pixels by default: foreground must be 0, not 255.
-    alpha.point(lambda value: 0 if value >= ALPHA_THRESHOLD else 255).save(path)
-
-
-def trace() -> tuple[Path, float, float, float, float]:
-    with tempfile.TemporaryDirectory(prefix="fongmi-logo-") as directory:
-        directory = pathlib.Path(directory)
-        mask = directory / "mask.pgm"
-        svg = directory / "logo.svg"
-        write_mask(mask)
-        subprocess.run(
-            ["potrace", "--svg", "--flat", "--tight", "--output", str(svg), str(mask)],
-            check=True,
-            capture_output=True,
-        )
-        text = svg.read_text()
-
-    transform = re.search(
-        r'transform="translate\(([-\d.]+),\s*([-\d.]+)\)\s*'
-        r'scale\(([-\d.]+),\s*([-\d.]+)\)"',
-        text,
-    )
-    path_data = re.search(r'<path d="([^"]+)"', text, re.DOTALL)
-    if transform is None or path_data is None:
-        raise RuntimeError("potrace returned an unsupported SVG structure")
-    tx, ty, sx, sy = (float(transform.group(i)) for i in range(1, 5))
-    return parse_path(path_data.group(1)), tx, ty, sx, sy
-
-
-def transform_path(path: Path, tx: float, ty: float, sx: float, sy: float) -> list[Path]:
-    def from_svg(point: complex) -> complex:
-        return complex(tx + point.real * sx, ty + point.imag * sy)
-
-    raw_subpaths = path.continuous_subpaths()
-    path_min_x, path_max_x, path_min_y, path_max_y = path.bbox()
-    transformed_x = (tx + path_min_x * sx, tx + path_max_x * sx)
-    transformed_y = (ty + path_min_y * sy, ty + path_max_y * sy)
-    min_x, max_x = min(transformed_x), max(transformed_x)
-    min_y, max_y = min(transformed_y), max(transformed_y)
-    scale = (VIEWPORT - 2 * PADDING) / max(max_x - min_x, max_y - min_y)
-    offset_x = (VIEWPORT - (max_x - min_x) * scale) / 2
-    offset_y = (VIEWPORT - (max_y - min_y) * scale) / 2
-
-    def fit(point: complex) -> complex:
-        point = from_svg(point)
-        return complex(
-            offset_x + (point.real - min_x) * scale,
-            offset_y + (point.imag - min_y) * scale,
-        )
-
-    output = []
-    for subpath in raw_subpaths:
-        segments = []
-        for segment in subpath:
-            start, end = fit(segment.start), fit(segment.end)
-            if isinstance(segment, CubicBezier):
-                segments.append(CubicBezier(start, fit(segment.control1), fit(segment.control2), end))
-            elif isinstance(segment, QuadraticBezier):
-                segments.append(QuadraticBezier(start, fit(segment.control), end))
-            else:
-                segments.append(Line(start, end))
-        output.append(Path(*segments))
-    return output
-
-
 def number(value: float) -> str:
     return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
-def serialize(subpaths: list[Path]) -> str:
-    commands = []
-    for subpath in subpaths:
-        commands.append(f"M{number(subpath[0].start.real)},{number(subpath[0].start.imag)}")
-        for segment in subpath:
-            end = segment.end
-            if isinstance(segment, CubicBezier):
-                commands.append(
-                    "C"
-                    f"{number(segment.control1.real)},{number(segment.control1.imag)} "
-                    f"{number(segment.control2.real)},{number(segment.control2.imag)} "
-                    f"{number(end.real)},{number(end.imag)}"
-                )
-            elif isinstance(segment, QuadraticBezier):
-                commands.append(
-                    "Q"
-                    f"{number(segment.control.real)},{number(segment.control.imag)} "
-                    f"{number(end.real)},{number(end.imag)}"
-                )
-            else:
-                commands.append(f"L{number(end.real)},{number(end.imag)}")
-        commands.append("Z")
-    return " ".join(commands)
+def android_color(value: str) -> str:
+    match = re.fullmatch(r"rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", value)
+    if match is None:
+        if re.fullmatch(r"#[0-9A-Fa-f]{6,8}", value):
+            return value.upper()
+        raise ValueError(f"unsupported SVG colour: {value}")
+    channels = tuple(int(channel) for channel in match.groups())
+    if any(channel > 255 for channel in channels):
+        raise ValueError(f"invalid SVG colour: {value}")
+    return "#" + "".join(f"{channel:02X}" for channel in channels)
+
+
+def parse_master() -> tuple[float, float, dict[str, ET.Element], list[ET.Element]]:
+    root = ET.parse(MASTER).getroot()
+    view_box = [float(value) for value in root.get("viewBox", "").split()]
+    if len(view_box) != 4 or view_box[:2] != [0.0, 0.0]:
+        raise ValueError("brand SVG must have a zero-origin four-value viewBox")
+    width, height = view_box[2:]
+    if width <= 0 or height <= 0:
+        raise ValueError("brand SVG viewBox must be positive")
+
+    gradients = {
+        gradient.attrib["id"]: gradient
+        for gradient in root.findall(f".//{SVG}linearGradient")
+    }
+    paths = root.findall(f".//{SVG}path")
+    if not gradients or not paths:
+        raise ValueError("brand SVG must contain gradients and paths")
+    return width, height, gradients, paths
+
+
+def gradient_xml(gradient: ET.Element) -> list[str]:
+    required = ("x1", "y1", "x2", "y2")
+    if any(name not in gradient.attrib for name in required):
+        raise ValueError(f"gradient {gradient.get('id')} is missing coordinates")
+    lines = [
+        "        <aapt:attr name=\"android:fillColor\">",
+        "            <gradient",
+        f"                android:startX=\"{gradient.attrib['x1']}\"",
+        f"                android:startY=\"{gradient.attrib['y1']}\"",
+        f"                android:endX=\"{gradient.attrib['x2']}\"",
+        f"                android:endY=\"{gradient.attrib['y2']}\"",
+        "                android:type=\"linear\">",
+    ]
+    stops = gradient.findall(f"{SVG}stop")
+    if not stops:
+        raise ValueError(f"gradient {gradient.get('id')} has no stops")
+    for stop in stops:
+        if stop.get("stop-opacity", "1") != "1":
+            raise ValueError(f"gradient {gradient.get('id')} uses unsupported opacity")
+        lines.append(
+            "                <item "
+            f"android:offset=\"{stop.attrib['offset']}\" "
+            f"android:color=\"{android_color(stop.attrib['stop-color'])}\" />"
+        )
+    lines.extend(("            </gradient>", "        </aapt:attr>"))
+    return lines
 
 
 def render() -> str:
-    path, tx, ty, sx, sy = trace()
-    path_data = serialize(transform_path(path, tx, ty, sx, sy))
-    stops = "\n".join(
-        f'                <item android:offset="{offset:.3f}" android:color="{color}" />'
-        for offset, color in GRADIENT_STOPS
-    )
-    return f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated by tools/brand/generate_logo_vector.py.
-     Brand exception: traced from docs/logo/02-图层 1.png, not a Lucide icon.
-     Source-SHA256: {source_hash()} -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
-    tools:ignore="VectorPath">
-    <path
-        android:fillType="evenOdd"
-        android:pathData="{path_data}">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="8"
-                android:startY="0"
-                android:endX="13"
-                android:endY="24"
-                android:type="linear">
-{stops}
-            </gradient>
-        </aapt:attr>
-    </path>
-</vector>
-'''
+    width, height, gradients, paths = parse_master()
+    intrinsic_width = INTRINSIC_HEIGHT_DP * width / height
+    output = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<!-- Generated by tools/brand/generate_logo_vector.py.',
+        '     Brand exception: converted directly from docs/logo/app-logo.svg, not a Lucide icon.',
+        f'     Source-SHA256: {source_hash()} -->',
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android"',
+        '    xmlns:aapt="http://schemas.android.com/aapt"',
+        '    xmlns:tools="http://schemas.android.com/tools"',
+        f'    android:width="{number(intrinsic_width)}dp"',
+        f'    android:height="{number(INTRINSIC_HEIGHT_DP)}dp"',
+        f'    android:viewportWidth="{number(width)}"',
+        f'    android:viewportHeight="{number(height)}"',
+        '    tools:ignore="VectorPath">',
+    ]
+
+    for path in paths:
+        transform = path.get("transform")
+        if transform not in (None, "translate(0,0)", "translate(0, 0)"):
+            raise ValueError(f"unsupported path transform: {transform}")
+        path_data = " ".join(path.attrib["d"].split())
+        fill = path.attrib["fill"]
+        gradient_match = re.fullmatch(r"url\(#([^)]+)\)", fill)
+        if gradient_match:
+            gradient_id = gradient_match.group(1)
+            if gradient_id not in gradients:
+                raise ValueError(f"missing SVG gradient: {gradient_id}")
+            output.extend(("    <path", f'        android:pathData="{path_data}">'))
+            output.extend(gradient_xml(gradients[gradient_id]))
+            output.append("    </path>")
+        else:
+            output.extend(
+                (
+                    "    <path",
+                    f'        android:fillColor="{android_color(fill)}"',
+                    f'        android:pathData="{path_data}" />',
+                )
+            )
+
+    output.extend(("</vector>", ""))
+    return "\n".join(output)
 
 
 def main() -> int:

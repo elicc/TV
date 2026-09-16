@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MASTER = ROOT / "docs/logo/02-图层 1.png"
+MASTER = ROOT / "docs/logo/app-logo.svg"
 VECTOR = ROOT / "app/src/main/res/drawable/ic_logo.xml"
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 TOOLS = "{http://schemas.android.com/tools}"
@@ -26,22 +26,20 @@ class LogoAssetTests(unittest.TestCase):
 
         root = ET.fromstring(text)
         self.assertTrue(root.tag.endswith("vector"))
-        self.assertEqual("24dp", root.get(ANDROID + "width"))
+        self.assertEqual("22.102dp", root.get(ANDROID + "width"))
         self.assertEqual("24dp", root.get(ANDROID + "height"))
-        self.assertEqual("24", root.get(ANDROID + "viewportWidth"))
-        self.assertEqual("24", root.get(ANDROID + "viewportHeight"))
+        self.assertEqual("1886", root.get(ANDROID + "viewportWidth"))
+        self.assertEqual("2048", root.get(ANDROID + "viewportHeight"))
         self.assertEqual("VectorPath", root.get(TOOLS + "ignore"))
 
-        path = next(node for node in root if node.tag.endswith("path"))
-        data = path.get(ANDROID + "pathData")
-        self.assertEqual("evenOdd", path.get(ANDROID + "fillType"))
-        self.assertEqual(2, data.count("M"), "brand silhouette must contain outer edge and inner cutout")
-        self.assertEqual(2, data.count("Z"), "each silhouette contour must close independently")
-        # Bezier controls may sit slightly outside the rendered curve bounds,
-        # but a wildly out-of-range value signals the old inverted canvas path.
-        coordinates = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", data)]
-        self.assertGreaterEqual(min(coordinates), 0.8)
-        self.assertLessEqual(max(coordinates), 23.2)
+        paths = [node for node in root if node.tag.endswith("path")]
+        gradients = [node for path in paths for node in path.iter() if node.tag.endswith("gradient")]
+        self.assertEqual(25, len(paths), "all supplied SVG paths must be retained")
+        self.assertEqual(9, len(gradients), "all supplied SVG gradients must be retained")
+        self.assertTrue(all(path.get(ANDROID + "pathData") for path in paths))
+
+        svg = ET.parse(MASTER).getroot()
+        self.assertEqual("xMidYMid meet", svg.get("preserveAspectRatio"))
 
     def test_home_and_toast_use_the_small_vector(self):
         home = ET.parse(ROOT / "app/src/leanback/res/layout/activity_home.xml").getroot()
