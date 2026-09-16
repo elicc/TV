@@ -24,6 +24,14 @@ class HomeNavigationTests(unittest.TestCase):
         self.assertIn("mBinding.sourceRow.setOnClickListener(v -> showDialog())", code)
         self.assertIn("SiteDialog.create().show(this)", code)
 
+    def test_home_back_restores_top_focus_before_shared_exit_confirmation(self):
+        code = (ROOT / "app/src/leanback/java/com/fongmi/android/tv/ui/activity/HomeActivity.java").read_text()
+        self.assertIn("focusHomeRoot();", code)
+        self.assertIn("mBinding.recycler.setSelectedPosition(0);", code)
+        self.assertIn("mBinding.recycler.scrollToPosition(0);", code)
+        self.assertIn("mBinding.navVod.requestFocus();", code)
+        self.assertIn("focusHomeRoot();\n            super.onBackInvoked();", code)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1181,11 +1181,21 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mPresenter.isDelete()) {
             setHistoryDelete(false);
         } else {
-            // Every normal Home state is already the first navigation level. Do not require
-            // extra Back presses merely to move focus or scroll the content before the shared
-            // task-root exit confirmation can run.
+            // Back is still the task-root exit gesture, but the first press also restores the
+            // Home landing state. This mirrors the usual TV "back to top" affordance without
+            // consuming the press: the shared callback still shows the exit hint, and a second
+            // press within its window exits exactly as before.
+            focusHomeRoot();
             super.onBackInvoked();
         }
+    }
+
+    private void focusHomeRoot() {
+        if (mBinding.recycler.getAdapter() != null && mBinding.recycler.getAdapter().getItemCount() > 0) {
+            mBinding.recycler.setSelectedPosition(0);
+            mBinding.recycler.scrollToPosition(0);
+        }
+        mBinding.navVod.requestFocus();
     }
 
     @Override
