@@ -56,6 +56,10 @@ public class TvKeycapsBar extends LinearLayoutCompat {
         super(context, attrs);
         setOrientation(HORIZONTAL);
         setGravity(Gravity.CENTER_VERTICAL);
+        // Press feedback scales keycaps outside their resting bounds. In particular,
+        // the first cap grows into the start padding and must not lose its left edge.
+        setClipChildren(false);
+        setClipToPadding(false);
         setFocusable(false);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }

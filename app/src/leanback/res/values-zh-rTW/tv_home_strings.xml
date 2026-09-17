@@ -5,6 +5,7 @@
     <string name="tv_source">切換片源</string>
     <string name="tv_source_unconfigured">資料源：未配置</string>
     <string name="tv_source_label">來自 %1$s</string>
+    <string name="tv_source_switch_failed">換源失敗，已保留原來的內容源</string>
     <string name="tv_details">查看詳情</string>
     <string name="tv_browse">瀏覽片庫</string>
     <string name="tv_configure">新增設定</string>
@@ -16,9 +17,14 @@
     <string name="tv_retry">重新載入</string>
     <string name="tv_live_unavailable">尚未設定直播源，請先在設定中新增直播設定。</string>
     <string name="tv_manage_history">管理觀看記錄</string>
-    <string name="tv_clear_history">清空目前設定的觀看記錄</string>
-    <string name="tv_clear_history_confirm">清空後無法復原，是否繼續？</string>
+    <string name="tv_clear_history">清空全部觀看記錄</string>
+    <string name="tv_clear_history_confirm">清空全部記錄後無法復原，是否繼續？</string>
     <string name="tv_continue">繼續 %1$s</string>
+    <string name="tv_history_source_label">來源：%1$s</string>
+    <string name="tv_history_switch_title">切換點播設定？</string>
+    <string name="tv_history_switch_message">此播放記錄來自 %1$s，目前設定為 %2$s。是否切換設定並繼續播放？</string>
+    <string name="tv_history_switch_confirm">切換並播放</string>
+    <string name="tv_history_source_missing">原點播設定已不可用，將改為在目前設定中搜尋。</string>
     <string name="tv_keep_empty_title">還沒有收藏影片</string>
     <string name="tv_keep_empty_body">在影片詳情頁收藏，便可在這裡快速找到。</string>
     <string name="tv_find_films">去找影片</string>

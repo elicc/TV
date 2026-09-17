@@ -1,5 +1,7 @@
 package com.fongmi.android.tv.ui.activity;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewpager.widget.ViewPager;
@@ -25,14 +28,20 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Cache;
 import com.fongmi.android.tv.bean.Class;
 import com.fongmi.android.tv.bean.Result;
+import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.ActivityVodBinding;
 import com.fongmi.android.tv.event.RefreshEvent;
+import com.fongmi.android.tv.impl.SiteListener;
+import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.ui.adapter.TypeAdapter;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
+import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.ui.fragment.FolderFragment;
+import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.utils.KeyUtil;
+import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.TvTheme;
 
@@ -44,11 +53,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class VodActivity extends BaseActivity implements TypeAdapter.OnClickListener {
+public class VodActivity extends BaseActivity implements TypeAdapter.OnClickListener, SiteListener {
 
     private ActivityVodBinding mBinding;
     private TypeAdapter mAdapter;
+    private SiteViewModel mViewModel;
+    private ObjectAnimator mSourcePulse;
+    private Site mPreviousSite;
     private View mOldView;
+    private boolean mSwitchingSource;
     private final Handler mClockHandler = new Handler();
 
     public static void start(Activity activity, Result result) {
@@ -92,12 +105,10 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
         // Follow the global film-atmosphere preference; the activity recreates on
         // change, so a one-shot visibility gate is sufficient.
         mBinding.atmosphere.setVisibility(TvTheme.isAtmosphereEnabled() ? View.VISIBLE : View.GONE);
-        String source = Optional.ofNullable(VodConfig.get().getHome())
-                .map(site -> site.getName())
-                .filter(name -> !name.isEmpty())
-                .orElse("饭太硬");
-        mBinding.source.setText("●  活跃源: " + source);
+        setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
+        startSourcePulse();
         updateClock();
+        setViewModel();
         setRecyclerView();
         setTypes();
         setPager();
@@ -181,6 +192,9 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
 
     @Override
     protected void initEvent() {
+        mBinding.sourceRow.setOnClickListener(v -> {
+            if (!mSwitchingSource) SiteDialog.create().show(this);
+        });
         mBinding.vodFilter.setOnClickListener(v -> toggleFilterPanel());
         // Reloading a category used to be hidden on the UP key, which meant an ordinary press
         // silently discarded the viewer's scroll position. It lives here instead: on a control
@@ -204,6 +218,61 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
                 onChildSelected(child);
             }
         });
+    }
+
+    private void setViewModel() {
+        mViewModel = new ViewModelProvider(this).get(SiteViewModel.class);
+        mViewModel.getResult().observe(this, this::onSourceLoaded);
+    }
+
+    private void setSourceChip(Site site, int statusColor) {
+        String title = site == null || site.getName().isEmpty()
+                ? getString(R.string.tv_source_unconfigured)
+                : site.getName();
+        mBinding.sourceTitle.setText(title);
+        mBinding.sourceTitle.setContentDescription(getString(R.string.tv_source) + "：" + title);
+        mBinding.sourceStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(statusColor));
+    }
+
+    private void startSourcePulse() {
+        if (!TvMotion.motionEnabled(this)) return;
+        mSourcePulse = ObjectAnimator.ofFloat(mBinding.sourceStatus, "alpha", 1f, 0.45f);
+        mSourcePulse.setDuration(1200);
+        mSourcePulse.setRepeatCount(ValueAnimator.INFINITE);
+        mSourcePulse.setRepeatMode(ValueAnimator.REVERSE);
+        mSourcePulse.start();
+    }
+
+    @Override
+    public void setSite(Site item) {
+        if (item == null || item.isEmpty() || mSwitchingSource) return;
+        Site current = VodConfig.get().getHome();
+        if (item.equals(current)) {
+            setSourceChip(current, getColor(R.color.tv_success));
+            return;
+        }
+        mPreviousSite = current;
+        mSwitchingSource = true;
+        VodConfig.get().setHome(item);
+        setSourceChip(item, TvTheme.color(this, R.attr.tvColorAccent));
+        mViewModel.homeContent();
+    }
+
+    private void onSourceLoaded(Result result) {
+        if (!mSwitchingSource || result == null) return;
+        Site previous = mPreviousSite;
+        mPreviousSite = null;
+        mSwitchingSource = false;
+        if (result.getTypes().isEmpty()) {
+            if (previous != null && !previous.isEmpty()) VodConfig.get().setHome(previous);
+            setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
+            Notify.show(R.string.tv_source_switch_failed);
+            return;
+        }
+        Cache.clear().put(result);
+        start(this, result);
+        finish();
+        overridePendingTransition(0, 0);
     }
 
     private void setRecyclerView() {
@@ -306,6 +375,17 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        // The source chip sits above the horizontal shelf. Relying on geometric focus search
+        // leaves it unreachable because the Leanback grid retains focus at its top edge.
+        if (KeyUtil.isActionDown(event) && KeyUtil.isUpKey(event) && isShelfFocused()) {
+            mBinding.sourceRow.requestFocus();
+            return true;
+        }
+        if (KeyUtil.isActionDown(event) && KeyUtil.isDownKey(event) && mBinding.sourceRow.hasFocus()) {
+            if (isVisible(mBinding.vodFilter)) mBinding.vodFilter.requestFocus();
+            else mBinding.recycler.requestFocus();
+            return true;
+        }
         if (KeyUtil.isMenuKey(event)) toggleFilterPanel();
         return super.dispatchKeyEvent(event);
     }
@@ -313,11 +393,18 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
     @Override
     protected void onResume() {
         super.onResume();
+        if (mSourcePulse != null) mSourcePulse.start();
         // The conditions cache is rebuilt by the home screen and cleared on every source load,
         // which can all happen while this screen is paused. Posted rather than called: reading
         // the badge reaches into the current page, and during the resume pass the pager may hand
         // back a page whose transaction has not committed yet.
         mBinding.pager.post(this::updateFilterBadge);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mSourcePulse != null) mSourcePulse.pause();
     }
 
     @Override
@@ -333,6 +420,7 @@ public class VodActivity extends BaseActivity implements TypeAdapter.OnClickList
     @Override
     protected void onDestroy() {
         mClockHandler.removeCallbacksAndMessages(null);
+        if (mSourcePulse != null) mSourcePulse.cancel();
         super.onDestroy();
     }
 

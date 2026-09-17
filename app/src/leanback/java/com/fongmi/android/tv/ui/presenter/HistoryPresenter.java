@@ -10,11 +10,13 @@ import androidx.leanback.widget.Presenter;
 import com.bumptech.glide.Glide;
 import com.fongmi.android.tv.Product;
 import com.fongmi.android.tv.R;
-import java.util.Locale;
+import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.databinding.AdapterHistoryBinding;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.ResUtil;
+
+import java.util.Locale;
 
 public class HistoryPresenter extends Presenter {
 
@@ -82,13 +84,15 @@ public class HistoryPresenter extends Presenter {
         ViewHolder holder = (ViewHolder) viewHolder;
         setClickListener(holder.view, item);
         holder.binding.name.setText(item.getVodName());
-        holder.binding.site.setText(item.getSiteName());
+        Config config = Config.find(item.getCid());
+        String source = config == null ? "" : holder.view.getContext().getString(R.string.tv_history_source_label, config.getDesc());
+        holder.binding.site.setText(source);
         long seconds = Math.max(0, item.getPosition()) / 1000;
         String time = String.format(Locale.getDefault(), "%d:%02d", seconds / 60, seconds % 60);
         holder.binding.remark.setText(holder.view.getContext().getString(R.string.tv_continue, time) + (item.getVodRemarks().isEmpty() ? "" : " · " + item.getVodRemarks()));
         holder.binding.position.setVisibility(item.getDuration() > 0 ? View.VISIBLE : View.INVISIBLE);
         holder.binding.position.setProgress(item.getDuration() > 0 ? (int) Math.max(0, Math.min(1000, item.getPosition() * 1000.0 / item.getDuration())) : 0);
-        holder.binding.site.setVisibility(item.getSiteVisible());
+        holder.binding.site.setVisibility(source.isEmpty() ? View.GONE : View.VISIBLE);
         holder.binding.delete.setVisibility(!delete ? View.GONE : View.VISIBLE);
         holder.binding.remark.setVisibility(delete ? View.INVISIBLE : View.VISIBLE);
         ImgUtil.load(item.getVodName(), item.getVodPic(), holder.binding.image);

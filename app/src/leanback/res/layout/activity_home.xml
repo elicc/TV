@@ -223,8 +223,10 @@
         <com.fongmi.android.tv.ui.custom.TvKeycapsBar
             android:id="@+id/keycaps"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:layout_marginBottom="24dp"
+            android:layout_height="@dimen/tv_keycaps_bar_height"
+            android:layout_marginBottom="@dimen/tv_keycaps_bottom_inset"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:gravity="center_vertical"
             android:paddingStart="@dimen/tv_safe_horizontal"
             android:paddingEnd="@dimen/tv_safe_horizontal"

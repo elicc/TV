@@ -56,17 +56,42 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/source"
+            <!-- Keep the current-source control identical to Home: a real status
+                 light plus a focusable pill, rather than a grey bullet embedded in text. -->
+            <LinearLayout
+                android:id="@+id/sourceRow"
                 android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:background="@drawable/tv_glass_pill"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="?attr/tvColorTextSecondary"
-                android:textSize="12sp"
-                tools:text="●  活跃源: 饭太硬" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/tv_source_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <View
+                    android:id="@+id/sourceStatus"
+                    android:layout_width="4dp"
+                    android:layout_height="4dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/tv_source_status"
+                    android:importantForAccessibility="no" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/sourceTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:duplicateParentState="true"
+                    android:focusable="false"
+                    android:textAppearance="@style/TextAppearance.Tv.Meta"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="8sp"
+                    tools:text="饭太硬" />
+            </LinearLayout>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/clock"
@@ -164,8 +189,10 @@
         <com.fongmi.android.tv.ui.custom.TvKeycapsBar
             android:id="@+id/keycaps"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:layout_marginBottom="24dp"
+            android:layout_height="@dimen/tv_keycaps_bar_height"
+            android:layout_marginBottom="@dimen/tv_keycaps_bottom_inset"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:gravity="center_vertical"
             android:importantForAccessibility="no"
             android:paddingStart="@dimen/tv_safe_horizontal"

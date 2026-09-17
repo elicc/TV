@@ -367,6 +367,8 @@ class TvThemeTests(unittest.TestCase):
         for name, value in {
             "tv_overscan_h": "36dp",
             "tv_overscan_v": "24dp",
+            "tv_keycaps_bar_height": "36dp",
+            "tv_keycaps_bottom_inset": "6dp",
             "tv_focus_stroke": "3.5dp",
             "tv_radius_card": "16dp",
             "tv_radius_chip": "20dp",
@@ -408,12 +410,79 @@ class TvThemeTests(unittest.TestCase):
         keycaps = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.TvKeycapsBar") if n.get(android + "id") == "@+id/keycaps")
         self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingEnd"))
-        self.assertEqual("24dp", keycaps.get(android + "layout_marginBottom"))
+        self.assertEqual("@dimen/tv_keycaps_bar_height", keycaps.get(android + "layout_height"))
+        self.assertEqual("@dimen/tv_keycaps_bottom_inset", keycaps.get(android + "layout_marginBottom"))
+        self.assertEqual("false", keycaps.get(android + "clipChildren"))
+        self.assertEqual("false", keycaps.get(android + "clipToPadding"))
         code = (JAVA / "ui/activity/HomeActivity.java").read_text()
         self.assertIn("getString(R.string.tv_source_unconfigured)", code)
         self.assertIn("TvTheme.color(this, R.attr.tvColorAccent)", code)
         self.assertIn('.format("HH:mm")', code)
         self.assertIn("mBinding.clock.setVisibility(View.VISIBLE)", code)
+
+    def test_vod_keycaps_share_compact_unclipped_footer_geometry(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/activity_vod.xml").getroot()
+        keycaps = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.TvKeycapsBar") if n.get(android + "id") == "@+id/keycaps")
+        self.assertEqual("@dimen/tv_keycaps_bar_height", keycaps.get(android + "layout_height"))
+        self.assertEqual("@dimen/tv_keycaps_bottom_inset", keycaps.get(android + "layout_marginBottom"))
+        self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingStart"))
+        self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingEnd"))
+        self.assertEqual("false", keycaps.get(android + "clipChildren"))
+        self.assertEqual("false", keycaps.get(android + "clipToPadding"))
+
+    def test_vod_source_switcher_matches_home_status_and_reload_contract(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/activity_vod.xml").getroot()
+        source = next(n for n in root.iter() if n.get(android + "id") == "@+id/sourceRow")
+        status = next(n for n in source.iter("View") if n.get(android + "id") == "@+id/sourceStatus")
+        title = next(n for n in source.iter() if n.get(android + "id") == "@+id/sourceTitle")
+        self.assertEqual("@drawable/tv_source_pill", source.get(android + "background"))
+        self.assertEqual("true", source.get(android + "focusable"))
+        self.assertEqual("true", source.get(android + "clickable"))
+        self.assertEqual("4dp", status.get(android + "layout_width"))
+        self.assertEqual("4dp", status.get(android + "layout_height"))
+        self.assertEqual("@drawable/tv_source_status", status.get(android + "background"))
+        self.assertEqual("true", title.get(android + "duplicateParentState"))
+
+        code = (JAVA / "ui/activity/VodActivity.java").read_text()
+        for contract in [
+            "SiteListener",
+            "mBinding.sourceRow.setOnClickListener",
+            "mBinding.sourceRow.requestFocus()",
+            "SiteDialog.create().show(this)",
+            "mBinding.sourceStatus",
+            "ObjectAnimator.ofFloat",
+            "VodConfig.get().setHome(item)",
+            "mViewModel.homeContent()",
+            "Cache.clear().put(result)",
+            "VodConfig.get().setHome(previous)",
+        ]:
+            self.assertIn(contract, code)
+
+    def test_home_history_is_global_and_confirms_cross_config_playback(self):
+        history = (MAIN_JAVA / "bean/History.java").read_text()
+        dao = (MAIN_JAVA / "db/dao/HistoryDao.java").read_text()
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        presenter = (JAVA / "ui/presenter/HistoryPresenter.java").read_text()
+
+        self.assertIn("findRecent(long createTime)", dao)
+        self.assertIn("getRecentAll()", history)
+        self.assertIn("History.getRecentAll()", home)
+        self.assertIn("Config.find(item.getCid())", home)
+        self.assertIn("R.string.tv_history_switch_message", home)
+        self.assertIn("loadHistoryConfig(getConfig(), config, item)", home)
+        self.assertIn("VodConfig.load(target", home)
+        self.assertIn("restoreHistoryConfig(previous, msg)", home)
+        self.assertIn("Config.find(item.getCid())", presenter)
+        self.assertIn("item.getCid() == VodConfig.getCid()", home)
+        self.assertIn("History.clearAll()", home)
+
+        android = "{http://schemas.android.com/apk/res/android}"
+        card = ET.parse(RES / "layout/adapter_history.xml").getroot()
+        source = next(n for n in card.iter() if n.get(android + "id") == "@+id/site")
+        self.assertEqual("220dp", source.get(android + "maxWidth"))
+        self.assertEqual("middle", source.get(android + "ellipsize"))
 
     def test_home_empty_source_uses_reference_geometry_and_initial_focus(self):
         android = "{http://schemas.android.com/apk/res/android}"
@@ -463,10 +532,15 @@ class TvThemeTests(unittest.TestCase):
         self.assertEqual("@dimen/tv_safe_horizontal", video.get(android + "layout_marginStart"))
         self.assertEqual("@dimen/tv_safe_vertical", video.get(android + "layout_marginTop"))
         name = next(n for n in root.iter() if n.get(android + "id") == "@+id/name")
-        self.assertEqual("@dimen/tv_text_display", name.get(android + "textSize"))
+        self.assertEqual("@dimen/tv_text_section", name.get(android + "textSize"))
+        self.assertIsNone(next((n for n in root.iter() if n.get(android + "id") == "@+id/fullscreen"), None))
         for chip_id in ["flag", "quality", "episode", "array", "part", "quick"]:
             chip = next(n for n in root.iter() if n.get(android + "id") == "@+id/" + chip_id)
             self.assertEqual("@dimen/tv_safe_horizontal", chip.get(android + "paddingStart"), chip_id)
+
+        code = (JAVA / "ui/activity/VideoActivity.java").read_text()
+        self.assertNotIn("mBinding.fullscreen", code)
+        self.assertLess(code.index("mBinding.progressLayout.showContent();"), code.index("showSkeleton(false);", code.index("renderDetail")))
 
     def test_live_drawer_and_osd_use_stitch_tokens(self):
         android = "{http://schemas.android.com/apk/res/android}"

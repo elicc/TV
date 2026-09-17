@@ -92,6 +92,10 @@ public class History implements Diffable<History> {
         return AppDatabase.get().getHistoryDao().find(cid, System.currentTimeMillis() - Constant.HISTORY_TIME);
     }
 
+    public static List<History> getRecentAll() {
+        return AppDatabase.get().getHistoryDao().findRecent(System.currentTimeMillis() - Constant.HISTORY_TIME);
+    }
+
     public static History find(String key) {
         return AppDatabase.get().getHistoryDao().find(VodConfig.getCid(), key);
     }
@@ -110,6 +114,10 @@ public class History implements Diffable<History> {
 
     public static void clear(int cid) {
         Task.executeSerial(() -> delete(cid));
+    }
+
+    public static void clearAll() {
+        Task.executeSerial(() -> AppDatabase.get().getHistoryDao().delete());
     }
 
     public static void sync(List<History> targets) {

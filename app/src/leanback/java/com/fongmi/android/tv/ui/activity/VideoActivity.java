@@ -317,7 +317,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
         mBinding.content.setOnClickListener(view -> onContent());
-        mBinding.fullscreen.setOnClickListener(view -> enterFullscreen());
         mBinding.control.action.more.setOnClickListener(view -> setAdvancedControls(!isVisible(mBinding.control.action.advanced)));
         mBinding.control.action.text.setOnClickListener(this::onTrack);
         mBinding.control.action.audio.setOnClickListener(this::onTrack);
@@ -570,8 +569,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     public void renderDetail(Vod item, History history) {
         trace("VIDEO_DETAIL_RENDER_BEGIN");
         mHistory = history;
-        showSkeleton(false);
         mBinding.progressLayout.showContent();
+        // ProgressLayout reveals all content children during the state switch;
+        // hide the loading placeholders after that transition.
+        showSkeleton(false);
         mBinding.name.setText(item.getName());
         mBinding.video.requestFocus();
         App.removeCallbacks(mR4);

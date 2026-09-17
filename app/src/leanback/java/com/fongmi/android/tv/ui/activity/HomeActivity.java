@@ -901,7 +901,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void getHistory(boolean renew) {
-        List<History> items = History.get();
+        List<History> items = History.getRecentAll();
         if (mFocusedHistory != null && !items.contains(mFocusedHistory)) mFocusedHistory = null;
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0 && (items.isEmpty() || renew)) mAdapter.removeItems(header, 2);
@@ -922,7 +922,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void clearHistory() {
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0) mAdapter.removeItems(header, 2);
-        History.clear(VodConfig.getCid());
+        History.clearAll();
         mPresenter.setDelete(false);
         mHistoryAdapter.clear();
         mFocusedHistory = null;
@@ -1057,6 +1057,61 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public void onItemClick(History item) {
+        if (item.getCid() == VodConfig.getCid()) {
+            openHistory(item);
+            return;
+        }
+        Config config = Config.find(item.getCid());
+        if (config == null) {
+            Notify.show(R.string.tv_history_source_missing);
+            CollectActivity.start(this, item.getVodName());
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tv_history_switch_title)
+                .setMessage(getString(R.string.tv_history_switch_message, config.getDesc(), getConfig().getDesc()))
+                .setPositiveButton(R.string.tv_history_switch_confirm, (dialog, which) -> loadHistoryConfig(getConfig(), config, item))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void loadHistoryConfig(Config previous, Config target, History item) {
+        VodConfig.load(target, new Callback() {
+            @Override
+            public void start() {
+                Notify.progress(getActivity());
+            }
+
+            @Override
+            public void success() {
+                Notify.dismiss();
+                if (!isFinishing() && !isDestroyed()) openHistory(item);
+            }
+
+            @Override
+            public void error(String msg) {
+                restoreHistoryConfig(previous, msg);
+            }
+        });
+    }
+
+    private void restoreHistoryConfig(Config previous, String msg) {
+        VodConfig.load(previous, new Callback() {
+            @Override
+            public void success() {
+                Notify.dismiss();
+                Notify.show(msg);
+            }
+
+            @Override
+            public void error(String restoreError) {
+                Notify.dismiss();
+                Notify.show(TextUtils.isEmpty(restoreError) ? msg : restoreError);
+            }
+        });
+    }
+
+    private void openHistory(History item) {
         VideoActivity.start(this, item.getSiteKey(), item.getVodId(), item.getVodName(), item.getVodPic());
     }
 
@@ -1071,7 +1126,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         Vod projected = new Vod();
         projected.setPic(item.getVodPic());
         updateBackdrop(projected, item.getSiteKey());
-        scheduleDetailPrefetch(item);
+        if (item.getCid() == VodConfig.getCid()) scheduleDetailPrefetch(item);
+        else {
+            App.removeCallbacks(mPrefetch);
+            mPrefetchTarget = null;
+        }
     }
 
     /** Warms the detail cache after focus settles so opening the card skips the network round-trip. */

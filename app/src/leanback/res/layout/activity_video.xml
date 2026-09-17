@@ -71,7 +71,7 @@
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
-        android:textSize="@dimen/tv_text_hero"
+        android:textSize="@dimen/tv_text_section"
         tools:text="慶餘年第二季" />
 
     <com.fongmi.android.tv.ui.custom.SkeletonLayout
@@ -256,27 +256,6 @@
         android:layout_alignStart="@+id/name"
         android:layout_alignBottom="@+id/video"
         android:orientation="horizontal">
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/fullscreen"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/selector_chip"
-            android:minHeight="40dp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:gravity="center"
-            android:nextFocusLeft="@id/video"
-            android:nextFocusUp="@id/actor"
-            android:nextFocusDown="@id/flag"
-            android:singleLine="true"
-            android:text="@string/tv_playback_fullscreen"
-            android:textColor="?attr/tvColorAccent"
-            android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/content"

@@ -36,10 +36,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
+            android:maxWidth="220dp"
             android:padding="4dp"
             android:background="?attr/tvColorScrimStrong"
             android:textColor="?attr/tvColorTextSecondary"
             android:textAppearance="@style/TextAppearance.Tv.Meta"
+            android:ellipsize="middle"
             android:singleLine="true"/>
     </FrameLayout>
     <ProgressBar
