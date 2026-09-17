@@ -1104,6 +1104,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void showInfo() {
         mBinding.widget.duration.setText(player().getDurationTime());
         mBinding.widget.position.setText(player().getPositionTime(0));
+        mBinding.widget.action.setImageResource(R.drawable.ic_widget_pause);
         fadeIn(mBinding.widget.top);
         fadeIn(mBinding.widget.center);
     }
@@ -1174,7 +1175,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             osd.setAlpha(1f);
             osd.setTranslationY(0f);
         }
-        hideInfo();
+        // The center pause badge and time info stay on screen while playback is paused.
+        if (!isMediaPaused()) hideInfo();
+    }
+
+    /** True when media is loaded, ready, and actually not playing — i.e. a user-visible pause. */
+    private boolean isMediaPaused() {
+        return controller() != null && !controller().isPlaying() && !isBuffering() && !isIdle();
     }
 
     private android.view.animation.Interpolator osdInterpolator() {

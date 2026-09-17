@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Playback badge pause glyph: the two bar lines of Lucide 0.344.0 pause-circle with
+     its outer ring dropped for a lighter look at the 56dp badge size, bars lengthened
+     (y 6..18), thinned (1.5-unit stroke) and spread apart (x 9.5/14.5) per design
+     feedback. Documented exception to the Lucide-generated-only icon rule (no official
+     ring-free variant); round caps stay aligned with the Lucide visual language. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M9.5,18 L9.5,6" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M14.5,18 L14.5,6" />
+</vector>
