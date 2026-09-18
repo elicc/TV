@@ -177,47 +177,42 @@
         android:layout_below="@+id/remark"
         android:layout_alignStart="@+id/remark"
         android:layout_marginTop="8dp"
+        android:visibility="gone"
         android:orientation="horizontal">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabSource"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="36dp"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/selector_item"
+            android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
             android:text="@string/metadata_source"
-            android:textColor="?attr/tvColorTextPrimary"
+            android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabDouban"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="36dp"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/selector_item"
+            android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
             android:text="@string/metadata_douban"
-            android:textColor="?attr/tvColorTextPrimary"
+            android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_button" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabTmdb"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:background="@drawable/selector_item"
+            android:layout_height="36dp"
+            android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
             android:text="@string/metadata_tmdb"
-            android:textColor="?attr/tvColorTextPrimary"
+            android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_button" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -236,6 +231,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:background="@drawable/shape_detail_tag"
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
@@ -247,6 +243,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:background="@drawable/shape_detail_tag"
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="?attr/tvColorTextSecondary"
@@ -258,8 +255,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
+            android:background="@drawable/shape_detail_tag"
             android:ellipsize="end"
             android:singleLine="true"
+            android:background="@drawable/shape_detail_tag"
             android:textColor="?attr/tvColorTextSecondary"
             android:textSize="@dimen/tv_text_body"
             tools:text="地區：台灣" />
@@ -545,73 +544,171 @@
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
-            <androidx.leanback.widget.HorizontalGridView
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/flagRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/flagLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/tv_accent_dot_green"
+                    android:drawablePadding="6dp"
+                    android:text="@string/detail_line"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+
+                <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/flag"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.leanback.widget.HorizontalGridView
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/qualityRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/qualityLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/tv_accent_dot_green"
+                    android:drawablePadding="6dp"
+                    android:text="@string/detail_quality"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+                <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/quality"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.leanback.widget.HorizontalGridView
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/episodeRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/episodeLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/tv_accent_dot_green"
+                    android:drawablePadding="6dp"
+                    android:text="@string/detail_episode"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+                <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/episode"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.leanback.widget.HorizontalGridView
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/arrayRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/arrayLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/detail_episode_range"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+                <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/array"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.leanback.widget.HorizontalGridView
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/partRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/partLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/detail_part"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+                <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/part"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.leanback.widget.HorizontalGridView
-                android:id="@+id/quick"
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/quickRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/quickLabel"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/detail_sources"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_meta" />
+                <androidx.leanback.widget.HorizontalGridView
+                android:id="@+id/quick"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
         </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.core.widget.NestedScrollView>
