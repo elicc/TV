@@ -19,7 +19,7 @@
             android:paddingStart="@dimen/tv_safe_horizontal"
             android:paddingTop="14dp"
             android:paddingEnd="@dimen/tv_safe_horizontal"
-            android:paddingBottom="@dimen/tv_safe_vertical"
+            android:paddingBottom="0dp"
             app:focusOutEnd="true"
             app:focusOutFront="true" />
 

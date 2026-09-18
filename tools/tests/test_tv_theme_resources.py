@@ -367,8 +367,9 @@ class TvThemeTests(unittest.TestCase):
         for name, value in {
             "tv_overscan_h": "36dp",
             "tv_overscan_v": "24dp",
-            "tv_keycaps_bar_height": "36dp",
-            "tv_keycaps_bottom_inset": "6dp",
+            "tv_keycaps_bar_height": "28dp",
+            "tv_keycaps_top_gap": "6dp",
+            "tv_keycaps_bottom_inset": "0dp",
             "tv_focus_stroke": "3.5dp",
             "tv_radius_card": "16dp",
             "tv_radius_chip": "20dp",
@@ -404,7 +405,7 @@ class TvThemeTests(unittest.TestCase):
         self.assertEqual("16dp", toolbar.get(android + "layout_marginTop"))
         self.assertEqual("@dimen/tv_safe_horizontal", toolbar.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_horizontal", recycler.get(android + "paddingStart"))
-        self.assertEqual("@dimen/tv_safe_vertical", recycler.get(android + "paddingBottom"))
+        self.assertEqual("0dp", recycler.get(android + "paddingBottom"))
         source = next(n for n in root.iter("View") if n.get(android + "id") == "@+id/sourceStatus")
         self.assertEqual("4dp", source.get(android + "layout_width"))
         keycaps = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.TvKeycapsBar") if n.get(android + "id") == "@+id/keycaps")
@@ -412,6 +413,8 @@ class TvThemeTests(unittest.TestCase):
         self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingEnd"))
         self.assertEqual("@dimen/tv_keycaps_bar_height", keycaps.get(android + "layout_height"))
         self.assertEqual("@dimen/tv_keycaps_bottom_inset", keycaps.get(android + "layout_marginBottom"))
+        progress = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.ProgressLayout") if n.get(android + "id") == "@+id/progressLayout")
+        self.assertEqual("@dimen/tv_keycaps_top_gap", progress.get(android + "layout_marginBottom"))
         self.assertEqual("false", keycaps.get(android + "clipChildren"))
         self.assertEqual("false", keycaps.get(android + "clipToPadding"))
         code = (JAVA / "ui/activity/HomeActivity.java").read_text()
@@ -426,6 +429,8 @@ class TvThemeTests(unittest.TestCase):
         keycaps = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.TvKeycapsBar") if n.get(android + "id") == "@+id/keycaps")
         self.assertEqual("@dimen/tv_keycaps_bar_height", keycaps.get(android + "layout_height"))
         self.assertEqual("@dimen/tv_keycaps_bottom_inset", keycaps.get(android + "layout_marginBottom"))
+        pager = next(n for n in root.iter("com.fongmi.android.tv.ui.custom.CustomViewPager") if n.get(android + "id") == "@+id/pager")
+        self.assertEqual("@dimen/tv_keycaps_top_gap", pager.get(android + "layout_marginBottom"))
         self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingStart"))
         self.assertEqual("@dimen/tv_safe_horizontal", keycaps.get(android + "paddingEnd"))
         self.assertEqual("false", keycaps.get(android + "clipChildren"))
@@ -474,7 +479,9 @@ class TvThemeTests(unittest.TestCase):
         self.assertIn("loadHistoryConfig(getConfig(), config, item)", home)
         self.assertIn("VodConfig.load(target", home)
         self.assertIn("restoreHistoryConfig(previous, msg)", home)
+        self.assertIn("alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()", home)
         self.assertIn("Config.find(item.getCid())", presenter)
+        self.assertIn("item.getCid() == VodConfig.getCid()", presenter)
         self.assertIn("item.getCid() == VodConfig.getCid()", home)
         self.assertIn("History.clearAll()", home)
 

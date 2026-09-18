@@ -177,10 +177,12 @@
                 android:textSize="10sp" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
+        <!-- Preserve the card-to-legend gap independently from the compact screen-edge inset. -->
         <com.fongmi.android.tv.ui.custom.CustomViewPager
             android:id="@+id/pager"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginBottom="@dimen/tv_keycaps_top_gap"
             android:layout_weight="1" />
 
         <!-- Remote hints. This screen used to advertise nothing while hiding two of its own

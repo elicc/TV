@@ -10,6 +10,7 @@ import androidx.leanback.widget.Presenter;
 import com.bumptech.glide.Glide;
 import com.fongmi.android.tv.Product;
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.databinding.AdapterHistoryBinding;
@@ -85,7 +86,7 @@ public class HistoryPresenter extends Presenter {
         setClickListener(holder.view, item);
         holder.binding.name.setText(item.getVodName());
         Config config = Config.find(item.getCid());
-        String source = config == null ? "" : holder.view.getContext().getString(R.string.tv_history_source_label, config.getDesc());
+        String source = item.getCid() == VodConfig.getCid() || config == null ? "" : holder.view.getContext().getString(R.string.tv_history_source_label, config.getDesc());
         holder.binding.site.setText(source);
         long seconds = Math.max(0, item.getPosition()) / 1000;
         String time = String.format(Locale.getDefault(), "%d:%02d", seconds / 60, seconds % 60);

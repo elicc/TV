@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.leanback.widget.ArrayObjectAdapter;
@@ -1067,12 +1068,14 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             CollectActivity.start(this, item.getVodName());
             return;
         }
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog alertDialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.tv_history_switch_title)
                 .setMessage(getString(R.string.tv_history_switch_message, config.getDesc(), getConfig().getDesc()))
                 .setPositiveButton(R.string.tv_history_switch_confirm, (dialog, which) -> loadHistoryConfig(getConfig(), config, item))
                 .setNegativeButton(android.R.string.cancel, null)
-                .show();
+                .create();
+        alertDialog.setOnShowListener(ignored -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus());
+        alertDialog.show();
     }
 
     private void loadHistoryConfig(Config previous, Config target, History item) {

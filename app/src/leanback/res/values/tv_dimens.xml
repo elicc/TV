@@ -33,10 +33,12 @@
     <dimen name="tv_glow_band">6dp</dimen>
     <dimen name="tv_glow_band_outset">-6dp</dimen>
     <dimen name="tv_keycap_height">32dp</dimen>
-    <!-- Compact footer band: a 24dp keycap is centered with 6dp breathing room,
-         while the separate bottom inset keeps it clear of the panel edge. -->
-    <dimen name="tv_keycaps_bar_height">36dp</dimen>
-    <dimen name="tv_keycaps_bottom_inset">6dp</dimen>
+    <!-- Compact footer band: keep the legend close to the lower edge while retaining
+         enough vertical room for the 24dp keycap's pressed-scale feedback.  The top
+         gap is independent so reducing the bottom whitespace does not crowd the cards. -->
+    <dimen name="tv_keycaps_bar_height">28dp</dimen>
+    <dimen name="tv_keycaps_top_gap">6dp</dimen>
+    <dimen name="tv_keycaps_bottom_inset">0dp</dimen>
     <dimen name="tv_seek_bar_height">4dp</dimen>
     <dimen name="tv_seek_scrubber_size">18dp</dimen>
     <!-- 380px drawer on the 1920x1080 Stitch raster becomes ~200dp logical. -->

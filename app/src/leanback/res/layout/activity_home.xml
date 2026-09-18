@@ -202,10 +202,12 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Preserve the card-to-legend gap independently from the compact screen-edge inset. -->
         <com.fongmi.android.tv.ui.custom.ProgressLayout
             android:id="@+id/progressLayout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginBottom="@dimen/tv_keycaps_top_gap"
             android:layout_weight="1">
             <com.fongmi.android.tv.ui.custom.TvVerticalGridView
                 android:id="@+id/recycler"
@@ -215,7 +217,7 @@
                 android:clipToPadding="false"
                 android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
-                android:paddingBottom="@dimen/tv_safe_vertical"
+                android:paddingBottom="0dp"
                 app:focusOutEnd="true"
                 app:focusOutFront="true" />
         </com.fongmi.android.tv.ui.custom.ProgressLayout>
