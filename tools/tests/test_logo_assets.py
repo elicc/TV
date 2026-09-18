@@ -45,6 +45,8 @@ class LogoAssetTests(unittest.TestCase):
         home = ET.parse(ROOT / "app/src/leanback/res/layout/activity_home.xml").getroot()
         logo = next(node for node in home.iter() if node.get(ANDROID + "id") == "@+id/logo")
         self.assertEqual("@drawable/ic_logo", logo.get(ANDROID + "src"))
+        self.assertEqual("28dp", logo.get(ANDROID + "layout_width"))
+        self.assertEqual("28dp", logo.get(ANDROID + "layout_height"))
 
         toast = ET.parse(ROOT / "app/src/main/res/layout/view_toast.xml").getroot()
         icon = next(node for node in toast.iter() if node.get(ANDROID + "id") == "@+id/toastIcon")
