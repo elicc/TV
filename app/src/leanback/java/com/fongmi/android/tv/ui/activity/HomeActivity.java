@@ -58,6 +58,9 @@ import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.model.VideoViewModel;
+import com.fongmi.android.tv.metadata.MetadataRepository;
+import com.fongmi.android.tv.metadata.MovieIdentity;
+import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.player.extractor.Source;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.service.DLNARendererService;
@@ -99,6 +102,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.Optional;
 
 public class HomeActivity extends BaseActivity implements CustomTitleView.Listener, VodPresenter.OnClickListener, FuncPresenter.OnClickListener, HistoryPresenter.OnClickListener, HeroPresenter.Listener, EmptySourcePresenter.Listener, ConfigListener, VaultDialog.Listener {
@@ -134,6 +138,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private long mSplashShownAt;
     /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
     private boolean mHeroUpdatePending;
+    /** Generation-guarded, focus-debounced provider artwork lookup. */
+    private long mBackdropGeneration;
+    private Future<?> mBackdropTask;
+    private Vod mBackdropVod;
+    private String mBackdropSource = "";
     /**
      * Set while a file-access grant is in flight. PermissionX never calls back on a refusal,
      * so returning from the system screen is the only signal a denial produces; onResume
@@ -144,6 +153,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private Runnable mVaultOnGranted;
     /** Pending coalesced updateHero runnable; retained so onDestroy can cancel it. */
     private final Runnable mHeroUpdate = this::applyHeroUpdate;
+    private final Runnable mBackdropLoad = this::loadBackdropArtwork;
     /** Coalesces startup callbacks so the final content bind cannot steal the default focus. */
     private final Runnable mInitialFocus = () -> {
         if (!mInitialFocusPending || isFinishing() || isDestroyed()) return;
@@ -195,6 +205,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // The focused-poster backdrop replaces the hero-scoped atmosphere; hide it
         // entirely when the user opted for their own wallpaper (customWall).
         mBinding.atmosphere.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
+        mBinding.backdrop.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         mBinding.progressLayout.showProgress();
         PermissionUtil.requestNotify(this);
         DLNARendererService.start(this);
@@ -796,19 +807,62 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // History, Header, Func, EmptySource, Progress → keep current backdrop.
     }
 
-    /** Pushes a poster to the full-screen atmosphere view, or clears it. */
+    /** Pushes a poster to the fallback atmosphere and schedules provider artwork. */
     private void updateBackdrop(Vod vod, String sourceKey) {
         if (mBinding == null) return;
+        if (!isFilmAtmosphereEnabled()) {
+            clearBackdrop();
+            return;
+        }
         if (vod == null || TextUtils.isEmpty(vod.getPic())) {
             clearBackdrop();
             return;
         }
+        String nextSource = sourceKey == null ? "" : sourceKey;
+        if (nextSource.equals(mBackdropSource) && mBackdropVod != null
+                && vod.getId().equals(mBackdropVod.getId()) && vod.getPic().equals(mBackdropVod.getPic())) return;
         mBinding.atmosphere.setImage(sourceKey, vod.getPic());
+        mBackdropGeneration++;
+        cancelBackdropTask();
+        mBackdropVod = vod;
+        mBackdropSource = nextSource;
+        App.post(mBackdropLoad, 450);
     }
 
     private void clearBackdrop() {
         if (mBinding == null) return;
+        mBackdropGeneration++;
+        cancelBackdropTask();
+        App.removeCallbacks(mBackdropLoad);
+        cancelBackdropTask();
+        mBackdropVod = null;
+        mBackdropSource = "";
         mBinding.atmosphere.clear();
+        mBinding.backdrop.clear();
+    }
+
+    private void loadBackdropArtwork() {
+        Vod vod = mBackdropVod;
+        String sourceKey = mBackdropSource;
+        long generation = mBackdropGeneration;
+        if (vod == null || TextUtils.isEmpty(sourceKey) || TextUtils.isEmpty(vod.getId()) || TextUtils.isEmpty(vod.getName())) return;
+        MovieIdentity identity = MovieIdentity.from(sourceKey, vod.getId(), vod);
+        mBackdropTask = MetadataRepository.get().loadArtwork(identity, vod, metadata -> {
+            if (mBinding == null || generation != mBackdropGeneration) return;
+            mBackdropTask = null;
+            if (metadata != null && metadata.hasBackdrop()) {
+                mBinding.backdrop.setImage(sourceKey, metadata.getBackdrop());
+            } else {
+                mBinding.backdrop.clear();
+            }
+        });
+    }
+
+    private void cancelBackdropTask() {
+        if (mBackdropTask != null) {
+            mBackdropTask.cancel(true);
+            mBackdropTask = null;
+        }
     }
 
     private void showMore() {
@@ -1053,7 +1107,11 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     public void onItemFocus(Vod item) {
         if (item == null) return;
-        updateBackdrop(item, item.getSiteKey());
+        // Home recommendation items usually omit siteKey because the whole
+        // result belongs to the active home site. Falling back here keeps the
+        // metadata identity stable and allows provider artwork resolution.
+        String sourceKey = TextUtils.isEmpty(item.getSiteKey()) ? getHome().getKey() : item.getSiteKey();
+        updateBackdrop(item, sourceKey);
     }
 
     @Override
@@ -1127,6 +1185,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // history record into a Vod projection so the backdrop tracks the
         // focused history card the same way it tracks any other Vod.
         Vod projected = new Vod();
+        projected.setId(item.getVodId());
+        projected.setName(item.getVodName());
         projected.setPic(item.getVodPic());
         updateBackdrop(projected, item.getSiteKey());
         if (item.getCid() == VodConfig.getCid()) scheduleDetailPrefetch(item);
@@ -1271,6 +1331,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mPulse != null) mPulse.cancel();
         App.removeCallbacks(mPrefetch);
         App.removeCallbacks(mHeroUpdate);
+        App.removeCallbacks(mBackdropLoad);
         App.removeCallbacks(mInitialFocus);
         if (!isChangingConfigurations()) {
             DLNARendererService.stop(this);

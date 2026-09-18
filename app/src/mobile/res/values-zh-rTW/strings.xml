@@ -59,4 +59,10 @@
         <item>子母畫面</item>
     </string-array>
 
+    <string name="metadata_source">來源</string>
+    <string name="metadata_douban">豆瓣</string>
+    <string name="metadata_tmdb">TMDB</string>
+    <string name="metadata_confirm_title">使用豆瓣資料？</string>
+    <string name="metadata_confirm_use">使用</string>
+    <string name="metadata_confirm_keep">保留來源</string>
 </resources>

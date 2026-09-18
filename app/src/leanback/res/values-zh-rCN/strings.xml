@@ -18,4 +18,11 @@
     <string name="push_info">使用手机扫描二维码，或于浏览器访问地址\n<xliff:g name="name">%s</xliff:g></string>
     <string name="push_info_emulator">使用手机扫描二维码，或于浏览器访问地址\n<xliff:g name="name">%1$s</xliff:g>\n\n检测到模拟器 — 如需在宿主机浏览器中访问，请先执行：\nadb forward tcp:9978 tcp:9978\n然后浏览器打开\n<xliff:g name="local">%2$s</xliff:g></string>
 
+    <string name="metadata_source">源站</string>
+    <string name="metadata_douban">豆瓣</string>
+    <string name="metadata_tmdb">TMDB</string>
+    <string name="metadata_artworks">影片照片墙</string>
+    <string name="metadata_confirm_title">使用豆瓣资料？</string>
+    <string name="metadata_confirm_use">使用</string>
+    <string name="metadata_confirm_keep">保留源站</string>
 </resources>

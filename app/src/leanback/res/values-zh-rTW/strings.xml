@@ -18,4 +18,11 @@
     <string name="push_info">使用手機掃描 QR Code，或於瀏覽器輸入網址\n<xliff:g name="name">%s</xliff:g></string>
     <string name="push_info_emulator">使用手機掃描 QR Code，或於瀏覽器輸入網址\n<xliff:g name="name">%1$s</xliff:g>\n\n偵測到模擬器 — 若要在宿主機瀏覽器中存取，請先執行：\nadb forward tcp:9978 tcp:9978\n然後瀏覽器開啟\n<xliff:g name="local">%2$s</xliff:g></string>
 
+    <string name="metadata_source">來源</string>
+    <string name="metadata_douban">豆瓣</string>
+    <string name="metadata_tmdb">TMDB</string>
+    <string name="metadata_artworks">影片照片牆</string>
+    <string name="metadata_confirm_title">使用豆瓣資料？</string>
+    <string name="metadata_confirm_use">使用</string>
+    <string name="metadata_confirm_keep">保留來源</string>
 </resources>

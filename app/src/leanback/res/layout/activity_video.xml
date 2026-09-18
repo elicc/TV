@@ -13,6 +13,13 @@
         android:focusable="false"
         android:importantForAccessibility="no" />
 
+    <com.fongmi.android.tv.ui.custom.FilmBackdropView
+        android:id="@+id/backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
+
     <FrameLayout
         android:id="@+id/video"
         android:layout_width="420dp"
@@ -164,10 +171,61 @@
         tools:text="更新到第二季" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/row1"
+        android:id="@+id/metadataTabs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/remark"
+        android:layout_alignStart="@+id/remark"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tabSource"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_item"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/metadata_source"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="@dimen/tv_text_button" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tabDouban"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_item"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/metadata_douban"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="@dimen/tv_text_button" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tabTmdb"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@drawable/selector_item"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/metadata_tmdb"
+            android:textColor="?attr/tvColorTextPrimary"
+            android:textSize="@dimen/tv_text_button" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/row1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/metadataTabs"
         android:layout_alignStart="@+id/remark"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
@@ -271,7 +329,7 @@
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:nextFocusUp="@id/actor"
-            android:nextFocusDown="@id/flag"
+            android:nextFocusDown="@id/artworks"
             android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/detail_desc"
@@ -292,7 +350,7 @@
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:nextFocusUp="@id/actor"
-            android:nextFocusDown="@id/flag"
+            android:nextFocusDown="@id/artworks"
             android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/keep"
@@ -313,7 +371,7 @@
             android:gravity="center"
             android:nextFocusRight="@id/change"
             android:nextFocusUp="@id/actor"
-            android:nextFocusDown="@id/flag"
+            android:nextFocusDown="@id/artworks"
             android:ellipsize="end"
             android:singleLine="true"
             android:text="@string/play_change"
@@ -462,6 +520,30 @@
                         android:backgroundTint="?attr/tvColorSurfaceRaised" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </com.fongmi.android.tv.ui.custom.SkeletonLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/artworkTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/tv_safe_horizontal"
+                android:layout_marginBottom="8dp"
+                android:text="@string/metadata_artworks"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="@dimen/tv_text_meta"
+                android:visibility="gone" />
+
+            <androidx.leanback.widget.HorizontalGridView
+                android:id="@+id/artworks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:nextFocusUp="@id/content"
+                android:nextFocusDown="@id/flag"
+                android:paddingStart="@dimen/tv_safe_horizontal"
+                android:paddingEnd="@dimen/tv_safe_horizontal"
+                android:visibility="gone" />
 
             <androidx.leanback.widget.HorizontalGridView
                 android:id="@+id/flag"

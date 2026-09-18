@@ -1,0 +1,298 @@
+package com.fongmi.android.tv.metadata;
+
+import android.util.Log;
+
+import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.bean.Vod;
+import com.fongmi.android.tv.utils.Task;
+import com.github.catvod.utils.Prefers;
+
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
+
+/** Coordinates source metadata, external providers, matching and local caching. */
+public class MetadataRepository {
+    private static final String TAG = "MetadataRepository";
+    private static final long MEMORY_TTL = 10 * 60 * 1000L;
+    private static final long DISK_TTL = 30L * 24 * 60 * 60 * 1000L;
+    private static final long CANDIDATE_TTL = 24L * 60 * 60 * 1000L;
+    private static final int MAX_CACHE_ENTRIES = 500;
+    private static final MetadataRepository INSTANCE = new MetadataRepository();
+
+    private final MetadataProviderClient douban = new DoubanProvider();
+    private final ConcurrentMap<String, CacheEntry> memory = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CandidateEntry> candidates = new ConcurrentHashMap<>();
+
+    public static MetadataRepository get() {
+        return INSTANCE;
+    }
+
+    public MetadataState initial(MovieIdentity identity, Vod vod) {
+        MovieMetadata source = MovieMetadata.fromSource(vod);
+        return MetadataState.loading(identity, source);
+    }
+
+    public MetadataState sourceOnly(MovieIdentity identity, Vod vod) {
+        MovieMetadata source = MovieMetadata.fromSource(vod);
+        EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+        providers.put(MetadataProvider.SOURCE, source);
+        return state(identity, source, providers, List.of(), MetadataState.Status.FALLBACK, "source only");
+    }
+
+    public void confirm(MovieIdentity identity, Vod vod, MetadataCandidate candidate, Consumer<MetadataState> callback) {
+        MovieMetadata source = MovieMetadata.fromSource(vod);
+        Task.execute(() -> {
+            try {
+                if (candidate == null || candidate.getMetadata() == null || !MetadataMatcher.isCandidate(candidate.getConfidence())) {
+                    App.post(() -> callback.accept(fallback(identity, source, "candidate rejected")));
+                    return;
+                }
+                MovieMetadata detail = douban.detail(candidate.getMetadata().getExternalId(), isTv(identity, candidate.getMetadata()));
+                detail.setProvider(MetadataProvider.DOUBAN);
+                String key = identity.mappingKey(MetadataProvider.DOUBAN);
+                save(key, identity, detail, detail.getExternalId(), true);
+                EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+                providers.put(MetadataProvider.SOURCE, source);
+                providers.put(MetadataProvider.DOUBAN, detail);
+                MetadataState state = state(identity, source, providers, List.of(candidate), MetadataState.Status.SUCCESS, "user confirmed");
+                App.post(() -> callback.accept(state));
+            } catch (Throwable error) {
+                Log.w(TAG, "confirm failed for " + identity.title(), error);
+                App.post(() -> callback.accept(fallback(identity, source, error.getMessage())));
+            }
+        });
+    }
+
+    public void load(MovieIdentity identity, Vod vod, Consumer<MetadataState> callback) {
+        MovieMetadata source = MovieMetadata.fromSource(vod);
+        MetadataState loading = MetadataState.loading(identity, source);
+        callback.accept(loading);
+        Task.execute(() -> {
+            try {
+                MetadataState state = resolve(identity, source);
+                App.post(() -> callback.accept(state));
+            } catch (Throwable error) {
+                Log.w(TAG, "load failed for " + identity.title(), error);
+                App.post(() -> callback.accept(fallback(identity, source, error.getMessage())));
+            }
+        });
+    }
+
+    /**
+     * Resolves only the artwork needed by the TV home backdrop. This deliberately
+     * reuses the same matching/caching policy as the detail screen: low-confidence
+     * candidates never leak their images into the home screen.
+     */
+    public Future<?> loadArtwork(MovieIdentity identity, Vod vod, Consumer<MovieMetadata> callback) {
+        if (identity == null || vod == null || !identity.isValid()) {
+            App.post(() -> callback.accept(null));
+            return null;
+        }
+        return Task.submit(() -> {
+            MovieMetadata result = null;
+            try {
+                MetadataState state = resolve(identity, MovieMetadata.fromSource(vod));
+                if (state.getStatus() == MetadataState.Status.SUCCESS
+                        && state.getSelectedProvider() != MetadataProvider.SOURCE) {
+                    result = state.getSelected();
+                    if (result != null && (!result.hasBackdrop() || !result.hasArtworks())) {
+                        douban.enrichArtwork(result, isTv(identity, result));
+                        if (result.hasBackdrop() || result.hasArtworks()) save(identity.mappingKey(MetadataProvider.DOUBAN), identity,
+                                result, result.getExternalId(), false);
+                    }
+                }
+            } catch (Throwable error) {
+                Log.d(TAG, "artwork unavailable for " + identity.title(), error);
+            }
+            MovieMetadata artwork = result;
+            App.post(() -> callback.accept(artwork));
+        });
+    }
+
+    private MetadataState resolve(MovieIdentity identity, MovieMetadata source) throws Exception {
+        EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+        providers.put(MetadataProvider.SOURCE, source);
+        if (identity == null || !identity.isValid()) return state(identity, source, providers, List.of(), MetadataState.Status.FALLBACK, "invalid identity");
+
+        String mappingKey = identity.mappingKey(MetadataProvider.DOUBAN);
+        CacheEntry cached = memory.get(mappingKey);
+        if (cached != null && !cached.expired(MEMORY_TTL)) {
+            MovieMetadata metadata = cached.metadata;
+            enrichCachedArtwork(identity, metadata);
+            providers.put(MetadataProvider.DOUBAN, metadata);
+            return state(identity, source, providers, List.of(), MetadataState.Status.SUCCESS, "memory");
+        }
+
+        String persisted = Prefers.getString(mappingKey, "");
+        if (!persisted.isEmpty()) {
+            CachedMetadata saved = App.gson().fromJson(persisted, CachedMetadata.class);
+            if (saved != null && saved.updatedAt > 0 && System.currentTimeMillis() - saved.updatedAt < DISK_TTL
+                    && identityFingerprint(identity).equals(saved.fingerprint) && !saved.externalId.isEmpty()) {
+                MovieMetadata metadata = saved.metadata;
+                if (metadata == null) metadata = douban.detail(saved.externalId, isTv(identity));
+                metadata.setProvider(MetadataProvider.DOUBAN);
+                enrichCachedArtwork(identity, metadata);
+                putBounded(memory, mappingKey, new CacheEntry(metadata, System.currentTimeMillis()));
+                providers.put(MetadataProvider.DOUBAN, metadata);
+                return state(identity, source, providers, List.of(), MetadataState.Status.SUCCESS, "disk");
+            }
+            Prefers.remove(mappingKey);
+        }
+
+        String candidateKey = "metadata_candidates_douban_" + identity.sourceInstanceId() + "_" + identity.sourceVodId();
+        CandidateEntry candidateEntry = candidates.get(candidateKey);
+        List<MetadataCandidate> ranked = candidateEntry != null && !candidateEntry.expired(CANDIDATE_TTL)
+                ? candidateEntry.items : search(identity);
+        putBounded(candidates, candidateKey, new CandidateEntry(ranked, System.currentTimeMillis()));
+        if (ranked.isEmpty()) return state(identity, source, providers, ranked, MetadataState.Status.FALLBACK, "no match");
+
+        double best = ranked.get(0).getConfidence();
+        double second = ranked.size() > 1 ? ranked.get(1).getConfidence() : 0d;
+        Log.d(TAG, "candidates title=" + identity.title() + " best=" + best + " second=" + second);
+        if (!MetadataMatcher.isAutomatic(best, second)) {
+            return state(identity, source, providers, ranked, MetadataState.Status.FALLBACK, "confirmation required");
+        }
+
+        MovieMetadata selected = ranked.get(0).getMetadata();
+        MovieMetadata detail = douban.detail(selected.getExternalId(), isTv(identity, selected));
+        detail.setProvider(MetadataProvider.DOUBAN);
+        save(mappingKey, identity, detail, detail.getExternalId(), false);
+        providers.put(MetadataProvider.DOUBAN, detail);
+        return state(identity, source, providers, ranked, MetadataState.Status.SUCCESS, "auto matched");
+    }
+
+    private List<MetadataCandidate> search(MovieIdentity identity) throws Exception {
+        List<MovieMetadata> results = douban.search(identity);
+        List<MetadataCandidate> ranked = new ArrayList<>();
+        for (MovieMetadata metadata : results) {
+            double score = MetadataMatcher.score(identity, metadata);
+            if (MetadataMatcher.isCandidate(score)) ranked.add(new MetadataCandidate(metadata, score));
+        }
+        ranked.sort(Comparator.comparingDouble(MetadataCandidate::getConfidence).reversed());
+        return ranked;
+    }
+
+    private void save(String key, MovieIdentity identity, MovieMetadata metadata, String externalId, boolean userVerified) {
+        CachedMetadata saved = new CachedMetadata();
+        saved.externalId = externalId;
+        saved.fingerprint = identityFingerprint(identity);
+        saved.updatedAt = System.currentTimeMillis();
+        saved.userVerified = userVerified;
+        saved.metadata = metadata;
+        Prefers.put(key, App.gson().toJson(saved));
+        putBounded(memory, key, new CacheEntry(metadata, saved.updatedAt));
+    }
+
+    /** Backfills photos for metadata written before the artwork gallery existed. */
+    private void enrichCachedArtwork(MovieIdentity identity, MovieMetadata metadata) {
+        if (metadata == null || metadata.getProvider() != MetadataProvider.DOUBAN
+                || (metadata.hasBackdrop() && metadata.hasArtworks())) return;
+        try {
+            douban.enrichArtwork(metadata, isTv(identity, metadata));
+            if (metadata.hasBackdrop() || metadata.hasArtworks()) {
+                save(identity.mappingKey(MetadataProvider.DOUBAN), identity, metadata, metadata.getExternalId(), false);
+            }
+        } catch (IOException ignored) {
+            // Artwork is optional; retain the already trusted title metadata.
+        }
+    }
+
+    private static <T> void putBounded(ConcurrentMap<String, T> map, String key, T value) {
+        if (map.size() >= MAX_CACHE_ENTRIES) {
+            String first = map.keySet().stream().findFirst().orElse(null);
+            if (first != null) map.remove(first);
+        }
+        map.put(key, value);
+    }
+
+    private static MetadataState fallback(MovieIdentity identity, MovieMetadata source, String message) {
+        EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+        providers.put(MetadataProvider.SOURCE, source);
+        return state(identity, source, providers, List.of(), MetadataState.Status.ERROR, message == null ? "metadata unavailable" : message);
+    }
+
+    private static MetadataState state(MovieIdentity identity, MovieMetadata source, Map<MetadataProvider, MovieMetadata> providers,
+                                       List<MetadataCandidate> candidates, MetadataState.Status status, String message) {
+        MetadataProvider selected = status == MetadataState.Status.SUCCESS && providers.containsKey(MetadataProvider.DOUBAN)
+                ? MetadataProvider.DOUBAN : MetadataProvider.SOURCE;
+        return new MetadataState(identity, source, providers, candidates, selected, status, message);
+    }
+
+    private static boolean isTv(MovieIdentity identity) {
+        String type = (identity.type() + " " + identity.title()).toLowerCase(Locale.ROOT);
+        boolean series = type.contains("电视剧") || type.contains("连续剧") || type.contains("剧集")
+                || (type.contains("剧") && !type.contains("剧情"));
+        return type.contains("tv") || series || type.contains("综艺") || type.contains("番");
+    }
+
+    private static boolean isTv(MovieIdentity identity, MovieMetadata metadata) {
+        if (metadata != null) {
+            if ("tv".equals(metadata.getExternalType())) return true;
+            if ("movie".equals(metadata.getExternalType())) return false;
+        }
+        return isTv(identity);
+    }
+
+    private static String identityFingerprint(MovieIdentity identity) {
+        String plain = String.join("|", MetadataMatcher.normalize(identity.title()), identity.year(),
+                MetadataMatcher.normalize(identity.area()), MetadataMatcher.normalize(identity.type()),
+                MetadataMatcher.normalize(identity.director()));
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(plain.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder();
+            for (byte value : bytes) result.append(String.format("%02x", value));
+            return result.toString();
+        } catch (Exception ignored) {
+            return plain;
+        }
+    }
+
+
+    private static class CandidateEntry {
+        private final List<MetadataCandidate> items;
+        private final long updatedAt;
+
+        private CandidateEntry(List<MetadataCandidate> items, long updatedAt) {
+            this.items = items == null ? List.of() : List.copyOf(items);
+            this.updatedAt = updatedAt;
+        }
+
+        private boolean expired(long ttl) {
+            return System.currentTimeMillis() - updatedAt >= ttl;
+        }
+    }
+    private static class CacheEntry {
+        private final MovieMetadata metadata;
+        private final long updatedAt;
+
+        private CacheEntry(MovieMetadata metadata, long updatedAt) {
+            this.metadata = metadata;
+            this.updatedAt = updatedAt;
+        }
+
+        private boolean expired(long ttl) {
+            return metadata == null || System.currentTimeMillis() - updatedAt >= ttl;
+        }
+    }
+
+    private static class CachedMetadata {
+        private String externalId = "";
+        private String fingerprint = "";
+        private long updatedAt;
+        private boolean userVerified;
+        private int version = 1;
+        private MovieMetadata metadata;
+    }
+}

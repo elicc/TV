@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.DialogFragment;
@@ -61,6 +62,9 @@ import com.fongmi.android.tv.event.CastEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.CustomTarget;
 import com.fongmi.android.tv.model.VideoViewModel;
+import com.fongmi.android.tv.metadata.MetadataProvider;
+import com.fongmi.android.tv.metadata.MetadataState;
+import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.playback.PlaybackAction;
 import com.fongmi.android.tv.playback.PlaybackIntent;
 import com.fongmi.android.tv.playback.PlaybackOrientation;
@@ -136,6 +140,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private History mHistory;
     private boolean fullscreen;
     private boolean useParse;
+    private boolean metadataPrompted;
     private boolean rotate;
 
     public static void push(FragmentActivity activity, String text) {
@@ -322,6 +327,9 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.more.setOnClickListener(view -> onMore());
         mBinding.actor.setOnClickListener(view -> onActor());
         mBinding.content.setOnClickListener(view -> onContent());
+        mBinding.tabSource.setOnClickListener(view -> selectMetadata(MetadataProvider.SOURCE));
+        mBinding.tabDouban.setOnClickListener(view -> selectMetadata(MetadataProvider.DOUBAN));
+        mBinding.tabTmdb.setOnClickListener(view -> selectMetadata(MetadataProvider.TMDB));
         mBinding.reverse.setOnClickListener(view -> onReverse());
         mBinding.director.setOnClickListener(view -> onDirector());
         mBinding.name.setOnLongClickListener(view -> onChange());
@@ -419,6 +427,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mViewModel = new ViewModelProvider(this).get(VideoViewModel.class);
         mVod = mViewModel.createPlaybackController(this);
         observeWhenServiceReady(mViewModel.getDetail(), this::onDetailObserved);
+        observeWhenServiceReady(mViewModel.getMetadata(), this::onMetadataObserved);
         observeWhenServiceReady(mViewModel.getSearch(), this::onSearchObserved);
         observeWhenServiceReady(mViewModel.getPreload(), this::onPreloadObserved);
         observeWhenServiceReady(mViewModel.getPlayback(), this::onPlaybackObserved);
@@ -426,6 +435,33 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     private void onDetailObserved(VodDetailResult result) {
         mVod.onDetailResult(result);
+    }
+
+    private void onMetadataObserved(MetadataState state) {
+        if (state == null) return;
+        MovieMetadata metadata = state.getSelected();
+        if (metadata != null) setMetadataText(metadata);
+        mBinding.tabDouban.setVisibility(state.getProviders().containsKey(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
+        mBinding.tabTmdb.setVisibility(state.getProviders().containsKey(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
+        mBinding.tabSource.setSelected(state.getSelectedProvider() == MetadataProvider.SOURCE);
+        mBinding.tabDouban.setSelected(state.getSelectedProvider() == MetadataProvider.DOUBAN);
+        mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
+        if (!metadataPrompted && state.getStatus() == MetadataState.Status.FALLBACK && !state.getCandidates().isEmpty()) {
+            metadataPrompted = true;
+            MovieMetadata candidate = state.getCandidates().get(0).getMetadata();
+            String message = candidate.getTitle() + (candidate.getYear().isEmpty() ? "" : " (" + candidate.getYear() + ")")
+                    + (candidate.getRatingText().isEmpty() ? "" : "\nRating: " + candidate.getRatingText());
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.metadata_confirm_title)
+                    .setMessage(message)
+                    .setNegativeButton(R.string.metadata_confirm_keep, null)
+                    .setPositiveButton(R.string.metadata_confirm_use, (dialog, which) -> mViewModel.confirmMetadata(state.getCandidates().get(0)))
+                    .show();
+        }
+    }
+
+    private void selectMetadata(MetadataProvider provider) {
+        mViewModel.selectMetadataProvider(provider);
     }
 
     private void onPlaybackObserved(PlaybackResult<VodPlayRequest> result) {
@@ -596,6 +632,8 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         setArtwork(item.getPic());
         checkKeepImg();
         setText(item);
+        metadataPrompted = false;
+        mViewModel.loadMetadata(getKey(), getId(), item);
         updateKeep();
     }
 
@@ -771,6 +809,17 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mBinding.progressLayout.showEmpty();
     }
 
+    private void setMetadataText(MovieMetadata item) {
+        if (item.getTitle().isEmpty()) return;
+        mBinding.name.setText(item.getTitle());
+        setText(mBinding.director, R.string.detail_director, item.getDirectors());
+        setText(mBinding.actor, R.string.detail_actor, item.getActors());
+        setText(mBinding.content, 0, item.getSummary());
+        setText(mBinding.remark, 0, item.getRatingText());
+        setOther(mBinding.other, item);
+        if (!item.getPoster().isEmpty()) setArtwork(item.getPoster());
+    }
+
     private void setText(Vod item) {
         setText(mBinding.site, R.string.detail_site, getSite().getName());
         setText(mBinding.director, R.string.detail_director, item.getDirector());
@@ -802,6 +851,15 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
                 setRedirect(true);
             }
         };
+    }
+
+    private void setOther(TextView view, MovieMetadata item) {
+        StringBuilder sb = new StringBuilder();
+        if (!item.getYear().isEmpty()) sb.append(getString(R.string.detail_year, item.getYear())).append("  ");
+        if (!item.getArea().isEmpty()) sb.append(getString(R.string.detail_area, item.getArea())).append("  ");
+        if (!item.getType().isEmpty()) sb.append(getString(R.string.detail_type, item.getType())).append("  ");
+        view.setVisibility(sb.length() == 0 ? View.GONE : View.VISIBLE);
+        view.setText(Util.substring(sb.toString(), 2));
     }
 
     private void setOther(TextView view, Vod item) {

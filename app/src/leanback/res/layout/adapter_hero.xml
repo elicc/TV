@@ -77,19 +77,19 @@
             android:clipChildren="false"
             android:clipToPadding="false">
             <TextView
+                android:id="@+id/secondary" style="@style/Tv.HeroAction"
+                android:drawableStart="@drawable/ic_hero_library"
+                android:drawableTint="@color/hero_secondary_text_color"
+                android:textColor="@color/hero_secondary_text_color"
+                android:nextFocusRight="@id/primary"/>
+            <TextView
                 android:id="@+id/primary" style="@style/Tv.HeroAction"
+                android:layout_marginStart="8dp"
                 android:background="@drawable/tv_hero_primary"
                 android:drawableStart="@drawable/ic_hero_details"
                 android:drawableTint="@color/hero_primary_text_color"
                 android:textColor="@color/hero_primary_text_color"
-                android:nextFocusRight="@id/secondary"/>
-            <TextView
-                android:id="@+id/secondary" style="@style/Tv.HeroAction"
-                android:layout_marginStart="8dp"
-                android:drawableStart="@drawable/ic_hero_library"
-                android:drawableTint="@color/hero_secondary_text_color"
-                android:textColor="@color/hero_secondary_text_color"
-                android:nextFocusLeft="@id/primary"/>
+                android:nextFocusLeft="@id/secondary"/>
         </LinearLayout>
     </LinearLayout>
 

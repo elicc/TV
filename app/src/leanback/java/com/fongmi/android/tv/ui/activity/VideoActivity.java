@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
 import androidx.lifecycle.ViewModelProvider;
@@ -54,6 +55,10 @@ import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.CustomTarget;
 import com.fongmi.android.tv.model.VideoViewModel;
+import com.fongmi.android.tv.metadata.MetadataProvider;
+import com.fongmi.android.tv.metadata.MetadataState;
+import com.fongmi.android.tv.metadata.MovieMetadata;
+import com.fongmi.android.tv.ui.adapter.ArtworkAdapter;
 import com.fongmi.android.tv.playback.PlaybackAction;
 import com.fongmi.android.tv.playback.PlaybackIntent;
 import com.fongmi.android.tv.playback.PlaybackReset;
@@ -120,6 +125,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private ArrayAdapter mArrayAdapter;
     private PartAdapter mPartAdapter;
     private QuickAdapter mQuickAdapter;
+    private ArtworkAdapter mArtworkAdapter;
     private ViewGroup.LayoutParams mFrameParams;
     private CustomKeyDownVod mKeyDown;
     private Clock mClock;
@@ -132,6 +138,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private History mHistory;
     private boolean fullscreen;
     private boolean useParse;
+    private boolean metadataPrompted;
 
     public static void push(FragmentActivity activity, String text) {
         Uri uri = UrlUtil.uri(text);
@@ -274,6 +281,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         super.onNewIntent(intent);
         if (TextUtils.isEmpty(intent.getStringExtra("id")) || isSameVideo(intent)) return;
         mBinding.atmosphere.clear();
+        mBinding.backdrop.clear();
+        mArtworkAdapter.clear();
+        mBinding.artworks.setVisibility(View.GONE);
+        mBinding.artworkTitle.setVisibility(View.GONE);
         saveHistory(true);
         mVod.reset();
         setIntent(intent);
@@ -317,6 +328,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
         mBinding.content.setOnClickListener(view -> onContent());
+        mBinding.tabSource.setOnClickListener(view -> selectMetadata(MetadataProvider.SOURCE));
+        mBinding.tabDouban.setOnClickListener(view -> selectMetadata(MetadataProvider.DOUBAN));
+        mBinding.tabTmdb.setOnClickListener(view -> selectMetadata(MetadataProvider.TMDB));
         mBinding.control.action.more.setOnClickListener(view -> setAdvancedControls(!isVisible(mBinding.control.action.advanced)));
         mBinding.control.action.text.setOnClickListener(this::onTrack);
         mBinding.control.action.audio.setOnClickListener(this::onTrack);
@@ -365,6 +379,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setRecyclerView() {
+        mBinding.artworks.setHorizontalSpacing(ResUtil.dp2px(12));
+        mBinding.artworks.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter());
         mBinding.flag.setHorizontalSpacing(ResUtil.dp2px(8));
         mBinding.flag.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
         mBinding.flag.setAdapter(mFlagAdapter = new FlagAdapter(this));
@@ -402,6 +419,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mViewModel = new ViewModelProvider(this).get(VideoViewModel.class);
         mVod = mViewModel.createPlaybackController(this);
         observeWhenServiceReady(mViewModel.getDetail(), this::onDetailObserved);
+        observeWhenServiceReady(mViewModel.getMetadata(), this::onMetadataObserved);
         observeWhenServiceReady(mViewModel.getSearch(), this::onSearchObserved);
         observeWhenServiceReady(mViewModel.getPreload(), this::onPreloadObserved);
         observeWhenServiceReady(mViewModel.getPlayback(), this::onPlaybackObserved);
@@ -409,6 +427,34 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onDetailObserved(VodDetailResult result) {
         mVod.onDetailResult(result);
+    }
+
+    private void onMetadataObserved(MetadataState state) {
+        if (state == null) return;
+        MovieMetadata metadata = state.getSelected();
+        if (metadata != null) setMetadataText(metadata);
+        setMetadataArtwork(metadata);
+        mBinding.tabDouban.setVisibility(state.getProviders().containsKey(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
+        mBinding.tabTmdb.setVisibility(state.getProviders().containsKey(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
+        mBinding.tabSource.setSelected(state.getSelectedProvider() == MetadataProvider.SOURCE);
+        mBinding.tabDouban.setSelected(state.getSelectedProvider() == MetadataProvider.DOUBAN);
+        mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
+        if (!metadataPrompted && state.getStatus() == MetadataState.Status.FALLBACK && !state.getCandidates().isEmpty()) {
+            metadataPrompted = true;
+            MovieMetadata candidate = state.getCandidates().get(0).getMetadata();
+            String message = candidate.getTitle() + (candidate.getYear().isEmpty() ? "" : " (" + candidate.getYear() + ")")
+                    + (candidate.getRatingText().isEmpty() ? "" : "\nRating: " + candidate.getRatingText());
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.metadata_confirm_title)
+                    .setMessage(message)
+                    .setNegativeButton(R.string.metadata_confirm_keep, null)
+                    .setPositiveButton(R.string.metadata_confirm_use, (dialog, which) -> mViewModel.confirmMetadata(state.getCandidates().get(0)))
+                    .show();
+        }
+    }
+
+    private void selectMetadata(MetadataProvider provider) {
+        mViewModel.selectMetadataProvider(provider);
     }
 
     private void onPlaybackObserved(PlaybackResult<VodPlayRequest> result) {
@@ -579,6 +625,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setArtwork(item.getPic());
         checkKeepImg();
         setText(item);
+        metadataPrompted = false;
+        mViewModel.loadMetadata(getKey(), getId(), item);
         updateKeep();
         trace("VIDEO_DETAIL_RENDER_END");
     }
@@ -774,6 +822,36 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.progressLayout.showEmpty();
     }
 
+    private void setMetadataText(MovieMetadata item) {
+        if (item.getTitle().isEmpty()) return;
+        mBinding.name.setText(item.getTitle());
+        setText(mBinding.year, R.string.detail_year, item.getYear());
+        setText(mBinding.area, R.string.detail_area, item.getArea());
+        setText(mBinding.type, R.string.detail_type, item.getType());
+        setText(mBinding.director, R.string.detail_director, item.getDirectors());
+        setText(mBinding.actor, R.string.detail_actor, item.getActors());
+        mBinding.content.setTag(item.getSummary());
+        setText(mBinding.content, 0, item.getSummary());
+        setText(mBinding.remark, 0, item.getRatingText());
+        if (!item.getPoster().isEmpty()) setArtwork(item.getPoster());
+    }
+
+    private void setMetadataArtwork(MovieMetadata item) {
+        boolean available = item != null && item.getProvider() == MetadataProvider.DOUBAN && item.hasArtworks();
+        mBinding.artworkTitle.setVisibility(available ? View.VISIBLE : View.GONE);
+        mBinding.artworks.setVisibility(available ? View.VISIBLE : View.GONE);
+        if (available) mArtworkAdapter.addAll(item.getArtworks());
+        else mArtworkAdapter.clear();
+        updateFocus();
+        if (item != null && item.getProvider() == MetadataProvider.DOUBAN && item.hasBackdrop() && !isFullscreen()) {
+            mBinding.backdrop.setVisibility(View.VISIBLE);
+            mBinding.backdrop.setImage(getSite().getKey(), item.getBackdrop());
+        } else {
+            mBinding.backdrop.clear();
+            mBinding.backdrop.setVisibility(View.GONE);
+        }
+    }
+
     private void setText(Vod item) {
         mBinding.content.setTag(item.getContent());
         setText(mBinding.year, R.string.detail_year, item.getYear());
@@ -842,22 +920,22 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int findFocusDown(int index) {
-        List<Integer> orders = Arrays.asList(R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
+        List<Integer> orders = Arrays.asList(R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
         for (int i = 0; i < orders.size(); i++) if (i > index) if (isVisible(findViewById(orders.get(i)))) return orders.get(i);
         return 0;
     }
 
     private int findFocusUp(int index) {
-        List<Integer> orders = Arrays.asList(R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
+        List<Integer> orders = Arrays.asList(R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
         for (int i = orders.size() - 1; i >= 0; i--) if (i < index) if (isVisible(findViewById(orders.get(i)))) return orders.get(i);
         return 0;
     }
 
     private void updateFocus() {
-        mPartAdapter.setNextFocusUp(findFocusUp(4));
-        mEpisodeAdapter.setNextFocusUp(findFocusUp(2));
-        mFlagAdapter.setNextFocusDown(findFocusDown(0));
-        mEpisodeAdapter.setNextFocusDown(findFocusDown(2));
+        mPartAdapter.setNextFocusUp(findFocusUp(5));
+        mEpisodeAdapter.setNextFocusUp(findFocusUp(3));
+        mFlagAdapter.setNextFocusDown(findFocusDown(1));
+        mEpisodeAdapter.setNextFocusDown(findFocusDown(3));
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         notifyItemChanged(mBinding.part, mPartAdapter);
         notifyItemChanged(mBinding.flag, mFlagAdapter);
@@ -884,6 +962,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void enterFullscreen() {
         mBinding.atmosphere.clear();
+        mBinding.backdrop.clear();
+        mBinding.backdrop.setVisibility(View.GONE);
         mBinding.atmosphere.setVisibility(View.GONE);
         mFocus1 = getCurrentFocus();
         mBinding.video.requestFocus();
@@ -902,6 +982,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mKeyDown.setFull(false);
         setFullscreen(false);
         updateAtmosphere();
+        MetadataState state = mViewModel == null ? null : mViewModel.getMetadata().getValue();
+        setMetadataArtwork(state == null ? null : state.getSelected());
         mFocus2 = null;
         hideInfo();
     }
@@ -1250,6 +1332,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.atmosphere.setVisibility(visible ? View.VISIBLE : View.GONE);
         if (visible) mBinding.atmosphere.setImage(getSite().getKey(), currentArtwork());
         else mBinding.atmosphere.clear();
+        if (!visible) mBinding.backdrop.clear();
     }
 
     /** Detail artwork when fetched, otherwise the poster passed through the entry intent. */
@@ -1585,12 +1668,15 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         super.onStart();
         mClock.stop().start();
         updateAtmosphere();
+        MetadataState state = mViewModel == null ? null : mViewModel.getMetadata().getValue();
+        setMetadataArtwork(state == null ? null : state.getSelected());
     }
 
     @Override
     protected void onStop() {
         trace("VIDEO_ON_STOP_BEGIN");
         mBinding.atmosphere.clear();
+        mBinding.backdrop.clear();
         super.onStop();
         if (!isFinishing()) saveHistory(false);
         if (PlayerSetting.isBackgroundOff()) mClock.stop();
@@ -1625,6 +1711,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     protected void onDestroy() {
         trace("VIDEO_ON_DESTROY_BEGIN");
         mBinding.atmosphere.clear();
+        mBinding.backdrop.clear();
         mClock.release();
         saveHistory(true);
         DanmakuApi.cancel();

@@ -19,9 +19,15 @@ import com.fongmi.android.tv.playback.vod.VodPlayRequest;
 import com.fongmi.android.tv.playback.vod.VodPlaybackController;
 import com.fongmi.android.tv.playback.vod.VodPlaybackHost;
 import com.fongmi.android.tv.playback.vod.VodPlaybackState;
+import com.fongmi.android.tv.metadata.MetadataProvider;
+import com.fongmi.android.tv.metadata.MetadataRepository;
+import com.fongmi.android.tv.metadata.MetadataState;
+import com.fongmi.android.tv.metadata.MovieIdentity;
+import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.utils.Task;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentMap;
 
 public class VideoViewModel extends SiteViewModel implements VodDataSource {
@@ -35,6 +41,10 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
     private final MutableLiveData<PlaybackResult<VodPlayRequest>> playback;
     private final ViewModelTaskRunner<TaskType> requestTasks;
     private final VodPlaybackState playbackState;
+    private final MutableLiveData<MetadataState> metadata;
+    private final AtomicLong metadataGeneration;
+    private final MetadataRepository metadataRepository;
+    private Vod metadataVod;
 
     public VideoViewModel() {
         detail = new MutableLiveData<>();
@@ -42,6 +52,9 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
         playback = new MutableLiveData<>();
         requestTasks = new ViewModelTaskRunner<>(TaskType.class);
         playbackState = new VodPlaybackState();
+        metadata = new MutableLiveData<>();
+        metadataGeneration = new AtomicLong();
+        metadataRepository = MetadataRepository.get();
     }
 
     public LiveData<VodDetailResult> getDetail() {
@@ -54,6 +67,38 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
 
     public LiveData<PlaybackResult<VodPlayRequest>> getPlayback() {
         return playback;
+    }
+
+    public LiveData<MetadataState> getMetadata() {
+        return metadata;
+    }
+
+    public void loadMetadata(String sourceKey, String sourceId, Vod vod) {
+        long generation = metadataGeneration.incrementAndGet();
+        metadataVod = vod;
+        MovieIdentity identity = MovieIdentity.from(sourceKey, sourceId, vod);
+        if (SiteApi.PUSH.equals(sourceKey)) {
+            metadata.postValue(metadataRepository.sourceOnly(identity, vod));
+            return;
+        }
+        metadataRepository.load(identity, vod, state -> {
+            if (generation == metadataGeneration.get()) metadata.postValue(state);
+        });
+    }
+
+    public void selectMetadataProvider(MetadataProvider provider) {
+        MetadataState state = metadata.getValue();
+        if (state != null) metadata.postValue(state.select(provider));
+    }
+
+    public void confirmMetadata(com.fongmi.android.tv.metadata.MetadataCandidate candidate) {
+        MetadataState current = metadata.getValue();
+        if (current == null || metadataVod == null || current.getIdentity() == null) return;
+        long generation = metadataGeneration.incrementAndGet();
+        metadata.postValue(MetadataState.loading(current.getIdentity(), current.getSource()));
+        metadataRepository.confirm(current.getIdentity(), metadataVod, candidate, state -> {
+            if (generation == metadataGeneration.get()) metadata.postValue(state);
+        });
     }
 
     public VodPlaybackController createPlaybackController(VodPlaybackHost host) {
@@ -154,6 +199,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
     @Override
     protected void onCleared() {
         requestTasks.cancelAll();
+        metadataGeneration.incrementAndGet();
         playbackState.reset();
         super.onCleared();
     }

@@ -59,4 +59,10 @@
         <item>画中画</item>
     </string-array>
 
+    <string name="metadata_source">源站</string>
+    <string name="metadata_douban">豆瓣</string>
+    <string name="metadata_tmdb">TMDB</string>
+    <string name="metadata_confirm_title">使用豆瓣资料？</string>
+    <string name="metadata_confirm_use">使用</string>
+    <string name="metadata_confirm_keep">保留源站</string>
 </resources>
