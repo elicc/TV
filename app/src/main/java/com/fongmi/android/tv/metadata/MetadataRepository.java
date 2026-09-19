@@ -30,7 +30,7 @@ public class MetadataRepository {
     private static final int MAX_CACHE_ENTRIES = 500;
     private static final MetadataRepository INSTANCE = new MetadataRepository();
 
-    private final MetadataProviderClient douban = new DoubanProvider();
+    private final DoubanProvider douban = new DoubanProvider();
     private final MetadataAgentClient agent = new MetadataAgentClient();
     private final ConcurrentMap<String, CacheEntry> memory = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CandidateEntry> candidates = new ConcurrentHashMap<>();
@@ -49,6 +49,18 @@ public class MetadataRepository {
         EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
         providers.put(MetadataProvider.SOURCE, source);
         return state(identity, source, providers, List.of(), MetadataState.Status.FALLBACK, "source only");
+    }
+
+    /** Loads the shared Douban hot collection for the TV search screen. */
+    public void loadHotMovies(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+        Task.execute(() -> {
+            try {
+                List<MovieMetadata> result = douban.hotMovies(40);
+                App.post(() -> success.accept(result));
+            } catch (Throwable error) {
+                App.post(() -> failure.accept(error));
+            }
+        });
     }
 
     public void confirm(MovieIdentity identity, Vod vod, MetadataCandidate candidate, Consumer<MetadataState> callback) {

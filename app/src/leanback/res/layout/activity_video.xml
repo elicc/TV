@@ -328,7 +328,7 @@
         android:id="@+id/description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/actor"
+        android:layout_below="@+id/metadataTabs"
         android:layout_above="@+id/row2"
         android:layout_alignStart="@+id/name"
         android:layout_marginTop="8dp"
@@ -449,8 +449,9 @@
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/video"
+        android:layout_height="0dp"
+        android:layout_below="@+id/row2"
+        android:layout_alignParentBottom="true"
         android:clipChildren="true"
         android:clipToPadding="true"
         android:overScrollMode="never">
@@ -620,6 +621,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/flagRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"
@@ -653,6 +656,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/qualityRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"
@@ -684,6 +689,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/episodeRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"
@@ -714,6 +721,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/arrayRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"
@@ -744,6 +753,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/partRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"
@@ -774,6 +785,8 @@
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/quickRow"
                 android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
                 android:layout_marginBottom="7dp"

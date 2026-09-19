@@ -154,6 +154,17 @@
                 android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="24sp" />
             <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/hotRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:visibility="gone"
+                tools:itemCount="12"
+                tools:listitem="@layout/adapter_hot_movie" />
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/wordRecycler"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
