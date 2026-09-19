@@ -442,6 +442,7 @@
     <string name="detail_sources">Sources</string>
     <string name="metadata_agent_title">Metadata service</string>
     <string name="metadata_agent_hint">Optional remote Douban and AI matching service. Leave the URL empty to use the built-in matcher.</string>
-    <string name="metadata_agent_url_hint">Service URL, for example http://192.168.1.2:8000</string>
+    <string name="metadata_agent_url_hint">Service URL, for example http://192.168.1.100:8765</string>
     <string name="metadata_agent_key_hint">Bearer API key (optional on a trusted LAN)</string>
+    <string name="metadata_agent_vault_banner">Grant storage access to keep this service setting after reinstall.</string>
 </resources>

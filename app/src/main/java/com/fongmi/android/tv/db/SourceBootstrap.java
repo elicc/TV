@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.bean.Config;
+import com.fongmi.android.tv.setting.MetadataAgentSetting;
 import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.Task;
 import com.github.catvod.utils.Path;
@@ -31,7 +32,7 @@ public final class SourceBootstrap {
 
     private static final String TAG = SourceBootstrap.class.getSimpleName();
     private static final String FILE_NAME = "source-bootstrap.json";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final long MAX_BYTES = 64 * 1024;
 
     private SourceBootstrap() {
@@ -60,7 +61,7 @@ public final class SourceBootstrap {
         File file = getFile();
         try {
             Snapshot snapshot = Snapshot.create();
-            if (snapshot.sources.isEmpty()) {
+            if (snapshot.sources.isEmpty() && snapshot.metadataAgent == null) {
                 // Nothing to store, so the snapshot file has to go. A file that is simply not
                 // there is ambiguous — "no source configured" and "no access to look" read the
                 // same — so the directory is materialised first: if that works the absence is
@@ -91,12 +92,20 @@ public final class SourceBootstrap {
      */
     static int apply() {
         int count = 0;
-        for (Source source : readAll()) {
+        Snapshot snapshot = readSnapshot();
+        if (snapshot == null) return 0;
+        for (Source source : snapshot.sources) {
             if (source == null || !source.isValid()) continue;
             source.toConfig().update();
             count++;
         }
+        if (snapshot.metadataAgent != null && snapshot.metadataAgent.apply()) count++;
         return count;
+    }
+
+    static void applyMetadata() {
+        Snapshot snapshot = readSnapshot();
+        if (snapshot != null && snapshot.metadataAgent != null) snapshot.metadataAgent.apply();
     }
 
     private static Source read(int type) {
@@ -105,15 +114,21 @@ public final class SourceBootstrap {
     }
 
     private static List<Source> readAll() {
+        Snapshot snapshot = readSnapshot();
+        return snapshot == null ? Collections.emptyList() : snapshot.sources;
+    }
+
+    private static Snapshot readSnapshot() {
         File file = getFile();
-        if (!file.isFile() || file.length() <= 0 || file.length() > MAX_BYTES) return Collections.emptyList();
+        if (!file.isFile() || file.length() <= 0 || file.length() > MAX_BYTES) return null;
         try {
             Snapshot snapshot = App.gson().fromJson(Path.read(file), Snapshot.class);
-            if (snapshot == null || snapshot.version != VERSION || snapshot.sources == null) return Collections.emptyList();
-            return snapshot.sources;
+            if (snapshot == null || snapshot.version < 1 || snapshot.version > VERSION) return null;
+            if (snapshot.sources == null) snapshot.sources = new ArrayList<>();
+            return snapshot;
         } catch (RuntimeException e) {
             Logger.t(TAG).e(e, "Unable to read source bootstrap");
-            return Collections.emptyList();
+            return null;
         }
     }
 
@@ -127,6 +142,8 @@ public final class SourceBootstrap {
         private int version;
         @SerializedName("sources")
         private List<Source> sources;
+        @SerializedName("metadataAgent")
+        private MetadataAgent metadataAgent;
 
         private static Snapshot create() {
             Snapshot snapshot = new Snapshot();
@@ -134,6 +151,7 @@ public final class SourceBootstrap {
             snapshot.sources = new ArrayList<>();
             snapshot.add(0);
             snapshot.add(1);
+            snapshot.metadataAgent = MetadataAgent.create();
             return snapshot;
         }
 
@@ -141,6 +159,29 @@ public final class SourceBootstrap {
             String url = Prefers.getString("config_" + type);
             Config config = TextUtils.isEmpty(url) ? null : AppDatabase.get().getConfigDao().find(url, type);
             if (config != null && !config.isEmpty()) sources.add(new Source(config));
+        }
+    }
+
+    private static final class MetadataAgent {
+
+        @SerializedName("url")
+        private String url;
+        @SerializedName("apiKey")
+        private String apiKey;
+
+        private static MetadataAgent create() {
+            if (!MetadataAgentSetting.isConfigured()) return null;
+            MetadataAgent value = new MetadataAgent();
+            value.url = MetadataAgentSetting.getUrl();
+            value.apiKey = MetadataAgentSetting.getApiKey();
+            return value;
+        }
+
+        private boolean apply() {
+            if (TextUtils.isEmpty(url)) return false;
+            MetadataAgentSetting.putUrl(url);
+            MetadataAgentSetting.putApiKey(apiKey);
+            return MetadataAgentSetting.isConfigured();
         }
     }
 

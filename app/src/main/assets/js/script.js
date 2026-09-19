@@ -23,6 +23,19 @@ function setting() {
     doAction('setting', { text: $('#setting_text').val(), name: $('#setting_name').val() });
 }
 
+function metadataAgent() {
+    const url = $('#metadata_agent_url').val().trim();
+    if (!/^https?:\/\//i.test(url)) {
+        warnToast('请输入 http 或 https 服务地址');
+        return;
+    }
+    doAction('metadataAgent', {
+        url,
+        apiKey: $('#metadata_agent_key').val().trim()
+    });
+    warnToast('已发送，电视端将自动保存');
+}
+
 function sendDanmaku() {
     const text = $('#danmaku_text').val().trim();
     if (!text) return;
@@ -266,7 +279,7 @@ function warnToast(msg) {
 }
 
 function showPanel(id) {
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 6; i++) {
         document.getElementById('panel' + i).classList.toggle('active', i === id);
         document.getElementById('tab' + i).classList.toggle('active', i === id);
     }

@@ -426,6 +426,7 @@
     <string name="metadata_candidate_available">%1$s，有新的资料可用，按确认键使用</string>
     <string name="metadata_agent_title">元数据增强服务</string>
     <string name="metadata_agent_hint">可选的远程豆瓣与大模型匹配服务。服务地址留空时继续使用内置匹配。</string>
-    <string name="metadata_agent_url_hint">服务地址，例如 http://192.168.1.2:8000</string>
+    <string name="metadata_agent_url_hint">服务地址，例如 http://192.168.1.100:8765</string>
     <string name="metadata_agent_key_hint">Bearer API Key（可信局域网可留空）</string>
+    <string name="metadata_agent_vault_banner">授予存储权限后，卸载重装仍可恢复此服务配置。</string>
 </resources>

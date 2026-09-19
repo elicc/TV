@@ -166,7 +166,12 @@ public final class ConfigVault {
         // fall back to the lightweight one when it is absent or unreadable. BackupManager
         // refuses a corrupt file rather than wiping the database with an empty snapshot.
         boolean full = VaultPolicy.pickSource(!backups.isEmpty(), SourceBootstrap.exists()) == VaultPolicy.Source.BACKUP;
-        if (full && BackupManager.restoreNow(backups.get(0))) return VaultPolicy.Source.BACKUP;
+        if (full && BackupManager.restoreNow(backups.get(0))) {
+            // A full snapshot may predate the metadata-agent fields. Overlay the lightweight
+            // bootstrap so the service survives upgrades even when the richer archive is stale.
+            SourceBootstrap.applyMetadata();
+            return VaultPolicy.Source.BACKUP;
+        }
         return SourceBootstrap.apply() > 0 ? VaultPolicy.Source.BOOTSTRAP : VaultPolicy.Source.NONE;
     }
 

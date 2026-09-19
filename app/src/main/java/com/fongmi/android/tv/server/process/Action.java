@@ -54,6 +54,7 @@ public class Action implements Process {
             case "sync" -> onSync(params);
             case "search" -> onSearch(params);
             case "setting" -> onSetting(params);
+            case "metadataAgent" -> onMetadataAgent(params);
             case "refresh" -> onRefresh(params);
             case "control" -> onControl(params);
             case "danmaku" -> onDanmaku(params);
@@ -85,6 +86,13 @@ public class Action implements Process {
         String name = params.get("name");
         if (TextUtils.isEmpty(text)) return;
         ServerEvent.setting(text, name);
+    }
+
+    private void onMetadataAgent(Map<String, String> params) {
+        String url = params.get("url");
+        String apiKey = params.get("apiKey");
+        if (TextUtils.isEmpty(url)) return;
+        ServerEvent.metadataAgent(url, Objects.requireNonNullElse(apiKey, ""));
     }
 
     private void onRefresh(Map<String, String> params) {

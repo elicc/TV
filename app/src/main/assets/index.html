@@ -79,6 +79,18 @@
                 </div>
                 <div id="file_list"></div>
             </div>
+            <!-- 元数据增强服务 -->
+            <div id="panel6" class="tab-panel">
+                <div class="panel-content">
+                    <div class="md-field">
+                        <input id="metadata_agent_url" class="md-input" type="url" placeholder="服务地址，例如 http://192.168.1.100:8765" />
+                    </div>
+                    <div class="md-field">
+                        <input id="metadata_agent_key" class="md-input" type="password" placeholder="Bearer API Key（局域网可留空）" />
+                    </div>
+                    <button onclick="metadataAgent()" class="md-btn md-btn-filled md-btn-full">保存</button>
+                </div>
+            </div>
         </div>
         <!-- M3 Navigation Bar -->
         <nav class="md-nav-bar">
@@ -111,6 +123,12 @@
                     <svg class="md-nav-icon" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M9.17 6l2 2H20v10H4V6h5.17M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
                 </div>
                 <span class="md-nav-label">本地</span>
+            </div>
+            <div id="tab6" class="md-nav-item" onclick="showPanel(6)">
+                <div class="md-nav-indicator">
+                    <svg class="md-nav-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 17.93V18h-2v1.93A8.008 8.008 0 0 1 4.07 13H6v-2H4.07A8.008 8.008 0 0 1 11 4.07V6h2V4.07A8.008 8.008 0 0 1 19.93 11H18v2h1.93A8.008 8.008 0 0 1 13 19.93Z"/></svg>
+                </div>
+                <span class="md-nav-label">元数据</span>
             </div>
         </nav>
     </div>

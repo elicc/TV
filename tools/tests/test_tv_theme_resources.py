@@ -357,6 +357,25 @@ class TvThemeTests(unittest.TestCase):
         setting = (JAVA / "ui/activity/SettingActivity.java").read_text()
         self.assertIn("if (allGranted) load(config)", setting)
 
+    def test_metadata_agent_uses_web_qr_and_vault_persistence(self):
+        dialog = (JAVA / "ui/dialog/MetadataAgentDialog.java").read_text()
+        layout = (RES / "layout/dialog_metadata_agent.xml").read_text()
+        action = (MAIN_JAVA / "server/process/Action.java").read_text()
+        event = (MAIN_JAVA / "event/ServerEvent.java").read_text()
+        html = (ROOT / "app/src/main/assets/index.html").read_text()
+        script = (ROOT / "app/src/main/assets/js/script.js").read_text()
+        bootstrap = (MAIN_JAVA / "db/SourceBootstrap.java").read_text()
+        self.assertIn("Server.get().getAddress(6)", dialog)
+        self.assertIn("ConfigVault.save()", dialog)
+        self.assertIn("METADATA_AGENT", event)
+        self.assertIn('case "metadataAgent"', action)
+        self.assertIn('id="panel6"', html)
+        self.assertIn('id="tab6"', html)
+        self.assertIn("function metadataAgent()", script)
+        self.assertIn("metadataAgent", script)
+        self.assertIn("MetadataAgentSetting", bootstrap)
+        self.assertIn("applyMetadata", (MAIN_JAVA / "db/ConfigVault.java").read_text())
+
     def test_tv_alert_dialogs_do_not_dim_the_full_screen(self):
         dialog = (MAIN_JAVA / "ui/dialog/BaseAlertDialog.java").read_text()
         self.assertIn("public void onStart()", dialog)
@@ -365,12 +384,14 @@ class TvThemeTests(unittest.TestCase):
     def test_source_bootstrap_is_versioned_atomic_and_source_only(self):
         bootstrap = (MAIN_JAVA / "db/SourceBootstrap.java").read_text()
         self.assertIn('FILE_NAME = "source-bootstrap.json"', bootstrap)
-        self.assertIn("VERSION = 1", bootstrap)
+        self.assertIn("VERSION = 2", bootstrap)
         self.assertIn("FileUtil.writeAtomically", bootstrap)
         self.assertIn("snapshot.add(0)", bootstrap)
         self.assertIn("snapshot.add(1)", bootstrap)
         self.assertNotIn("Config.wall()", bootstrap)
         self.assertIn('Prefers.getString("config_" + type)', bootstrap)
+        self.assertIn("MetadataAgentSetting", bootstrap)
+        self.assertIn('metadataAgent', bootstrap)
         self.assertIn("getConfigDao().find(url, type)", bootstrap)
         self.assertIn("MAX_BYTES", bootstrap)
 
@@ -413,7 +434,7 @@ class TvThemeTests(unittest.TestCase):
         for name, value in {
             "tv_overscan_h": "36dp",
             "tv_overscan_v": "24dp",
-            "tv_keycaps_bar_height": "28dp",
+            "tv_keycaps_bar_height": "26dp",
             "tv_keycaps_top_gap": "6dp",
             "tv_keycaps_bottom_inset": "0dp",
             "tv_focus_stroke": "3.5dp",
