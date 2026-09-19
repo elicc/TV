@@ -19,7 +19,7 @@
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:singleLine="true"
+        android:ellipsize="none"
         android:textColor="@color/white"
         android:textSize="13sp"
         tools:text="蜘蛛人" />
@@ -29,7 +29,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:singleLine="true"
+        android:ellipsize="none"
         android:textColor="@color/green_a_400"
         android:textSize="11sp"
         tools:text="泥巴"
@@ -40,7 +40,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:singleLine="true"
+        android:ellipsize="none"
         android:textColor="@color/yellow_500"
         android:textSize="11sp"
         tools:text="1080p" />

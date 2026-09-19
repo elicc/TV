@@ -290,10 +290,12 @@
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/director"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/name"
         android:layout_alignStart="@+id/name"
+        android:layout_toEndOf="@+id/video"
+        android:layout_alignParentEnd="true"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:nextFocusDown="@id/actor"
@@ -307,10 +309,12 @@
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/actor"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/director"
         android:layout_alignStart="@+id/name"
+        android:layout_toEndOf="@+id/video"
+        android:layout_alignParentEnd="true"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="24dp"
         android:ellipsize="end"
@@ -326,11 +330,13 @@
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/description"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/metadataTabs"
         android:layout_above="@+id/row2"
         android:layout_alignStart="@+id/name"
+        android:layout_toEndOf="@+id/video"
+        android:layout_alignParentEnd="true"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:ellipsize="end"
@@ -359,10 +365,12 @@
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/row2"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_marginEnd="24dp"
         android:layout_height="wrap_content"
         android:layout_alignStart="@+id/name"
+        android:layout_toEndOf="@+id/video"
+        android:layout_alignParentEnd="true"
         android:layout_alignBottom="@+id/video"
         android:clipChildren="false"
         android:orientation="horizontal">
@@ -462,6 +470,7 @@
             android:clipChildren="false"
             android:clipToPadding="false"
             android:orientation="vertical"
+            android:paddingTop="6dp"
             android:paddingBottom="8dp">
 
             <com.fongmi.android.tv.ui.custom.SkeletonLayout
@@ -647,7 +656,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
@@ -680,7 +689,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone"
                 tools:visibility="visible" />
@@ -713,7 +722,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>
@@ -745,7 +754,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>
@@ -777,7 +786,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>
@@ -809,7 +818,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/tv_safe_horizontal"
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>

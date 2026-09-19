@@ -466,6 +466,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
         setCandidateIndicator(mBinding.tabDouban, state.isPendingCandidate(MetadataProvider.DOUBAN));
         setCandidateIndicator(mBinding.tabTmdb, state.isPendingCandidate(MetadataProvider.TMDB));
+        updateMetadataFocus();
     }
 
     private void previewMetadata(MetadataProvider provider) {
@@ -862,6 +863,28 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             mBinding.tabDouban.setVisibility(View.GONE);
             mBinding.tabTmdb.setVisibility(View.GONE);
         }
+        updateMetadataFocus();
+    }
+
+    private int firstMetadataTabId() {
+        if (isVisible(mBinding.tabSource)) return R.id.tabSource;
+        if (isVisible(mBinding.tabDouban)) return R.id.tabDouban;
+        if (isVisible(mBinding.tabTmdb)) return R.id.tabTmdb;
+        return 0;
+    }
+
+    private void updateMetadataFocus() {
+        if (mBinding == null) return;
+        int firstTab = firstMetadataTabId();
+        int detailDown = isVisible(mBinding.description) ? R.id.description : firstFocusRow();
+        mBinding.actor.setNextFocusDownId(firstTab != 0 ? firstTab : detailDown);
+        mBinding.tabSource.setNextFocusUpId(R.id.actor);
+        mBinding.tabDouban.setNextFocusUpId(R.id.actor);
+        mBinding.tabTmdb.setNextFocusUpId(R.id.actor);
+        mBinding.tabSource.setNextFocusDownId(detailDown);
+        mBinding.tabDouban.setNextFocusDownId(detailDown);
+        mBinding.tabTmdb.setNextFocusDownId(detailDown);
+        mBinding.description.setNextFocusUpId(firstTab != 0 ? firstTab : R.id.actor);
     }
 
     private void checkId() {
@@ -1070,6 +1093,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         notifyItemChanged(mBinding.part, mPartAdapter);
         notifyItemChanged(mBinding.flag, mFlagAdapter);
+        updateMetadataFocus();
     }
 
     private int firstFocusRow() {

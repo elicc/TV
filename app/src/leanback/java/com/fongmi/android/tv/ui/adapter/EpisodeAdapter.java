@@ -85,6 +85,9 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Episode item = mItems.get(position);
         holder.binding.text.setMaxWidth(maxWidth);
+        holder.binding.text.setMaxLines(3);
+        holder.binding.text.setEllipsize(null);
+        holder.binding.text.setSingleLine(false);
         holder.binding.text.setNextFocusUpId(nextFocusUp);
         holder.binding.text.setNextFocusDownId(nextFocusDown);
         holder.binding.text.setSelected(item.isSelected());
