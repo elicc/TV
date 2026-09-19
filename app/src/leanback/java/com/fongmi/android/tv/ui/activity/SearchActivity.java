@@ -120,7 +120,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         mBinding.wordRecycler.setLayoutManager(new FlexboxLayoutManager(this, FlexDirection.ROW));
         mBinding.wordRecycler.setAdapter(mWordAdapter = new WordAdapter(this));
         mBinding.hotRecycler.setHasFixedSize(false);
-        mBinding.hotRecycler.setLayoutManager(new GridLayoutManager(this, 3));
+        mBinding.hotRecycler.setLayoutManager(new GridLayoutManager(this, 4));
         mBinding.hotRecycler.setAdapter(mHotMovieAdapter = new HotMovieAdapter(this));
         mBinding.recordRecycler.setHasFixedSize(false);
         mBinding.recordRecycler.setLayoutManager(new FlexboxLayoutManager(this, FlexDirection.ROW));

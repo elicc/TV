@@ -94,11 +94,12 @@ public class DoubanProvider implements MetadataProviderClient {
             MovieMetadata metadata = new MovieMetadata();
             metadata.setProvider(MetadataProvider.DOUBAN);
             metadata.setExternalId(externalId);
-            metadata.setExternalType("movie");
+            metadata.setExternalType("tv".equals(string(item, "type")) ? "tv" : "movie");
             metadata.setTitle(title);
             metadata.setOriginalTitle(string(item, "original_title"));
             metadata.setYear(string(item, "year"));
-            metadata.setPoster(nestedString(item, "cover", "url"));
+            String poster = nestedString(item, "cover", "url");
+            metadata.setPoster(poster.isEmpty() ? "" : artworkUrl(poster));
             JsonObject rating = object(item, "rating");
             metadata.setRating(number(rating, "value"));
             metadata.setRatingCount((int) number(rating, "count"));
