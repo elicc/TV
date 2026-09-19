@@ -337,7 +337,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.change.setOnClickListener(view -> onChange());
         mBinding.actor.setOnClickListener(view -> {
             actorExpanded = !actorExpanded;
-            mBinding.actor.setMaxLines(actorExpanded ? Integer.MAX_VALUE : 2);
+            mBinding.actor.setMaxLines(actorExpanded ? Integer.MAX_VALUE : 1);
             mBinding.actor.setEllipsize(actorExpanded ? null : TextUtils.TruncateAt.END);
         });
         View.OnClickListener descriptionToggle = view -> toggleDescription();
@@ -424,6 +424,25 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setAdvancedControls(false);
         PlayerEngineDialog.setText(mBinding.control.action.player);
         mBinding.control.action.danmaku.setVisibility(DanmakuSetting.isLoad() ? View.VISIBLE : View.GONE);
+        // Keep the scrolling surface below the fixed player/detail header even when
+        // RelativeLayout remeasures after metadata, focus, or fullscreen transitions.
+        mBinding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateScrollViewport());
+        mBinding.getRoot().post(this::updateScrollViewport);
+    }
+
+    private void updateScrollViewport() {
+        if (mBinding == null || mBinding.getRoot().getHeight() == 0) return;
+        int gap = ResUtil.dp2px(14);
+        int top = Math.max(0, mBinding.row2.getBottom() + gap);
+        int height = Math.max(0, mBinding.getRoot().getHeight() - top);
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mBinding.scroll.getLayoutParams();
+        if (params.topMargin == top && params.height == height && params.getRule(RelativeLayout.ALIGN_PARENT_TOP) == RelativeLayout.TRUE) return;
+        params.removeRule(RelativeLayout.BELOW);
+        params.removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        params.topMargin = top;
+        params.height = height;
+        mBinding.scroll.setLayoutParams(params);
     }
 
     private void setPlaybackMode() {
@@ -902,7 +921,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void setMetadataText(MovieMetadata item) {
         if (item.getTitle().isEmpty()) return;
         actorExpanded = false;
-        mBinding.actor.setMaxLines(2);
+        mBinding.actor.setMaxLines(1);
         mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
         mBinding.name.setText(item.getTitle());
         setText(mBinding.site, 0, getSite().getName());
@@ -969,7 +988,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setText(Vod item) {
         actorExpanded = false;
-        mBinding.actor.setMaxLines(2);
+        mBinding.actor.setMaxLines(1);
         mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
         setDescription(item.getContent());
         setText(mBinding.year, R.string.detail_year, item.getYear());
@@ -999,6 +1018,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.descriptionMore.setVisibility(visible && expandable ? View.VISIBLE : View.GONE);
         mBinding.descriptionMore.setText(descriptionExpanded ? R.string.tv_collapse : R.string.tv_more);
         mBinding.description.setMaxLines(descriptionExpanded ? Integer.MAX_VALUE : 3);
+        mBinding.description.setMinLines(expandable ? 3 : 1);
         mBinding.description.setEllipsize(descriptionExpanded ? null : TextUtils.TruncateAt.END);
         mBinding.description.setText(fullDescription);
         mBinding.description.setContentDescription(expandable
@@ -1082,8 +1102,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void updateFocus() {
         int firstRow = firstFocusRow();
+        int descriptionDown = isVisible(mBinding.descriptionMore) ? R.id.descriptionMore : firstRow;
         mBinding.video.setNextFocusDownId(firstRow);
-        mBinding.description.setNextFocusDownId(firstRow);
+        mBinding.description.setNextFocusDownId(descriptionDown);
+        mBinding.descriptionMore.setNextFocusUpId(R.id.description);
+        mBinding.descriptionMore.setNextFocusDownId(firstRow);
         mBinding.keep.setNextFocusDownId(firstRow);
         mBinding.change.setNextFocusDownId(firstRow);
         mPartAdapter.setNextFocusUp(findFocusUp(5));
