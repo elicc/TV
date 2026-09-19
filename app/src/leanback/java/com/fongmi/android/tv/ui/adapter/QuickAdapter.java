@@ -23,7 +23,9 @@ public class QuickAdapter extends RecyclerView.Adapter<QuickAdapter.ViewHolder> 
         mListener = listener;
         mItems = new ArrayList<>();
         int space = ResUtil.dp2px(24) + ResUtil.dp2px(32);
-        width = (ResUtil.getScreenWidth() - space) / 4;
+        // Keep source cards compact enough for the five-card rhythm in the
+        // detail design while retaining horizontal scrolling for long lists.
+        width = (ResUtil.getScreenWidth() - space) / 5;
     }
 
     public void addAll(List<Vod> items) {

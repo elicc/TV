@@ -90,6 +90,52 @@ class TvThemeTests(unittest.TestCase):
         self.assertIn('?attr/tvColorSurfaceRaised', primary_background)
         self.assertEqual(1, primary_background.count('<solid android:color="?attr/tvColorAccent"'))
 
+    def test_home_hero_defaults_to_recent_browse_and_one_first_screen_rail(self):
+        android = "{http://schemas.android.com/apk/res/android}"
+        root = ET.parse(RES / "layout/adapter_hero.xml").getroot()
+        actions = [
+            node.get(android + "id")
+            for node in root.iter("TextView")
+            if node.get(android + "id") in {"@+id/primary", "@+id/secondary"}
+        ]
+        self.assertEqual(["@+id/secondary", "@+id/primary"], actions)
+
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        self.assertIn("mFocusedHistory = items.get(0)", home)
+        self.assertIn("position != getHistoryIndex() && position != 0", home)
+        self.assertIn("post(this::focusHeroBrowse)", home)
+        self.assertIn("alignFirstScreenRow()", home)
+        self.assertIn("viewportBottom - railHolder.itemView.getBottom()", home)
+        self.assertIn("FOCUS_SCROLL_ITEM", home)
+
+    def test_provider_artwork_carousels_and_crossfades(self):
+        home = (JAVA / "ui/activity/HomeActivity.java").read_text()
+        video = (JAVA / "ui/activity/VideoActivity.java").read_text()
+        adapter = (JAVA / "ui/adapter/ArtworkAdapter.java").read_text()
+        self.assertIn("mBinding.backdrop.fadeOut()", home)
+        self.assertIn("mBinding.backdrop.setCarousel", home)
+        self.assertIn("mBinding.backdrop.setCarousel", video)
+        self.assertIn("mBinding.backdrop.selectCarouselItem(position)", video)
+        self.assertIn("setSelectedPosition(int position)", adapter)
+        backdrop = (JAVA / "ui/custom/FilmBackdropView.java").read_text()
+        atmosphere = (JAVA / "ui/custom/FilmAtmosphereView.java").read_text()
+        transform = (JAVA / "utils/AtmosphereTransformation.java").read_text()
+        self.assertIn("HERO_ARTWORK_FADE", backdrop)
+        self.assertIn("CAROUSEL_INTERVAL", backdrop)
+        self.assertIn("previousBitmap", backdrop)
+        ready = backdrop.index("imageUrl = requestUrl")
+        marker = backdrop.index("notifyCarouselChanged();", ready)
+        fade = backdrop.index("startArtworkFade();", ready)
+        self.assertLess(ready, marker)
+        self.assertLess(marker, fade)
+        self.assertIn("!urls.contains(url)", video)
+        self.assertIn("HERO_ARTWORK_FADE", atmosphere)
+        self.assertIn("setSaturation(0.72f)", atmosphere)
+        self.assertIn("BLUR_RADIUS = 7", transform)
+
+        ring = (RES / "drawable/selector_artwork_ring.xml").read_text()
+        self.assertIn('android:state_selected="true"', ring)
+
     def test_movie_rows_size_cards_inside_the_shared_safe_gutters(self):
         product = (ROOT / "app/src/leanback/java/com/fongmi/android/tv/Product.java").read_text()
         history = (JAVA / "ui/presenter/HistoryPresenter.java").read_text()

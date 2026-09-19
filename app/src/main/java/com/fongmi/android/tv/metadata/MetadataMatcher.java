@@ -14,9 +14,22 @@ public final class MetadataMatcher {
     private MetadataMatcher() {
     }
 
+    /**
+     * Removes only well-known trailing distribution labels before an external
+     * metadata lookup. The original title remains untouched for display and
+     * source identity; this is deliberately narrower than general punctuation
+     * cleanup so legitimate movie titles are not rewritten.
+     */
+    public static String queryTitle(String value) {
+        if (TextUtils.isEmpty(value)) return "";
+        String title = Normalizer.normalize(value, Normalizer.Form.NFKC).trim();
+        String cleaned = title.replaceFirst("(?iu)\\s*\\(\\s*(?:臻彩|4k|8k|高清|超清|蓝光|蓝光版|抢先版|tc|ts|cam)\\s*\\)\\s*$", "").trim();
+        return cleaned.isEmpty() ? title : cleaned;
+    }
+
     public static double score(MovieIdentity source, MovieMetadata candidate) {
         if (source == null || candidate == null || hardConflict(source, candidate)) return 0d;
-        double points = similarity(source.title(), candidate.getTitle()) * 0.45d;
+        double points = similarity(queryTitle(source.title()), candidate.getTitle()) * 0.45d;
         double weight = 0.45d;
         if (hasBothYears(source.year(), candidate.getYear())) {
             points += yearScore(source.year(), candidate.getYear()) * 0.20d;

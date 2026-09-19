@@ -25,4 +25,10 @@
     <string name="metadata_confirm_title">使用豆瓣资料？</string>
     <string name="metadata_confirm_use">使用</string>
     <string name="metadata_confirm_keep">保留源站</string>
+    <string name="detail_line">播放线路</string>
+    <string name="detail_quality">画质规格</string>
+    <string name="detail_episode">剧集选段</string>
+    <string name="detail_episode_range">选集范围</string>
+    <string name="detail_part">分段</string>
+    <string name="detail_sources">其他源</string>
 </resources>

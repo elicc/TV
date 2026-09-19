@@ -28,6 +28,7 @@ import androidx.leanback.widget.HorizontalGridView;
 import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
+import androidx.leanback.widget.VerticalGridView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
@@ -60,6 +61,7 @@ import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.model.VideoViewModel;
 import com.fongmi.android.tv.metadata.MetadataRepository;
 import com.fongmi.android.tv.metadata.MovieIdentity;
+import com.fongmi.android.tv.metadata.MovieArtwork;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.player.extractor.Source;
 import com.fongmi.android.tv.server.Server;
@@ -113,7 +115,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private HistoryPresenter mPresenter;
     private SiteViewModel mViewModel;
     private Result mResult;
-    /** History card currently under the D-pad; null means the source hero is active. */
+    /** History title represented by the hero; seeded from the newest persisted row. */
     private History mFocusedHistory;
     /** History card whose detail prefetch is pending after focus settles. */
     private History mPrefetchTarget;
@@ -138,11 +140,16 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private long mSplashShownAt;
     /** Guards against re-entrant adapter mutations while a previous updateHero is queued. */
     private boolean mHeroUpdatePending;
+    /** Keeps the first content rail flush with the usable screen bottom. */
+    private boolean mFirstScreenAligned;
+    private boolean mFirstScreenAligning;
     /** Generation-guarded, focus-debounced provider artwork lookup. */
     private long mBackdropGeneration;
     private Future<?> mBackdropTask;
     private Vod mBackdropVod;
     private String mBackdropSource = "";
+    /** A detail screen confirmed new provider artwork while Home was stopped. */
+    private boolean mBackdropRefreshPending;
     /**
      * Set while a file-access grant is in flight. PermissionX never calls back on a refusal,
      * so returning from the system screen is the only signal a denial produces; onResume
@@ -300,13 +307,24 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             @Override
             public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
                 if (mPresenter.isDelete() && position != getHistoryIndex()) setHistoryDelete(false);
-                if (position != getHistoryIndex() && mFocusedHistory != null) {
+                // Keep the selected recent title while the hero itself is focused. The
+                // history-backed hero is the cold-start landing state; only entering a
+                // different content rail should hand the hero back to recommendations.
+                if (position != getHistoryIndex() && position != 0 && mFocusedHistory != null) {
                     mFocusedHistory = null;
                     updateHero();
+                }
+                if (position == 0 && mBinding.recycler.hasFocus()) {
+                    mBinding.recycler.post(HomeActivity.this::focusHeroBrowse);
                 }
                 syncBackdropFromSelection(child);
             }
         });
+    }
+
+    private void focusHeroBrowse() {
+        View browse = mBinding.recycler.findViewById(R.id.secondary);
+        if (browse != null && browse.isFocusable()) browse.requestFocus();
     }
 
     private void checkAction(Intent intent) {
@@ -341,6 +359,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         selector.addPresenter(ListRow.class, new CustomRowPresenter(16, FocusHighlight.ZOOM_FACTOR_SMALL, HorizontalGridView.FOCUS_SCROLL_ALIGNED), HistoryPresenter.class);
         mBinding.recycler.setAdapter(new ItemBridgeAdapter(mAdapter = new ArrayObjectAdapter(selector)));
         mBinding.recycler.setVerticalSpacing(ResUtil.dp2px(12));
+        // The first rail is deliberately aligned to the viewport bottom. Keep
+        // that alignment when focus enters its first card; the next down press
+        // will still reveal the following rail because it is outside the
+        // viewport. ALIGNED would recenter the first rail immediately because
+        // the focused card's zoomed bounds extend below the fold.
+        mBinding.recycler.setFocusScrollStrategy(VerticalGridView.FOCUS_SCROLL_ITEM);
         // Mirror the project's other RecyclerViews (KeepActivity, FileActivity, the dialogs):
         // the outer container's size does not depend on item content, and the first-screen
         // entrance already runs view-level alpha animations via TvStagger.firstScreen(), so
@@ -349,6 +373,40 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // RecyclerView is re-laid out while a fling is still in flight.
         mBinding.recycler.setHasFixedSize(true);
         mBinding.recycler.setItemAnimator(null);
+        mBinding.recycler.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                      oldLeft, oldTop, oldRight, oldBottom) -> alignFirstScreenRow());
+    }
+
+    /**
+     * Expands only the hero's quiet space so the first film rail ends at the
+     * content viewport bottom. Card geometry remains untouched and subsequent
+     * rails stay below the fold, independent of TV density or poster ratio.
+     */
+    private void alignFirstScreenRow() {
+        if (mBinding == null || mAdapter == null || mFirstScreenAligned || mFirstScreenAligning
+                || mAdapter.size() <= 2 || !(mAdapter.get(2) instanceof ListRow)) return;
+        RecyclerView.ViewHolder heroHolder = mBinding.recycler.findViewHolderForAdapterPosition(0);
+        RecyclerView.ViewHolder railHolder = mBinding.recycler.findViewHolderForAdapterPosition(2);
+        if (heroHolder == null || railHolder == null || heroHolder.itemView.getTop() < 0) return;
+        int viewportBottom = mBinding.recycler.getHeight() - mBinding.recycler.getPaddingBottom();
+        int delta = viewportBottom - railHolder.itemView.getBottom();
+        if (Math.abs(delta) <= ResUtil.dp2px(1)) {
+            mFirstScreenAligned = true;
+            return;
+        }
+        int minimum = ResUtil.dp2px(152);
+        int target = Math.max(minimum, heroHolder.itemView.getHeight() + delta);
+        if (target == heroHolder.itemView.getMinimumHeight()) {
+            mFirstScreenAligned = true;
+            return;
+        }
+        mFirstScreenAligning = true;
+        heroHolder.itemView.setMinimumHeight(target);
+        heroHolder.itemView.requestLayout();
+        mBinding.recycler.post(() -> {
+            mFirstScreenAligning = false;
+            alignFirstScreenRow();
+        });
     }
 
     private void setViewModel() {
@@ -714,6 +772,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     }
 
     private void addVideo(Result result) {
+        mFirstScreenAligned = false;
         Style style = result.getStyle(getHome().getStyle());
         if (style.isList()) mAdapter.addAll(mAdapter.size(), result.getList());
         else addGrid(result.getList(), style);
@@ -822,6 +881,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (nextSource.equals(mBackdropSource) && mBackdropVod != null
                 && vod.getId().equals(mBackdropVod.getId()) && vod.getPic().equals(mBackdropVod.getPic())) return;
         mBinding.atmosphere.setImage(sourceKey, vod.getPic());
+        mBinding.backdrop.fadeOut();
         mBackdropGeneration++;
         cancelBackdropTask();
         mBackdropVod = vod;
@@ -850,12 +910,33 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         mBackdropTask = MetadataRepository.get().loadArtwork(identity, vod, metadata -> {
             if (mBinding == null || generation != mBackdropGeneration) return;
             mBackdropTask = null;
-            if (metadata != null && metadata.hasBackdrop()) {
-                mBinding.backdrop.setImage(sourceKey, metadata.getBackdrop());
+            List<String> artworks = artworkUrls(metadata);
+            if (!artworks.isEmpty()) {
+                mBinding.backdrop.setCarousel(sourceKey + ":" + vod.getId(), artworks, 0, null);
             } else {
                 mBinding.backdrop.clear();
             }
         });
+    }
+
+    /** Re-resolves the current title even when its source/card identity did not change. */
+    private void reloadBackdropArtwork() {
+        if (mBinding == null || mBackdropVod == null || TextUtils.isEmpty(mBackdropSource)) return;
+        mBackdropGeneration++;
+        cancelBackdropTask();
+        App.removeCallbacks(mBackdropLoad);
+        mBinding.backdrop.fadeOut();
+        App.post(mBackdropLoad);
+    }
+
+    private static List<String> artworkUrls(MovieMetadata metadata) {
+        if (metadata == null) return List.of();
+        List<String> urls = new ArrayList<>();
+        if (!TextUtils.isEmpty(metadata.getBackdrop())) urls.add(metadata.getBackdrop());
+        for (MovieArtwork artwork : metadata.getArtworks()) {
+            if (!TextUtils.isEmpty(artwork.getUrl()) && !urls.contains(artwork.getUrl())) urls.add(artwork.getUrl());
+        }
+        return urls;
     }
 
     private void cancelBackdropTask() {
@@ -957,8 +1038,20 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     private void getHistory(boolean renew) {
         List<History> items = History.getRecentAll();
-        if (mFocusedHistory != null && !items.contains(mFocusedHistory)) mFocusedHistory = null;
+        // The first recent item is the hero's initial subject. Do this before the
+        // coalesced adapter update so cold start never flashes the recommendation
+        // hero before history has been attached.
+        if (items.isEmpty()) {
+            mFocusedHistory = null;
+        } else {
+            int focused = mFocusedHistory == null ? -1 : items.indexOf(mFocusedHistory);
+            // Preserve the focused key but replace the object with the fresh DB
+            // row so a provider-confirmed poster/name is not held stale.
+            if (focused < 0) mFocusedHistory = items.get(0);
+            else mFocusedHistory = items.get(focused);
+        }
         int header = mAdapter.indexOf(R.string.home_history);
+        if (renew || (header >= 0) == items.isEmpty()) mFirstScreenAligned = false;
         if (header >= 0 && (items.isEmpty() || renew)) mAdapter.removeItems(header, 2);
         if (renew) mHistoryAdapter = new ArrayObjectAdapter(mPresenter = new HistoryPresenter(this));
         mHistoryAdapter.setItems(items, new BaseDiffCallback<History>());
@@ -977,6 +1070,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void clearHistory() {
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0) mAdapter.removeItems(header, 2);
+        mFirstScreenAligned = false;
         History.clearAll();
         mPresenter.setDelete(false);
         mHistoryAdapter.clear();
@@ -1035,6 +1129,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             case SIZE:
                 getVideo();
                 getHistory(true);
+                break;
+            case METADATA:
+                mBackdropRefreshPending = true;
                 break;
         }
     }
@@ -1215,6 +1312,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         if (mHistoryAdapter.size() > 0) return;
         int header = mAdapter.indexOf(R.string.home_history);
         if (header >= 0) mAdapter.removeItems(header, 2);
+        mFirstScreenAligned = false;
         mPresenter.setDelete(false);
         updateHero();
         mBinding.more.requestFocus();
@@ -1258,6 +1356,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             }
             mBinding.recycler.setSelectedPosition(0);
             mBinding.recycler.requestFocus();
+            // The browse action is deliberately the first hero control. Request it
+            // after RecyclerView has attached the selected holder so every nav-down
+            // transition lands on the same predictable target.
+            mBinding.recycler.post(this::focusHeroBrowse);
             return true;
         }
         return super.dispatchKeyEvent(event);
@@ -1277,6 +1379,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         // adapter has items. Forcing a redraw on resume guarantees the
         // content area paints once focus returns to the activity.
         mBinding.getRoot().post(mBinding.getRoot()::invalidate);
+        if (mBackdropRefreshPending) {
+            mBackdropRefreshPending = false;
+            mBinding.recycler.post(this::reloadBackdropArtwork);
+        }
     }
 
     @Override

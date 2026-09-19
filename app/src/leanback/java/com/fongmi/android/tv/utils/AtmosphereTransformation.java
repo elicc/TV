@@ -15,9 +15,10 @@ import java.security.MessageDigest;
 
 /** Runs on Glide decode workers, never on the UI drawing path. */
 public final class AtmosphereTransformation extends BitmapTransformation {
-    public static final int WIDTH = 320;
-    public static final int HEIGHT = 180;
-    private static final byte[] KEY = "tv.atmosphere.box.v1.320x180.radius12.passes2".getBytes(StandardCharsets.UTF_8);
+    public static final int WIDTH = 480;
+    public static final int HEIGHT = 270;
+    private static final int BLUR_RADIUS = 7;
+    private static final byte[] KEY = "tv.atmosphere.box.v2.480x270.radius7.passes2".getBytes(StandardCharsets.UTF_8);
 
     @Override
     protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap source, int outWidth, int outHeight) {
@@ -33,7 +34,9 @@ public final class AtmosphereTransformation extends BitmapTransformation {
         canvas.setBitmap(null);
         int[] pixels = new int[WIDTH * HEIGHT];
         result.getPixels(pixels, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
-        AtmosphereBlur.apply(pixels, WIDTH, HEIGHT, 12);
+        // Retain enough diffusion to hide portrait-poster seams without reducing
+        // the film to an indistinct colour wash on a 1080p television.
+        AtmosphereBlur.apply(pixels, WIDTH, HEIGHT, BLUR_RADIUS);
         result.setPixels(pixels, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
         return result;
     }

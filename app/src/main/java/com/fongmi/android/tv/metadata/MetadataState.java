@@ -43,11 +43,29 @@ public class MetadataState {
 
     public MovieMetadata getSelected() {
         MovieMetadata metadata = providers.get(selectedProvider);
-        return metadata == null ? source : metadata;
+        if (metadata != null) return metadata;
+        MetadataCandidate candidate = getCandidate(selectedProvider);
+        return candidate == null ? source : candidate.getMetadata();
     }
 
     public MetadataState select(MetadataProvider provider) {
-        MetadataProvider selected = providers.containsKey(provider) ? provider : MetadataProvider.SOURCE;
+        MetadataProvider selected = hasProviderOrCandidate(provider) ? provider : MetadataProvider.SOURCE;
         return new MetadataState(identity, source, providers, candidates, selected, status, message);
+    }
+
+    public boolean hasProviderOrCandidate(MetadataProvider provider) {
+        return providers.containsKey(provider) || getCandidate(provider) != null;
+    }
+
+    public boolean isPendingCandidate(MetadataProvider provider) {
+        return !providers.containsKey(provider) && getCandidate(provider) != null;
+    }
+
+    public MetadataCandidate getCandidate(MetadataProvider provider) {
+        for (MetadataCandidate candidate : candidates) {
+            MovieMetadata metadata = candidate == null ? null : candidate.getMetadata();
+            if (metadata != null && metadata.getProvider() == provider) return candidate;
+        }
+        return null;
     }
 }

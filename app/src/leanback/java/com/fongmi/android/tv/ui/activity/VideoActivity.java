@@ -19,7 +19,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
 import androidx.lifecycle.ViewModelProvider;
@@ -57,6 +56,8 @@ import com.fongmi.android.tv.impl.CustomTarget;
 import com.fongmi.android.tv.model.VideoViewModel;
 import com.fongmi.android.tv.metadata.MetadataProvider;
 import com.fongmi.android.tv.metadata.MetadataState;
+import com.fongmi.android.tv.metadata.MetadataCandidate;
+import com.fongmi.android.tv.metadata.MovieArtwork;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.ui.adapter.ArtworkAdapter;
 import com.fongmi.android.tv.playback.PlaybackAction;
@@ -138,7 +139,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private History mHistory;
     private boolean fullscreen;
     private boolean useParse;
-    private boolean metadataPrompted;
+    private boolean detailReady;
+    private boolean metadataReady;
 
     public static void push(FragmentActivity activity, String text) {
         Uri uri = UrlUtil.uri(text);
@@ -285,6 +287,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mArtworkAdapter.clear();
         mBinding.artworks.setVisibility(View.GONE);
         mBinding.artworkTitle.setVisibility(View.GONE);
+        detailReady = false;
+        metadataReady = false;
+        mBinding.metadataTabs.setVisibility(View.GONE);
+        showSkeleton(true);
         saveHistory(true);
         mVod.reset();
         setIntent(intent);
@@ -328,9 +334,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
         mBinding.content.setOnClickListener(view -> onContent());
-        mBinding.tabSource.setOnClickListener(view -> selectMetadata(MetadataProvider.SOURCE));
-        mBinding.tabDouban.setOnClickListener(view -> selectMetadata(MetadataProvider.DOUBAN));
-        mBinding.tabTmdb.setOnClickListener(view -> selectMetadata(MetadataProvider.TMDB));
+        bindMetadataTab(mBinding.tabSource, MetadataProvider.SOURCE);
+        bindMetadataTab(mBinding.tabDouban, MetadataProvider.DOUBAN);
+        bindMetadataTab(mBinding.tabTmdb, MetadataProvider.TMDB);
         mBinding.control.action.more.setOnClickListener(view -> setAdvancedControls(!isVisible(mBinding.control.action.advanced)));
         mBinding.control.action.text.setOnClickListener(this::onTrack);
         mBinding.control.action.audio.setOnClickListener(this::onTrack);
@@ -381,7 +387,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void setRecyclerView() {
         mBinding.artworks.setHorizontalSpacing(ResUtil.dp2px(12));
         mBinding.artworks.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-        mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter());
+        mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter(this::onArtworkFocus));
         mBinding.flag.setHorizontalSpacing(ResUtil.dp2px(8));
         mBinding.flag.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
         mBinding.flag.setAdapter(mFlagAdapter = new FlagAdapter(this));
@@ -431,30 +437,53 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onMetadataObserved(MetadataState state) {
         if (state == null) return;
+        boolean ready = state.getStatus() != MetadataState.Status.IDLE && state.getStatus() != MetadataState.Status.LOADING;
+        metadataReady = ready;
+        setMetadataTabsVisible(detailReady && metadataReady);
+        mBinding.skeletonMeta.setVisibility(ready ? View.GONE : View.VISIBLE);
+        int metadataUp = detailReady && metadataReady ? R.id.tabSource : R.id.actor;
+        mBinding.content.setNextFocusUpId(metadataUp);
+        mBinding.keep.setNextFocusUpId(metadataUp);
+        mBinding.change.setNextFocusUpId(metadataUp);
         MovieMetadata metadata = state.getSelected();
         if (metadata != null) setMetadataText(metadata);
         setMetadataArtwork(metadata);
-        mBinding.tabDouban.setVisibility(state.getProviders().containsKey(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
-        mBinding.tabTmdb.setVisibility(state.getProviders().containsKey(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
+        boolean tabsVisible = detailReady && metadataReady;
+        mBinding.tabSource.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.SOURCE) ? View.VISIBLE : View.GONE);
+        mBinding.tabDouban.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
+        mBinding.tabTmdb.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
         mBinding.tabSource.setSelected(state.getSelectedProvider() == MetadataProvider.SOURCE);
         mBinding.tabDouban.setSelected(state.getSelectedProvider() == MetadataProvider.DOUBAN);
         mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
-        if (!metadataPrompted && state.getStatus() == MetadataState.Status.FALLBACK && !state.getCandidates().isEmpty()) {
-            metadataPrompted = true;
-            MovieMetadata candidate = state.getCandidates().get(0).getMetadata();
-            String message = candidate.getTitle() + (candidate.getYear().isEmpty() ? "" : " (" + candidate.getYear() + ")")
-                    + (candidate.getRatingText().isEmpty() ? "" : "\nRating: " + candidate.getRatingText());
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.metadata_confirm_title)
-                    .setMessage(message)
-                    .setNegativeButton(R.string.metadata_confirm_keep, null)
-                    .setPositiveButton(R.string.metadata_confirm_use, (dialog, which) -> mViewModel.confirmMetadata(state.getCandidates().get(0)))
-                    .show();
-        }
+        setCandidateIndicator(mBinding.tabDouban, state.isPendingCandidate(MetadataProvider.DOUBAN));
+        setCandidateIndicator(mBinding.tabTmdb, state.isPendingCandidate(MetadataProvider.TMDB));
     }
 
-    private void selectMetadata(MetadataProvider provider) {
+    private void previewMetadata(MetadataProvider provider) {
         mViewModel.selectMetadataProvider(provider);
+    }
+
+    private void bindMetadataTab(TextView tab, MetadataProvider provider) {
+        tab.setOnFocusChangeListener((view, focused) -> {
+            if (focused) previewMetadata(provider);
+        });
+        tab.setOnClickListener(view -> onMetadataTabClick(provider));
+    }
+
+    private void onMetadataTabClick(MetadataProvider provider) {
+        MetadataState state = mViewModel.getMetadata().getValue();
+        if (state == null) return;
+        MetadataCandidate candidate = state.isPendingCandidate(provider) ? state.getCandidate(provider) : null;
+        if (candidate == null) previewMetadata(provider);
+        else mViewModel.confirmMetadata(candidate);
+    }
+
+    private void setCandidateIndicator(TextView tab, boolean visible) {
+        tab.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, visible ? R.drawable.tv_metadata_candidate_dot : 0, 0);
+        tab.setCompoundDrawablePadding(visible ? ResUtil.dp2px(6) : 0);
+        tab.setContentDescription(visible
+                ? getString(R.string.metadata_candidate_available, tab.getText())
+                : tab.getText());
     }
 
     private void onPlaybackObserved(PlaybackResult<VodPlayRequest> result) {
@@ -486,6 +515,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public String getVodName() {
+        if (mHistory != null && !mHistory.getVodName().isEmpty()) return mHistory.getVodName();
         String name = mBinding.name.getText().toString();
         return name.isEmpty() ? getName() : name;
     }
@@ -615,17 +645,19 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     public void renderDetail(Vod item, History history) {
         trace("VIDEO_DETAIL_RENDER_BEGIN");
         mHistory = history;
+        detailReady = true;
+        metadataReady = false;
         mBinding.progressLayout.showContent();
-        // ProgressLayout reveals all content children during the state switch;
-        // hide the loading placeholders after that transition.
-        showSkeleton(false);
+        // Keep metadata placeholders visible until the provider state resolves.
+        // The detail request and external metadata request complete independently.
+        showSkeleton(true);
+        mBinding.skeletonEpisode.setVisibility(View.GONE);
         mBinding.name.setText(item.getName());
         mBinding.video.requestFocus();
         App.removeCallbacks(mR4);
         setArtwork(item.getPic());
         checkKeepImg();
         setText(item);
-        metadataPrompted = false;
         mViewModel.loadMetadata(getKey(), getId(), item);
         updateKeep();
         trace("VIDEO_DETAIL_RENDER_END");
@@ -658,7 +690,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderFlags(List<Flag> items) {
-        mBinding.flag.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+        setRowVisibility(mBinding.flagRow, mBinding.flag, !items.isEmpty());
         mFlagAdapter.addAll(items);
     }
 
@@ -699,7 +731,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     public void renderSources(List<Vod> items) {
         mQuickAdapter.addAll(items);
-        mBinding.quick.setVisibility(mQuickAdapter.isEmpty() ? View.GONE : View.VISIBLE);
+        setRowVisibility(mBinding.quickRow, mBinding.quick, !mQuickAdapter.isEmpty());
     }
 
     @Override
@@ -809,8 +841,18 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showSkeleton(boolean show) {
+        if (show) setMetadataTabsVisible(false);
         mBinding.skeletonMeta.setVisibility(show ? View.VISIBLE : View.GONE);
         mBinding.skeletonEpisode.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    private void setMetadataTabsVisible(boolean visible) {
+        mBinding.metadataTabs.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (!visible) {
+            mBinding.tabSource.setVisibility(View.GONE);
+            mBinding.tabDouban.setVisibility(View.GONE);
+            mBinding.tabTmdb.setVisibility(View.GONE);
+        }
     }
 
     private void checkId() {
@@ -818,7 +860,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showEmpty() {
+        detailReady = false;
+        metadataReady = false;
         showSkeleton(false);
+        setMetadataTabsVisible(false);
         mBinding.progressLayout.showEmpty();
     }
 
@@ -833,23 +878,58 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.content.setTag(item.getSummary());
         setText(mBinding.content, 0, item.getSummary());
         setText(mBinding.remark, 0, item.getRatingText());
-        if (!item.getPoster().isEmpty()) setArtwork(item.getPoster());
+        if (!item.getPoster().isEmpty()) previewMetadataArtwork(item.getPoster());
+    }
+
+    /** Metadata tabs are previews; only playback/history flows may persist artwork. */
+    private void previewMetadataArtwork(String url) {
+        if (isFilmAtmosphereEnabled() && !isFullscreen()) mBinding.atmosphere.setImage(getKey(), url);
+        loadArtwork(url);
     }
 
     private void setMetadataArtwork(MovieMetadata item) {
-        boolean available = item != null && item.getProvider() == MetadataProvider.DOUBAN && item.hasArtworks();
+        boolean providerArtwork = item != null && item.getProvider() == MetadataProvider.DOUBAN;
+        List<MovieArtwork> artworks = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
+        if (providerArtwork) {
+            for (MovieArtwork artwork : item.getArtworks()) {
+                String url = artwork.getUrl();
+                if (!url.isEmpty() && !urls.contains(url)) {
+                    artworks.add(artwork);
+                    urls.add(url);
+                }
+            }
+        }
+        boolean available = !artworks.isEmpty();
         mBinding.artworkTitle.setVisibility(available ? View.VISIBLE : View.GONE);
         mBinding.artworks.setVisibility(available ? View.VISIBLE : View.GONE);
-        if (available) mArtworkAdapter.addAll(item.getArtworks());
+        if (available) mArtworkAdapter.addAll(artworks);
         else mArtworkAdapter.clear();
         updateFocus();
-        if (item != null && item.getProvider() == MetadataProvider.DOUBAN && item.hasBackdrop() && !isFullscreen()) {
+        if (providerArtwork && !isFullscreen()) {
+            if (urls.isEmpty() && item.hasBackdrop()) urls.add(item.getBackdrop());
+            if (urls.isEmpty()) {
+                mBinding.backdrop.clear();
+                mBinding.backdrop.setVisibility(View.GONE);
+                return;
+            }
             mBinding.backdrop.setVisibility(View.VISIBLE);
-            mBinding.backdrop.setImage(getSite().getKey(), item.getBackdrop());
+            mBinding.backdrop.setCarousel(getSite().getKey() + ":" + item.getExternalId(), urls, 0, this::onBackdropArtworkChanged);
         } else {
             mBinding.backdrop.clear();
             mBinding.backdrop.setVisibility(View.GONE);
         }
+    }
+
+    private void onArtworkFocus(int position, MovieArtwork artwork) {
+        if (isFullscreen() || artwork == null || artwork.getUrl().isEmpty()) return;
+        mArtworkAdapter.setSelectedPosition(position);
+        mBinding.backdrop.selectCarouselItem(position);
+    }
+
+    private void onBackdropArtworkChanged(int position) {
+        mArtworkAdapter.setSelectedPosition(position);
+        if (!mBinding.artworks.hasFocus()) mBinding.artworks.setSelectedPositionSmooth(position);
     }
 
     private void setText(Vod item) {
@@ -887,7 +967,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setEpisodeAdapter(List<Episode> items) {
-        mBinding.episode.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+        setRowVisibility(mBinding.episodeRow, mBinding.episode, !items.isEmpty());
         mEpisodeAdapter.addAll(items);
         setArrayAdapter(items.size());
         setR2Callback();
@@ -900,7 +980,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setQualityVisible(boolean visible) {
-        mBinding.quality.setVisibility(visible ? View.VISIBLE : View.GONE);
+        setRowVisibility(mBinding.qualityRow, mBinding.quality, visible);
         setR2Callback();
     }
 
@@ -913,7 +993,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         List<String> items = new ArrayList<>();
         items.add(getString(R.string.play_reverse));
         items.add(getString(mHistory.getRevPlayText()));
-        mBinding.array.setVisibility(size > 1 ? View.VISIBLE : View.GONE);
+        setRowVisibility(mBinding.arrayRow, mBinding.array, size > 1);
         if (mHistory.isRevSort()) for (int i = size; i > 0; i -= 20) items.add(i + "-" + Math.max(i - 19, 1));
         else for (int i = 0; i < size; i += 20) items.add((i + 1) + "-" + Math.min(i + 20, size));
         mArrayAdapter.addAll(items);
@@ -932,6 +1012,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void updateFocus() {
+        int firstRow = firstFocusRow();
+        mBinding.video.setNextFocusDownId(firstRow);
+        mBinding.content.setNextFocusDownId(firstRow);
+        mBinding.keep.setNextFocusDownId(firstRow);
+        mBinding.change.setNextFocusDownId(firstRow);
         mPartAdapter.setNextFocusUp(findFocusUp(5));
         mEpisodeAdapter.setNextFocusUp(findFocusUp(3));
         mFlagAdapter.setNextFocusDown(findFocusDown(1));
@@ -939,6 +1024,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         notifyItemChanged(mBinding.part, mPartAdapter);
         notifyItemChanged(mBinding.flag, mFlagAdapter);
+    }
+
+    private int firstFocusRow() {
+        int[] rows = {R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
+        for (int row : rows) if (isVisible(findViewById(row))) return row;
+        return R.id.video;
     }
 
     @Override
@@ -1362,8 +1453,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setPartAdapter() {
         mPartAdapter.addAll(PartUtil.split(mHistory.getVodName()));
-        mBinding.part.setVisibility(View.VISIBLE);
+        setRowVisibility(mBinding.partRow, mBinding.part, true);
         setR2Callback();
+    }
+
+    private void setRowVisibility(View row, View list, boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.GONE;
+        row.setVisibility(visibility);
+        list.setVisibility(visibility);
     }
 
     private void saveHistory(boolean exit) {

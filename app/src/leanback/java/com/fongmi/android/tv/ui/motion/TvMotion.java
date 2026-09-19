@@ -21,6 +21,8 @@ public final class TvMotion {
     public static final long SHIMMER = 4500;
     public static final long BREATH = 11000;
     public static final long DRIFT = 14000;
+    /** Calm crossfade used when the home hero changes its film artwork. */
+    public static final long HERO_ARTWORK_FADE = 520;
     /** Cold-start brand splash: holds, then dissolves into the home. */
     public static final long SPLASH_HOLD = 900;
     /** Dissolve out while pushing slightly toward the viewer, into the home entrance. */

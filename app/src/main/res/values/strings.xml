@@ -433,4 +433,11 @@
     <string name="metadata_confirm_title">Use Douban metadata?</string>
     <string name="metadata_confirm_use">Use</string>
     <string name="metadata_confirm_keep">Keep source</string>
+    <string name="metadata_candidate_available">%1$s, new metadata available; press OK to use</string>
+    <string name="detail_line">Lines</string>
+    <string name="detail_quality">Quality</string>
+    <string name="detail_episode">Episodes</string>
+    <string name="detail_episode_range">Range</string>
+    <string name="detail_part">Parts</string>
+    <string name="detail_sources">Sources</string>
 </resources>

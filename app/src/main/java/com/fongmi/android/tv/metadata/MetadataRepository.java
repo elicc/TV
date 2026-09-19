@@ -138,12 +138,19 @@ public class MetadataRepository {
         if (!persisted.isEmpty()) {
             CachedMetadata saved = App.gson().fromJson(persisted, CachedMetadata.class);
             if (saved != null && saved.updatedAt > 0 && System.currentTimeMillis() - saved.updatedAt < DISK_TTL
-                    && identityFingerprint(identity).equals(saved.fingerprint) && !saved.externalId.isEmpty()) {
+                    && mappingMatches(identity, saved) && !saved.externalId.isEmpty()) {
                 MovieMetadata metadata = saved.metadata;
                 if (metadata == null) metadata = douban.detail(saved.externalId, isTv(identity));
                 metadata.setProvider(MetadataProvider.DOUBAN);
                 enrichCachedArtwork(identity, metadata);
-                putBounded(memory, mappingKey, new CacheEntry(metadata, System.currentTimeMillis()));
+                // Migrate older fingerprints that included optional detail fields.
+                // Home history projections intentionally omit those fields, so the
+                // stable title-only fingerprint is shared by both screens.
+                if (!identityFingerprint(identity).equals(saved.fingerprint)) {
+                    save(mappingKey, identity, metadata, metadata.getExternalId(), saved.userVerified);
+                } else {
+                    putBounded(memory, mappingKey, new CacheEntry(metadata, System.currentTimeMillis()));
+                }
                 providers.put(MetadataProvider.DOUBAN, metadata);
                 return state(identity, source, providers, List.of(), MetadataState.Status.SUCCESS, "disk");
             }
@@ -188,7 +195,9 @@ public class MetadataRepository {
         saved.externalId = externalId;
         saved.fingerprint = identityFingerprint(identity);
         saved.updatedAt = System.currentTimeMillis();
-        saved.userVerified = userVerified;
+        // Artwork enrichment rewrites the same cache record. Never let that
+        // optional refresh downgrade an explicit viewer confirmation.
+        saved.userVerified = userVerified || isUserVerified(key);
         saved.metadata = metadata;
         Prefers.put(key, App.gson().toJson(saved));
         putBounded(memory, key, new CacheEntry(metadata, saved.updatedAt));
@@ -245,9 +254,10 @@ public class MetadataRepository {
     }
 
     private static String identityFingerprint(MovieIdentity identity) {
-        String plain = String.join("|", MetadataMatcher.normalize(identity.title()), identity.year(),
-                MetadataMatcher.normalize(identity.area()), MetadataMatcher.normalize(identity.type()),
-                MetadataMatcher.normalize(identity.director()));
+        // sourceInstanceId + sourceVodId already scope the mapping key. Only the
+        // normalized lookup title is stable across the rich detail object and
+        // the intentionally sparse history projection used by the TV home.
+        String plain = MetadataMatcher.normalize(MetadataMatcher.queryTitle(identity.title()));
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] bytes = digest.digest(plain.getBytes(StandardCharsets.UTF_8));
@@ -256,6 +266,28 @@ public class MetadataRepository {
             return result.toString();
         } catch (Exception ignored) {
             return plain;
+        }
+    }
+
+    private static boolean mappingMatches(MovieIdentity identity, CachedMetadata saved) {
+        if (identityFingerprint(identity).equals(saved.fingerprint)) return true;
+        // A manual choice is authoritative for this source + VOD id. Optional
+        // source fields may legitimately be absent when the home screen loads it.
+        if (saved.userVerified) return true;
+        if (saved.metadata == null || MetadataMatcher.hardConflict(identity, saved.metadata)) return false;
+        String sourceTitle = MetadataMatcher.normalize(MetadataMatcher.queryTitle(identity.title()));
+        String savedTitle = MetadataMatcher.normalize(saved.metadata.getTitle());
+        return !sourceTitle.isEmpty() && sourceTitle.equals(savedTitle);
+    }
+
+    private static boolean isUserVerified(String key) {
+        try {
+            String persisted = Prefers.getString(key, "");
+            if (persisted.isEmpty()) return false;
+            CachedMetadata saved = App.gson().fromJson(persisted, CachedMetadata.class);
+            return saved != null && saved.userVerified;
+        } catch (RuntimeException ignored) {
+            return false;
         }
     }
 

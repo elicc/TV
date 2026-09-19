@@ -423,4 +423,5 @@
     <string name="metadata_confirm_title">使用豆瓣资料？</string>
     <string name="metadata_confirm_use">使用</string>
     <string name="metadata_confirm_keep">保留源站</string>
+    <string name="metadata_candidate_available">%1$s，有新的资料可用，按确认键使用</string>
 </resources>

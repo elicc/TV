@@ -22,7 +22,7 @@
         android:id="@+id/focusRing"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/selector_focus_ring"
+        android:background="@drawable/selector_artwork_ring"
         android:duplicateParentState="true"
         android:importantForAccessibility="no" />
 </FrameLayout>

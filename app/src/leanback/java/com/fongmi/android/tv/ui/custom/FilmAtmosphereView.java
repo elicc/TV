@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.ui.custom;
 
+import android.animation.ValueAnimator;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -28,6 +29,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.bumptech.glide.signature.ObjectKey;
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.utils.AtmosphereTransformation;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.TvTheme;
@@ -52,6 +54,8 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
     private Shader bottomMask;
     private Shader topMask;
     private Bitmap bitmap;
+    private ValueAnimator artworkFade;
+    private float artworkAlpha = 1f;
     private RequestManager requests;
     private CustomTarget<Bitmap> target;
     /** Identity of the artwork currently on screen (updated only on load success). */
@@ -77,7 +81,7 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
         scrim = TvTheme.color(context, R.attr.tvColorScrim);
         strongScrim = TvTheme.color(context, R.attr.tvColorScrimStrong);
         ColorMatrix saturation = new ColorMatrix();
-        saturation.setSaturation(0.55f);
+        saturation.setSaturation(0.72f);
         imagePaint.setColorFilter(new ColorMatrixColorFilter(saturation));
         setFocusable(false);
         setClickable(false);
@@ -127,11 +131,36 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
         generation++;
         pending = false;
         removeCallbacks(load);
+        cancelArtworkFade();
         bitmap = null;
         CustomTarget<Bitmap> old = target;
         target = null;
         if (old != null && requests != null) requests.clear(old);
         invalidate();
+    }
+
+    private void startArtworkFade() {
+        cancelArtworkFade();
+        if (!TvMotion.motionEnabled(this)) {
+            invalidate();
+            return;
+        }
+        artworkAlpha = 0f;
+        artworkFade = ValueAnimator.ofFloat(0f, 1f);
+        artworkFade.setDuration(TvMotion.HERO_ARTWORK_FADE);
+        artworkFade.addUpdateListener(value -> {
+            artworkAlpha = (float) value.getAnimatedValue();
+            invalidate();
+        });
+        artworkFade.start();
+    }
+
+    private void cancelArtworkFade() {
+        if (artworkFade != null) {
+            artworkFade.cancel();
+            artworkFade = null;
+        }
+        artworkAlpha = 1f;
     }
 
     private void loadImage() {
@@ -155,7 +184,7 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
                     bitmap = resource;
                     sourceKey = requestSource;
                     imageUrl = requestUrl;
-                    invalidate();
+                    startArtworkFade();
                 }
 
                 @Override
@@ -240,7 +269,9 @@ public final class FilmAtmosphereView extends View implements ComponentCallbacks
             int left = (bitmap.getWidth() - width) / 2;
             int top = (bitmap.getHeight() - height) / 2;
             crop.set(left, top, left + width, top + height);
+            imagePaint.setAlpha(Math.round(255 * artworkAlpha));
             canvas.drawBitmap(bitmap, crop, bounds, imagePaint);
+            imagePaint.setAlpha(255);
             canvas.drawColor(scrim);
             maskPaint.setShader(leftMask);
             canvas.drawRect(bounds, maskPaint);

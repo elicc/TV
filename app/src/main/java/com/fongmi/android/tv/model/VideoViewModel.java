@@ -12,6 +12,7 @@ import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.api.SiteApi;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.exception.ExtractException;
+import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.playback.PlaybackResult;
 import com.fongmi.android.tv.playback.vod.VodDataSource;
 import com.fongmi.android.tv.playback.vod.VodDetailResult;
@@ -88,7 +89,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
 
     public void selectMetadataProvider(MetadataProvider provider) {
         MetadataState state = metadata.getValue();
-        if (state != null) metadata.postValue(state.select(provider));
+        if (state != null) metadata.setValue(state.select(provider));
     }
 
     public void confirmMetadata(com.fongmi.android.tv.metadata.MetadataCandidate candidate) {
@@ -97,6 +98,10 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
         long generation = metadataGeneration.incrementAndGet();
         metadata.postValue(MetadataState.loading(current.getIdentity(), current.getSource()));
         metadataRepository.confirm(current.getIdentity(), metadataVod, candidate, state -> {
+            if (state.getStatus() == MetadataState.Status.SUCCESS
+                    && state.getSelectedProvider() != MetadataProvider.SOURCE) {
+                RefreshEvent.metadata();
+            }
             if (generation == metadataGeneration.get()) metadata.postValue(state);
         });
     }

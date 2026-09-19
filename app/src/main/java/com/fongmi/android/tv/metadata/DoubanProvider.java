@@ -40,7 +40,7 @@ public class DoubanProvider implements MetadataProviderClient {
     @Override
     public List<MovieMetadata> search(MovieIdentity identity) throws IOException {
         ArrayMap<String, String> params = new ArrayMap<>();
-        params.put("q", identity.title());
+        params.put("q", MetadataMatcher.queryTitle(identity.title()));
         params.put("start", "0");
         params.put("count", "5");
         JsonObject root = request("/api/v2/search/weixin", params);

@@ -59,13 +59,13 @@ public final class HeroPresenter extends Presenter {
         b.getRoot().setTranslationY(0f);
         boolean largeText = b.getRoot().getResources().getConfiguration().fontScale > 1.15f;
         // The FrameLayout already declares wrap_content in XML and a 152dp
-        // minHeight covers empty/error states. History focus naturally grows
+        // minHeight covers empty/error states. Real film content naturally grows
         // the hero via the larger name (tv_text_hero) and the 2-line
         // description; forcing an additional minHeight here would leave the
         // centered inner content floating inside empty padding and push the
         // recent-watch row down by ~64dp.
         b.getRoot().getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(item.history() && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
+        b.name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, b.getRoot().getResources().getDimension(vod != null && !largeText ? R.dimen.tv_text_hero : R.dimen.tv_text_title));
         int emptyTitle = item.loading() ? R.string.tv_loading_title : item.configFailed() ? R.string.tv_config_error_title : !TextUtils.isEmpty(item.error()) ? R.string.tv_content_error_title : R.string.tv_no_content_title;
         b.name.setText(vod != null ? vod.getName() : b.getRoot().getContext().getString(emptyTitle));
         String badge = getBadge(vod);
