@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="240dp"
-    android:layout_height="140dp"
-    android:layout_marginEnd="12dp"
+    android:layout_width="176dp"
+    android:layout_height="100dp"
+    android:layout_marginEnd="8dp"
     android:background="@drawable/shape_vod_list"
     android:foreground="@drawable/selector_vod_grid"
     android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/image"

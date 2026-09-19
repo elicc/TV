@@ -7,8 +7,9 @@
     android:background="@drawable/selector_flag_choice"
     android:focusable="true"
     android:focusableInTouchMode="true"
+    android:stateListAnimator="@animator/tv_focus_scale"
     android:gravity="center"
     android:nextFocusDown="@id/episode"
     android:textColor="@color/selector_flag_choice_text"
-    android:textSize="16sp"
+    android:textSize="13sp"
     tools:text="泥巴" />

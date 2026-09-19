@@ -33,10 +33,9 @@
     <dimen name="tv_glow_band">6dp</dimen>
     <dimen name="tv_glow_band_outset">-6dp</dimen>
     <dimen name="tv_keycap_height">32dp</dimen>
-    <!-- Compact footer band: keep the legend close to the lower edge while retaining
-         enough vertical room for the 24dp keycap's pressed-scale feedback.  The top
-         gap is independent so reducing the bottom whitespace does not crowd the cards. -->
-    <dimen name="tv_keycaps_bar_height">28dp</dimen>
+    <!-- Compact footer band: match the 24dp keycap height so its lower edge
+         sits directly on the screen edge. The top gap remains independent. -->
+    <dimen name="tv_keycaps_bar_height">24dp</dimen>
     <dimen name="tv_keycaps_top_gap">6dp</dimen>
     <dimen name="tv_keycaps_bottom_inset">0dp</dimen>
     <dimen name="tv_seek_bar_height">4dp</dimen>

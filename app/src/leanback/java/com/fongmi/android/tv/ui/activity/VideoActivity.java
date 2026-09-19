@@ -84,7 +84,6 @@ import com.fongmi.android.tv.ui.custom.CustomKeyDownVod;
 import com.fongmi.android.tv.ui.custom.CustomMovement;
 import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.ui.dialog.ChapterDialog;
-import com.fongmi.android.tv.ui.dialog.ContentDialog;
 import com.fongmi.android.tv.ui.dialog.DanmakuDialog;
 import com.fongmi.android.tv.ui.dialog.EditionDialog;
 import com.fongmi.android.tv.ui.dialog.ParseDialog;
@@ -141,6 +140,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private boolean useParse;
     private boolean detailReady;
     private boolean metadataReady;
+    private boolean actorExpanded;
+    private boolean descriptionExpanded;
+    private String fullDescription = "";
 
     public static void push(FragmentActivity activity, String text) {
         Uri uri = UrlUtil.uri(text);
@@ -333,7 +335,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.keep.setOnClickListener(view -> onKeep());
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
-        mBinding.content.setOnClickListener(view -> onContent());
+        mBinding.actor.setOnClickListener(view -> {
+            actorExpanded = !actorExpanded;
+            mBinding.actor.setMaxLines(actorExpanded ? Integer.MAX_VALUE : 2);
+            mBinding.actor.setEllipsize(actorExpanded ? null : TextUtils.TruncateAt.END);
+        });
+        View.OnClickListener descriptionToggle = view -> toggleDescription();
+        mBinding.description.setOnClickListener(descriptionToggle);
+        mBinding.descriptionMore.setOnClickListener(descriptionToggle);
         bindMetadataTab(mBinding.tabSource, MetadataProvider.SOURCE);
         bindMetadataTab(mBinding.tabDouban, MetadataProvider.DOUBAN);
         bindMetadataTab(mBinding.tabTmdb, MetadataProvider.TMDB);
@@ -385,7 +394,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setRecyclerView() {
-        mBinding.artworks.setHorizontalSpacing(ResUtil.dp2px(12));
+        mBinding.artworks.setHorizontalSpacing(ResUtil.dp2px(8));
         mBinding.artworks.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
         mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter(this::onArtworkFocus));
         mBinding.flag.setHorizontalSpacing(ResUtil.dp2px(8));
@@ -757,7 +766,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderDescription(String desc) {
-        mBinding.content.setTag(desc);
+        setDescription(desc);
     }
 
     @Override
@@ -869,14 +878,17 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setMetadataText(MovieMetadata item) {
         if (item.getTitle().isEmpty()) return;
+        actorExpanded = false;
+        mBinding.actor.setMaxLines(2);
+        mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
         mBinding.name.setText(item.getTitle());
+        setText(mBinding.site, 0, getSite().getName());
         setText(mBinding.year, R.string.detail_year, item.getYear());
         setText(mBinding.area, R.string.detail_area, item.getArea());
         setText(mBinding.type, R.string.detail_type, item.getType());
         setText(mBinding.director, R.string.detail_director, item.getDirectors());
         setText(mBinding.actor, R.string.detail_actor, item.getActors());
-        mBinding.content.setTag(item.getSummary());
-        setText(mBinding.content, 0, item.getSummary());
+        setDescription(item.getSummary());
         setText(mBinding.remark, 0, item.getRatingText());
         if (!item.getPoster().isEmpty()) previewMetadataArtwork(item.getPoster());
     }
@@ -933,7 +945,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setText(Vod item) {
-        mBinding.content.setTag(item.getContent());
+        actorExpanded = false;
+        mBinding.actor.setMaxLines(2);
+        mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
+        setDescription(item.getContent());
         setText(mBinding.year, R.string.detail_year, item.getYear());
         setText(mBinding.area, R.string.detail_area, item.getArea());
         setText(mBinding.type, R.string.detail_type, item.getTypeName());
@@ -941,6 +956,37 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setText(mBinding.director, R.string.detail_director, item.getDirector());
         setText(mBinding.actor, R.string.detail_actor, item.getActor());
         setText(mBinding.remark, 0, item.getRemarks());
+    }
+
+    /**
+     * Keeps the description in the detail column instead of hiding it behind the old
+     * "简介" action. Long summaries expose a small inline 更多 affordance and expand in place.
+     */
+    private void setDescription(String description) {
+        fullDescription = TextUtils.isEmpty(description) ? "" : description.trim();
+        descriptionExpanded = false;
+        mBinding.content.setTag(fullDescription);
+        renderDescription();
+    }
+
+    private void renderDescription() {
+        boolean visible = !TextUtils.isEmpty(fullDescription);
+        boolean expandable = fullDescription.length() > 150 || fullDescription.contains("\n");
+        mBinding.description.setVisibility(visible ? View.VISIBLE : View.GONE);
+        mBinding.descriptionMore.setVisibility(visible && expandable ? View.VISIBLE : View.GONE);
+        mBinding.descriptionMore.setText(descriptionExpanded ? R.string.tv_collapse : R.string.tv_more);
+        mBinding.description.setMaxLines(descriptionExpanded ? Integer.MAX_VALUE : 3);
+        mBinding.description.setEllipsize(descriptionExpanded ? null : TextUtils.TruncateAt.END);
+        mBinding.description.setText(fullDescription);
+        mBinding.description.setContentDescription(expandable
+                ? getString(descriptionExpanded ? R.string.tv_collapse : R.string.tv_expand)
+                : null);
+    }
+
+    private void toggleDescription() {
+        if (fullDescription.length() <= 150 && !fullDescription.contains("\n")) return;
+        descriptionExpanded = !descriptionExpanded;
+        renderDescription();
     }
 
     private void setText(TextView view, int resId, String text) {
@@ -1014,7 +1060,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void updateFocus() {
         int firstRow = firstFocusRow();
         mBinding.video.setNextFocusDownId(firstRow);
-        mBinding.content.setNextFocusDownId(firstRow);
+        mBinding.description.setNextFocusDownId(firstRow);
         mBinding.keep.setNextFocusDownId(firstRow);
         mBinding.change.setNextFocusDownId(firstRow);
         mPartAdapter.setNextFocusUp(findFocusUp(5));
@@ -1077,11 +1123,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setMetadataArtwork(state == null ? null : state.getSelected());
         mFocus2 = null;
         hideInfo();
-    }
-
-    private void onContent() {
-        if (mBinding.content.getTag() == null) return;
-        ContentDialog.create().content(mBinding.content.getTag().toString()).show(this);
     }
 
     private void onKeep() {

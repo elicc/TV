@@ -434,7 +434,7 @@ class TvThemeTests(unittest.TestCase):
         for name, value in {
             "tv_overscan_h": "36dp",
             "tv_overscan_v": "24dp",
-            "tv_keycaps_bar_height": "26dp",
+            "tv_keycaps_bar_height": "24dp",
             "tv_keycaps_top_gap": "6dp",
             "tv_keycaps_bottom_inset": "0dp",
             "tv_focus_stroke": "3.5dp",

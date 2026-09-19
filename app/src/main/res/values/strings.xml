@@ -429,7 +429,10 @@
     <string name="metadata_source">Source</string>
     <string name="metadata_douban">Douban</string>
     <string name="metadata_tmdb">TMDB</string>
-    <string name="metadata_artworks">影片照片墙</string>
+    <string name="metadata_artworks">影片海报</string>
+    <string name="tv_expand">展开全部</string>
+    <string name="tv_collapse">收起详情</string>
+    <string name="tv_more">更多</string>
     <string name="metadata_confirm_title">Use Douban metadata?</string>
     <string name="metadata_confirm_use">Use</string>
     <string name="metadata_confirm_keep">Keep source</string>

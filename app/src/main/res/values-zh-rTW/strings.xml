@@ -419,7 +419,10 @@
     <string name="metadata_source">來源</string>
     <string name="metadata_douban">豆瓣</string>
     <string name="metadata_tmdb">TMDB</string>
-    <string name="metadata_artworks">影片照片牆</string>
+    <string name="metadata_artworks">影片海報</string>
+    <string name="tv_expand">展開全部</string>
+    <string name="tv_collapse">收起詳情</string>
+    <string name="tv_more">更多</string>
     <string name="metadata_confirm_title">使用豆瓣資料？</string>
     <string name="metadata_confirm_use">使用</string>
     <string name="metadata_confirm_keep">保留來源</string>
