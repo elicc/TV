@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/metadata_agent_title"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/metadata_agent_hint"
+        android:textColor="?attr/tvColorTextMuted"
+        android:textSize="12sp" />
+
+    <com.fongmi.android.tv.ui.custom.CustomEditText
+        android:id="@+id/url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="@string/metadata_agent_url_hint"
+        android:imeOptions="actionNext"
+        android:importantForAutofill="no"
+        android:inputType="textUri"
+        android:nextFocusDown="@id/apiKey"
+        android:singleLine="true"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textColorHint="?attr/tvColorTextSecondary"
+        android:textSize="16sp" />
+
+    <com.fongmi.android.tv.ui.custom.CustomEditText
+        android:id="@+id/apiKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="@string/metadata_agent_key_hint"
+        android:imeOptions="actionDone"
+        android:importantForAutofill="no"
+        android:inputType="textPassword"
+        android:nextFocusUp="@id/url"
+        android:nextFocusDown="@id/positive"
+        android:singleLine="true"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textColorHint="?attr/tvColorTextSecondary"
+        android:textSize="16sp" />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/positive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:background="@drawable/selector_button"
+            android:focusable="true"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="@string/dialog_positive"
+            android:textColor="?attr/tvColorTextPrimary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/negative"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/selector_button"
+            android:focusable="true"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="@string/dialog_negative"
+            android:textColor="?attr/tvColorTextPrimary" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

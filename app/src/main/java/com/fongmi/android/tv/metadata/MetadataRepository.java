@@ -31,6 +31,7 @@ public class MetadataRepository {
     private static final MetadataRepository INSTANCE = new MetadataRepository();
 
     private final MetadataProviderClient douban = new DoubanProvider();
+    private final MetadataAgentClient agent = new MetadataAgentClient();
     private final ConcurrentMap<String, CacheEntry> memory = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CandidateEntry> candidates = new ConcurrentHashMap<>();
 
@@ -54,11 +55,11 @@ public class MetadataRepository {
         MovieMetadata source = MovieMetadata.fromSource(vod);
         Task.execute(() -> {
             try {
-                if (candidate == null || candidate.getMetadata() == null || !MetadataMatcher.isCandidate(candidate.getConfidence())) {
+                if (candidate == null || candidate.getMetadata() == null) {
                     App.post(() -> callback.accept(fallback(identity, source, "candidate rejected")));
                     return;
                 }
-                MovieMetadata detail = douban.detail(candidate.getMetadata().getExternalId(), isTv(identity, candidate.getMetadata()));
+                MovieMetadata detail = loadConfirmedDetail(identity, candidate.getMetadata());
                 detail.setProvider(MetadataProvider.DOUBAN);
                 String key = identity.mappingKey(MetadataProvider.DOUBAN);
                 save(key, identity, detail, detail.getExternalId(), true);
@@ -80,7 +81,7 @@ public class MetadataRepository {
         callback.accept(loading);
         Task.execute(() -> {
             try {
-                MetadataState state = resolve(identity, source);
+                MetadataState state = resolve(identity, source, true);
                 App.post(() -> callback.accept(state));
             } catch (Throwable error) {
                 Log.w(TAG, "load failed for " + identity.title(), error);
@@ -102,7 +103,7 @@ public class MetadataRepository {
         return Task.submit(() -> {
             MovieMetadata result = null;
             try {
-                MetadataState state = resolve(identity, MovieMetadata.fromSource(vod));
+                MetadataState state = resolve(identity, MovieMetadata.fromSource(vod), false);
                 if (state.getStatus() == MetadataState.Status.SUCCESS
                         && state.getSelectedProvider() != MetadataProvider.SOURCE) {
                     result = state.getSelected();
@@ -120,7 +121,7 @@ public class MetadataRepository {
         });
     }
 
-    private MetadataState resolve(MovieIdentity identity, MovieMetadata source) throws Exception {
+    private MetadataState resolve(MovieIdentity identity, MovieMetadata source, boolean allowAgent) throws Exception {
         EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
         providers.put(MetadataProvider.SOURCE, source);
         if (identity == null || !identity.isValid()) return state(identity, source, providers, List.of(), MetadataState.Status.FALLBACK, "invalid identity");
@@ -157,6 +158,9 @@ public class MetadataRepository {
             Prefers.remove(mappingKey);
         }
 
+        MetadataState remote = resolveRemote(identity, source, allowAgent);
+        if (remote != null) return remote;
+
         String candidateKey = "metadata_candidates_douban_" + identity.sourceInstanceId() + "_" + identity.sourceVodId();
         CandidateEntry candidateEntry = candidates.get(candidateKey);
         List<MetadataCandidate> ranked = candidateEntry != null && !candidateEntry.expired(CANDIDATE_TTL)
@@ -177,6 +181,40 @@ public class MetadataRepository {
         save(mappingKey, identity, detail, detail.getExternalId(), false);
         providers.put(MetadataProvider.DOUBAN, detail);
         return state(identity, source, providers, ranked, MetadataState.Status.SUCCESS, "auto matched");
+    }
+
+    private MetadataState resolveRemote(MovieIdentity identity, MovieMetadata source, boolean allowAgent) {
+        if (!agent.isConfigured()) return null;
+        try {
+            MetadataAgentClient.Resolution result = agent.resolve(identity, allowAgent);
+            if (result.isMatched()) {
+                MovieMetadata selected = result.getSelected();
+                save(identity.mappingKey(MetadataProvider.DOUBAN), identity, selected, selected.getExternalId(), false);
+                EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+                providers.put(MetadataProvider.SOURCE, source);
+                providers.put(MetadataProvider.DOUBAN, selected);
+                return state(identity, source, providers, result.getCandidates(), MetadataState.Status.SUCCESS, "remote matched");
+            }
+            if (result.needsConfirmation()) {
+                EnumMap<MetadataProvider, MovieMetadata> providers = new EnumMap<>(MetadataProvider.class);
+                providers.put(MetadataProvider.SOURCE, source);
+                return state(identity, source, providers, result.getCandidates(), MetadataState.Status.FALLBACK, result.getMessage());
+            }
+        } catch (Throwable error) {
+            Log.d(TAG, "remote resolver unavailable for " + identity.title() + ", using local provider", error);
+        }
+        return null;
+    }
+
+    private MovieMetadata loadConfirmedDetail(MovieIdentity identity, MovieMetadata candidate) throws Exception {
+        if (agent.isConfigured()) {
+            try {
+                return agent.detail(candidate.getExternalId(), isTv(identity, candidate));
+            } catch (Throwable error) {
+                Log.d(TAG, "remote detail unavailable for " + identity.title() + ", using local provider", error);
+            }
+        }
+        return douban.detail(candidate.getExternalId(), isTv(identity, candidate));
     }
 
     private List<MetadataCandidate> search(MovieIdentity identity) throws Exception {

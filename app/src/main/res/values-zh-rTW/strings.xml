@@ -424,4 +424,8 @@
     <string name="metadata_confirm_use">使用</string>
     <string name="metadata_confirm_keep">保留來源</string>
     <string name="metadata_candidate_available">%1$s，有新的資料可用，按確認鍵使用</string>
+    <string name="metadata_agent_title">中繼資料增強服務</string>
+    <string name="metadata_agent_hint">可選的遠端豆瓣與大型模型配對服務。服務位址留空時繼續使用內建配對。</string>
+    <string name="metadata_agent_url_hint">服務位址，例如 http://192.168.1.2:8000</string>
+    <string name="metadata_agent_key_hint">Bearer API Key（可信區域網路可留空）</string>
 </resources>

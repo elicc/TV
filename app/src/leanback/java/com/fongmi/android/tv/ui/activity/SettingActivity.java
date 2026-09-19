@@ -23,14 +23,15 @@ import com.fongmi.android.tv.bean.Live;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.databinding.ActivitySettingBinding;
 import com.fongmi.android.tv.db.BackupManager;
+import com.fongmi.android.tv.db.ConfigVault;
+import com.fongmi.android.tv.db.VaultPolicy;
 import com.fongmi.android.tv.event.ConfigEvent;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
-import com.fongmi.android.tv.db.ConfigVault;
-import com.fongmi.android.tv.db.VaultPolicy;
 import com.fongmi.android.tv.impl.ConfigListener;
 import com.fongmi.android.tv.impl.LiveListener;
 import com.fongmi.android.tv.impl.SiteListener;
+import com.fongmi.android.tv.setting.MetadataAgentSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
@@ -39,6 +40,7 @@ import com.fongmi.android.tv.ui.dialog.ConfigDialog;
 import com.fongmi.android.tv.ui.dialog.DohDialog;
 import com.fongmi.android.tv.ui.dialog.HistoryDialog;
 import com.fongmi.android.tv.ui.dialog.LiveDialog;
+import com.fongmi.android.tv.ui.dialog.MetadataAgentDialog;
 import com.fongmi.android.tv.ui.dialog.RestoreDialog;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
 import com.fongmi.android.tv.utils.FileUtil;
@@ -46,9 +48,6 @@ import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.PermissionUtil;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.TvTheme;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.github.catvod.bean.Doh;
 import com.github.catvod.net.OkHttp;
@@ -56,10 +55,13 @@ import com.github.catvod.net.OkHttp;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-public class SettingActivity extends BaseActivity implements ConfigListener, SiteListener, LiveListener, DohDialog.Listener {
+public class SettingActivity extends BaseActivity implements ConfigListener, SiteListener, LiveListener, DohDialog.Listener, MetadataAgentDialog.Listener {
 
     private ActivitySettingBinding mBinding;
     private String[] size;
@@ -113,6 +115,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         setKeycaps();
         setCacheText();
         setOtherText();
+        setMetadataAgentText();
         setVaultText();
     }
 
@@ -129,6 +132,11 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(Setting.getSwitch(Setting.isIncognito()));
         mBinding.sizeText.setText((size = ResUtil.getStringArray(R.array.select_size))[PlayerSetting.getSize()]);
+    }
+
+    private void setMetadataAgentText() {
+        mBinding.metadataAgentText.setText(MetadataAgentSetting.isConfigured()
+                ? MetadataAgentSetting.getUrl() : getString(R.string.tv_setting_unconfigured));
     }
 
     /**
@@ -243,7 +251,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         bindSectionNavigation(mBinding.navPlayback, mBinding.settingsScroll, mBinding.sectionPlayback, mBinding.player);
         bindSectionNavigation(mBinding.navData, mBinding.utilityScroll, mBinding.sectionData, mBinding.incognito);
         bindSectionNavigation(mBinding.navAbout, mBinding.utilityScroll, mBinding.sectionAbout, mBinding.version);
-        bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh);
+        bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh, mBinding.metadataAgent);
         bindSectionFocus(mBinding.navAppearance, mBinding.skin, mBinding.atmosphere, mBinding.wall, mBinding.wallDefault, mBinding.wallRefresh, mBinding.size);
         bindSectionFocus(mBinding.navPlayback, mBinding.player, mBinding.danmaku);
         bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.vault, mBinding.backup, mBinding.restore, mBinding.cache);
@@ -252,6 +260,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.atmosphere.setOnClickListener(this::setAtmosphere);
         mBinding.vod.setOnClickListener(this::onVod);
         mBinding.doh.setOnClickListener(this::setDoh);
+        mBinding.metadataAgent.setOnClickListener(view -> MetadataAgentDialog.show(this));
         mBinding.live.setOnClickListener(this::onLive);
         mBinding.wall.setOnClickListener(this::onWall);
         mBinding.size.setOnClickListener(this::setSize);
@@ -498,6 +507,12 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         OkHttp.dns().setDoh(doh);
         Setting.putDoh(doh.toString());
         mBinding.dohText.setText(doh.getName());
+    }
+
+    @Override
+    public void onMetadataAgentChanged() {
+        setMetadataAgentText();
+        mBinding.metadataAgent.requestFocus();
     }
 
     private void onCache(View view) {

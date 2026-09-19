@@ -309,7 +309,7 @@
                         android:nextFocusLeft="@id/navContent"
                         android:nextFocusUp="@id/live"
                         android:nextFocusRight="@id/incognito"
-                        android:nextFocusDown="@id/skin">
+                        android:nextFocusDown="@id/metadataAgent">
                         <com.google.android.material.textview.MaterialTextView
                             style="@style/Tv.Setting.RowTitle"
                             android:layout_width="wrap_content"
@@ -318,6 +318,26 @@
                             android:id="@+id/dohText"
                             style="@style/Tv.Setting.RowValue"
                             tools:text="System" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/metadataAgent"
+                        style="@style/Tv.Setting.Row"
+                        android:layout_marginTop="5dp"
+                        android:nextFocusLeft="@id/navContent"
+                        android:nextFocusUp="@id/doh"
+                        android:nextFocusRight="@id/incognito"
+                        android:nextFocusDown="@id/skin">
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/Tv.Setting.RowTitle"
+                            android:layout_width="wrap_content"
+                            android:text="@string/metadata_agent_title" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/metadataAgentText"
+                            style="@style/Tv.Setting.RowValue"
+                            android:ellipsize="middle"
+                            android:singleLine="true"
+                            tools:text="http://192.168.1.2:8000" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
                 </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -335,7 +355,7 @@
                         android:id="@+id/skin"
                         style="@style/Tv.Setting.Row"
                         android:nextFocusLeft="@id/navAppearance"
-                        android:nextFocusUp="@id/doh"
+                        android:nextFocusUp="@id/metadataAgent"
                         android:nextFocusRight="@id/incognito"
                         android:nextFocusDown="@id/atmosphere">
                         <com.google.android.material.textview.MaterialTextView

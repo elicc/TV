@@ -1,3 +1,3 @@
-[submodule "services/tv-agent"]
-	path = services/tv-agent
+[submodule "tv-agent"]
+	path = tv-agent
 	url = git@github.com:elicc/tv-agent.git
