@@ -153,6 +153,9 @@
                 android:text="@string/search_hot"
                 android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="24sp" />
+            <include
+                android:id="@+id/hotSkeleton"
+                layout="@layout/view_hot_movie_skeletons" />
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/hotRecycler"
                 android:layout_width="match_parent"

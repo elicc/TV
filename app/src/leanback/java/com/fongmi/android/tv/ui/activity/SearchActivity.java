@@ -144,11 +144,14 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     private void getHot() {
         mBinding.word.setText(R.string.search_douban_hot);
-        mBinding.hotRecycler.setVisibility(View.VISIBLE);
+        mBinding.hotSkeleton.getRoot().setVisibility(View.VISIBLE);
+        mBinding.hotRecycler.setVisibility(View.GONE);
         mBinding.wordRecycler.setVisibility(View.GONE);
         int token = ++hotRequestToken;
         MetadataRepository.get().loadHotMovies(items -> {
             if (token != hotRequestToken || !empty()) return;
+            mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
+            mBinding.hotRecycler.setVisibility(View.VISIBLE);
             mHotMovieAdapter.setItems(items);
         }, error -> {
             if (token != hotRequestToken || !empty()) return;
@@ -159,6 +162,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private void getSuggest(String text) {
         ++hotRequestToken;
         mBinding.word.setText(R.string.search_suggest);
+        mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
         mBinding.hotRecycler.setVisibility(View.GONE);
         mBinding.wordRecycler.setVisibility(View.VISIBLE);
         OkHttp.newCall("https://suggest.video.iqiyi.com/?if=mobile&key=" + Uri.encode(ZhuToPin.get(text))).enqueue(getCallback(false));
@@ -182,6 +186,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     private void showHotFallback() {
         mBinding.word.setText(R.string.search_hot);
+        mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
         mBinding.hotRecycler.setVisibility(View.GONE);
         mBinding.wordRecycler.setVisibility(View.VISIBLE);
         mWordAdapter.setItems(Word.objectFrom(Setting.getHot()).getData());

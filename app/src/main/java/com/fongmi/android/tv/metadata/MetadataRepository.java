@@ -27,6 +27,8 @@ public class MetadataRepository {
     private static final long MEMORY_TTL = 10 * 60 * 1000L;
     private static final long DISK_TTL = 30L * 24 * 60 * 60 * 1000L;
     private static final long CANDIDATE_TTL = 24L * 60 * 60 * 1000L;
+    private static final long HOT_TTL = 12L * 60 * 60 * 1000L;
+    private static final String HOT_CACHE_KEY = "metadata_douban_hot_movies";
     private static final int MAX_CACHE_ENTRIES = 500;
     private static final MetadataRepository INSTANCE = new MetadataRepository();
 
@@ -34,6 +36,9 @@ public class MetadataRepository {
     private final MetadataAgentClient agent = new MetadataAgentClient();
     private final ConcurrentMap<String, CacheEntry> memory = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CandidateEntry> candidates = new ConcurrentHashMap<>();
+    private final Object hotLock = new Object();
+    private final List<HotCallback> hotWaiters = new ArrayList<>();
+    private boolean hotLoading;
 
     public static MetadataRepository get() {
         return INSTANCE;
@@ -53,14 +58,80 @@ public class MetadataRepository {
 
     /** Loads the shared Douban hot collection for the TV search screen. */
     public void loadHotMovies(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+        HotSnapshot cached = readHotSnapshot();
+        if (cached != null && !cached.expired()) {
+            App.post(() -> success.accept(cached.items));
+            return;
+        }
+        synchronized (hotLock) {
+            hotWaiters.add(new HotCallback(success, failure));
+            if (hotLoading) return;
+            hotLoading = true;
+        }
         Task.execute(() -> {
             try {
                 List<MovieMetadata> result = douban.hotMovies(40);
-                App.post(() -> success.accept(result));
+                saveHotSnapshot(result);
+                finishHotLoad(result, null);
             } catch (Throwable error) {
-                App.post(() -> failure.accept(error));
+                HotSnapshot fallback = readHotSnapshot();
+                finishHotLoad(fallback == null ? null : fallback.items, error);
             }
         });
+    }
+
+    private void finishHotLoad(List<MovieMetadata> result, Throwable error) {
+        List<HotCallback> callbacks;
+        synchronized (hotLock) {
+            hotLoading = false;
+            callbacks = new ArrayList<>(hotWaiters);
+            hotWaiters.clear();
+        }
+        App.post(() -> {
+            for (HotCallback callback : callbacks) {
+                if (result != null && !result.isEmpty()) callback.success.accept(result);
+                else callback.failure.accept(error == null ? new IOException("Douban hot list is empty") : error);
+            }
+        });
+    }
+
+    private HotSnapshot readHotSnapshot() {
+        String json = Prefers.getString(HOT_CACHE_KEY, "");
+        if (json.isEmpty()) return null;
+        try {
+            HotSnapshot snapshot = App.gson().fromJson(json, HotSnapshot.class);
+            return snapshot == null || snapshot.items == null || snapshot.items.isEmpty() ? null : snapshot;
+        } catch (RuntimeException ignored) {
+            Prefers.remove(HOT_CACHE_KEY);
+            return null;
+        }
+    }
+
+    private void saveHotSnapshot(List<MovieMetadata> items) {
+        if (items == null || items.isEmpty()) return;
+        HotSnapshot snapshot = new HotSnapshot();
+        snapshot.updatedAt = System.currentTimeMillis();
+        snapshot.items = new ArrayList<>(items);
+        Prefers.put(HOT_CACHE_KEY, App.gson().toJson(snapshot));
+    }
+
+    private static final class HotCallback {
+        private final Consumer<List<MovieMetadata>> success;
+        private final Consumer<Throwable> failure;
+
+        private HotCallback(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+            this.success = success;
+            this.failure = failure;
+        }
+    }
+
+    private static final class HotSnapshot {
+        private long updatedAt;
+        private List<MovieMetadata> items = new ArrayList<>();
+
+        private boolean expired() {
+            return updatedAt <= 0 || System.currentTimeMillis() - updatedAt >= HOT_TTL;
+        }
     }
 
     public void confirm(MovieIdentity identity, Vod vod, MetadataCandidate candidate, Consumer<MetadataState> callback) {
