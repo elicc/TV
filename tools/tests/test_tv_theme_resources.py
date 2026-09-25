@@ -217,7 +217,7 @@ class TvThemeTests(unittest.TestCase):
         self.assertIn('tvColorFocusGlow">@color/tv_focus_glow_ice', styles)
         self.assertIn('tvColorFocusGlow">@color/tv_focus_glow_jade', styles)
         animator = (RES / "animator/tv_focus_scale.xml").read_text()
-        self.assertIn("valueTo=\"1.05\"", animator)
+        self.assertIn("valueTo=\"1.03\"", animator)
         self.assertIn("valueTo=\"0.98\"", animator)
         self.assertIn("propertyName=\"translationZ\"", animator)
         self.assertIn("@integer/tv_motion_focus_on", animator)
@@ -437,7 +437,7 @@ class TvThemeTests(unittest.TestCase):
             "tv_keycaps_bar_height": "24dp",
             "tv_keycaps_top_gap": "6dp",
             "tv_keycaps_bottom_inset": "0dp",
-            "tv_focus_stroke": "3.5dp",
+            "tv_focus_stroke": "1.5dp",
             "tv_radius_card": "16dp",
             "tv_radius_chip": "20dp",
             "tv_text_card_title": "20sp",
@@ -622,6 +622,11 @@ class TvThemeTests(unittest.TestCase):
         description = next(n for n in root.iter() if n.get(android + "id") == "@+id/description")
         self.assertEqual("2", description.get(android + "maxLines"))
         self.assertEqual("true", description.get(android + "focusable"))
+        self.assertEqual("12dp", description.get(android + "paddingStart"))
+        self.assertEqual("6dp", description.get(android + "paddingTop"))
+        self.assertEqual("8dp", description.get(android + "layout_marginBottom"))
+        self.assertEqual("@id/change", description.get(android + "nextFocusDown"))
+        self.assertIn("tab.setOnFocusChangeListener", code)
         self.assertIn("mBinding.video.setClipToOutline(true);", code)
         artwork = ET.parse(RES / "layout/adapter_artwork.xml").getroot()
         artwork_image = next(n for n in artwork.iter() if n.get(android + "id") == "@+id/image")
@@ -640,13 +645,13 @@ class TvThemeTests(unittest.TestCase):
         metadata_selector = (RES / "drawable/selector_metadata_tab.xml").read_text()
         self.assertIn('android:state_focused="true" android:state_selected="true"', metadata_selector)
         focused_tab = (RES / "drawable/shape_metadata_tab_focused.xml").read_text()
-        self.assertIn('?attr/tvColorFocus', focused_tab)
-        self.assertNotIn('<layer-list', focused_tab)
+        self.assertIn('@drawable/shape_metadata_tab_indicator', focused_tab)
+        self.assertNotIn('tvColorFocusGlow', focused_tab)
         focused_choice = (RES / "drawable/shape_detail_choice_focused.xml").read_text()
         self.assertIn('?attr/tvColorFocus', focused_choice)
-        self.assertNotIn('<layer-list', focused_choice)
+        self.assertIn('tvColorFocusGlow', focused_choice)
         focused_selected_tab = (RES / "drawable/shape_metadata_tab_focused_selected.xml").read_text()
-        self.assertIn('@drawable/shape_metadata_tab_indicator', focused_selected_tab)
+        self.assertIn('@drawable/shape_metadata_tab_focused', focused_selected_tab)
 
         scroll = next(n for n in root.iter() if n.get(android + "id") == "@+id/scroll")
         # The scroll viewport starts below a zero-height player anchor.  Its

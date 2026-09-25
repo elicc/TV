@@ -3,11 +3,19 @@
      Used for the standalone settings gear on the right side of the topnav. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <shape android:shape="oval">
-            <solid android:color="@color/tv_glass" />
-            <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
-            <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="@color/tv_glass" />
+                    <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="oval">
+                    <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
     <item>
         <shape android:shape="oval">

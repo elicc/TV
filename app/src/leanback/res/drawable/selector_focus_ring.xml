@@ -2,16 +2,20 @@
 <!-- Inner poster ring shown while the card itself is focused (duplicateParentState). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <shape android:shape="rectangle">
-            <corners
-                android:bottomLeftRadius="0dp"
-                android:bottomRightRadius="0dp"
-                android:topLeftRadius="@dimen/tv_radius_card"
-                android:topRightRadius="@dimen/tv_radius_card" />
-            <stroke
-                android:width="2dp"
-                android:color="?attr/tvColorFocus" />
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="@dimen/tv_radius_card" />
+                    <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="@dimen/tv_radius_card" />
+                    <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
     <item android:drawable="@android:color/transparent" />
 </selector>

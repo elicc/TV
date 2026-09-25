@@ -473,6 +473,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void bindMetadataTab(TextView tab, MetadataProvider provider) {
         tab.setOnClickListener(view -> onMetadataTabClick(provider));
+        // Provider tabs are a focus-driven TV control.  Preview the provider as
+        // soon as the D-pad lands on it; OK remains supported for pointer/input
+        // parity and for pending candidates that still need confirmation.
+        tab.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus) onMetadataTabClick(provider);
+        });
     }
 
     private void onMetadataTabClick(MetadataProvider provider) {
@@ -902,7 +908,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int detailUpTargetId() {
-        if (isVisible(mBinding.descriptionMore)) return R.id.descriptionMore;
         if (isVisible(mBinding.description)) return R.id.description;
         int tab = firstMetadataTabId();
         if (tab != 0) return tab;
@@ -1115,11 +1120,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void updateFocus() {
         int firstRow = firstFocusRow();
-        int descriptionDown = isVisible(mBinding.descriptionMore) ? R.id.descriptionMore : firstRow;
+        int descriptionDown = firstDetailActionId() != 0 ? firstDetailActionId() : firstRow;
         mBinding.video.setNextFocusDownId(firstRow);
         mBinding.description.setNextFocusDownId(descriptionDown);
-        mBinding.descriptionMore.setNextFocusUpId(R.id.description);
-        mBinding.descriptionMore.setNextFocusDownId(firstRow);
         mBinding.keep.setNextFocusDownId(firstRow);
         mBinding.change.setNextFocusDownId(firstRow);
         mBinding.content.setNextFocusDownId(firstRow);
@@ -1191,10 +1194,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             target = down ? detailDownTargetId() : (isVisible(mBinding.actor) ? R.id.actor : R.id.video);
         } else if (focused == mBinding.description) {
             target = down
-                    ? (isVisible(mBinding.descriptionMore) ? R.id.descriptionMore : firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow())
+                    ? (firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow())
                     : (firstMetadataTabId() != 0 ? firstMetadataTabId() : isVisible(mBinding.actor) ? R.id.actor : R.id.video);
-        } else if (focused == mBinding.descriptionMore) {
-            target = down ? (firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow()) : R.id.description;
         } else if (!down && focused == mBinding.change) {
             // Source/Douban/TMDB are the semantic parent of the source-switch
             // action. Prefer the first available provider tab before falling

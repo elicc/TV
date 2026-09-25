@@ -25,13 +25,15 @@
     <dimen name="tv_radius_modal">24dp</dimen>
     <dimen name="tv_radius_control">@dimen/tv_radius_button</dimen>
     <dimen name="tv_radius_panel">@dimen/tv_radius_modal</dimen>
-    <dimen name="tv_focus_stroke">3.5dp</dimen>
-    <dimen name="tv_focus_stroke_offset">2dp</dimen>
-    <dimen name="tv_focus_glow">25dp</dimen>
+    <!-- Focus geometry from fongmi_tv_leanback_focus: a precise 1.5dp ring
+         with a restrained halo instead of the former 3.5dp hard outline. -->
+    <dimen name="tv_focus_stroke">1.5dp</dimen>
+    <dimen name="tv_focus_stroke_offset">1dp</dimen>
+    <dimen name="tv_focus_glow">16dp</dimen>
     <dimen name="tv_focus_width">@dimen/tv_focus_stroke</dimen>
-    <!-- Halo band stroked outside the 3.5dp ring; negative inset in shape_*_focused. -->
-    <dimen name="tv_glow_band">6dp</dimen>
-    <dimen name="tv_glow_band_outset">-6dp</dimen>
+    <!-- Shared translucent halo band used beneath the precision ring. -->
+    <dimen name="tv_glow_band">3dp</dimen>
+    <dimen name="tv_glow_band_outset">-3dp</dimen>
     <dimen name="tv_keycap_height">32dp</dimen>
     <!-- Compact footer band: match the 24dp keycap height so its lower edge
          sits directly on the screen edge. The top gap remains independent. -->

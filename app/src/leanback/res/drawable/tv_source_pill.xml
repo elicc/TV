@@ -3,7 +3,7 @@
      Designed as an "info + clickable" target, not a primary navigation
      item, so the focus treatment is intentionally quieter than tv_nav_pill:
        - Background lifts from glass → tv_glass_raised (subtle elevation).
-       - A single 2dp accent ring replaces the previous 3.5dp + 6dp double
+     - A precise shared focus ring replaces the previous 3.5dp + 6dp double
          stroke so the ring reads as a selection indicator instead of
          dominating the top-right corner.
        - Text/icon colors do not need to swap (they already contrast well
@@ -11,11 +11,21 @@
          consistent with the unfocused state. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/tv_glass_raised" />
-            <corners android:radius="@dimen/tv_radius_control" />
-            <stroke android:width="2dp" android:color="?attr/tvColorFocus" />
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="@dimen/tv_radius_control" />
+                    <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/tv_glass_raised" />
+                    <corners android:radius="@dimen/tv_radius_control" />
+                    <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
     <item>
         <shape android:shape="rectangle">

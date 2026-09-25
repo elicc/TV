@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@drawable/shape_metadata_tab_focused" />
-    <item
-        android:left="8dp"
-        android:right="8dp"
-        android:height="2dp"
-        android:gravity="bottom"
-        android:drawable="@drawable/shape_metadata_tab_indicator" />
 </layer-list>

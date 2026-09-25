@@ -6,20 +6,20 @@
             <solid android:color="?attr/tvColorSurface" />
             <corners android:radius="16dp" />
             <stroke
-                android:width="6dp"
+                android:width="@dimen/tv_glow_band"
                 android:color="?attr/tvColorFocusGlow" />
         </shape>
     </item>
     <item
-        android:left="3dp"
-        android:top="3dp"
-        android:right="3dp"
-        android:bottom="3dp">
+        android:left="@dimen/tv_focus_stroke_offset"
+        android:top="@dimen/tv_focus_stroke_offset"
+        android:right="@dimen/tv_focus_stroke_offset"
+        android:bottom="@dimen/tv_focus_stroke_offset">
         <shape android:shape="rectangle">
             <solid android:color="@android:color/transparent" />
             <corners android:radius="13dp" />
             <stroke
-                android:width="2dp"
+                android:width="@dimen/tv_focus_width"
                 android:color="?attr/tvColorFocus" />
         </shape>
     </item>

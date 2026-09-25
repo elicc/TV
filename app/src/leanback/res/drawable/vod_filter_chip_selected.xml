@@ -4,6 +4,6 @@
     <solid android:color="?attr/tvColorSelected" />
     <corners android:radius="12dp" />
     <stroke
-        android:width="2dp"
+        android:width="@dimen/tv_focus_width"
         android:color="?attr/tvColorFocus" />
 </shape>
