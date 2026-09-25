@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
+import android.text.Layout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
 import androidx.lifecycle.ViewModelProvider;
@@ -84,6 +86,7 @@ import com.fongmi.android.tv.ui.custom.CustomKeyDownVod;
 import com.fongmi.android.tv.ui.custom.CustomMovement;
 import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.ui.dialog.ChapterDialog;
+import com.fongmi.android.tv.ui.dialog.ContentDialog;
 import com.fongmi.android.tv.ui.dialog.DanmakuDialog;
 import com.fongmi.android.tv.ui.dialog.EditionDialog;
 import com.fongmi.android.tv.ui.dialog.ParseDialog;
@@ -108,13 +111,14 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private static final String TRACE_TAG = "PlaybackTrace";
+    private static final int[] DETAIL_ROW_IDS = {R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
+    private static final int[] DETAIL_ACTION_IDS = {R.id.content, R.id.change, R.id.keep};
 
     private ActivityVideoBinding mBinding;
     private VideoViewModel mViewModel;
@@ -141,7 +145,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private boolean detailReady;
     private boolean metadataReady;
     private boolean actorExpanded;
-    private boolean descriptionExpanded;
     private String fullDescription = "";
 
     public static void push(FragmentActivity activity, String text) {
@@ -340,9 +343,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             mBinding.actor.setMaxLines(actorExpanded ? Integer.MAX_VALUE : 1);
             mBinding.actor.setEllipsize(actorExpanded ? null : TextUtils.TruncateAt.END);
         });
-        View.OnClickListener descriptionToggle = view -> toggleDescription();
-        mBinding.description.setOnClickListener(descriptionToggle);
-        mBinding.descriptionMore.setOnClickListener(descriptionToggle);
+        View.OnClickListener descriptionClick = view -> showDescriptionDialog();
+        mBinding.description.setOnClickListener(descriptionClick);
+        mBinding.descriptionMore.setOnClickListener(descriptionClick);
         bindMetadataTab(mBinding.tabSource, MetadataProvider.SOURCE);
         bindMetadataTab(mBinding.tabDouban, MetadataProvider.DOUBAN);
         bindMetadataTab(mBinding.tabTmdb, MetadataProvider.TMDB);
@@ -373,12 +376,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.control.action.ending.setOnLongClickListener(view -> onEndingReset());
         mBinding.control.action.opening.setOnLongClickListener(view -> onOpeningReset());
         mBinding.video.setOnTouchListener((view, event) -> mKeyDown.onTouchEvent(event));
-        mBinding.flag.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
-            @Override
-            public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
-                if (mFlagAdapter.getItemCount() > 0) onItemClick(mFlagAdapter.get(position));
-            }
-        });
         mBinding.episode.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
             @Override
             public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
@@ -420,29 +417,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void setVideoView() {
         setSeekNextFocusDown(R.id.next);
         setActionFocusBoundary(mBinding.control.action.getRoot());
+        mBinding.video.setClipToOutline(true);
         mBinding.control.action.more.setVisibility(View.VISIBLE);
         setAdvancedControls(false);
         PlayerEngineDialog.setText(mBinding.control.action.player);
         mBinding.control.action.danmaku.setVisibility(DanmakuSetting.isLoad() ? View.VISIBLE : View.GONE);
-        // Keep the scrolling surface below the fixed player/detail header even when
-        // RelativeLayout remeasures after metadata, focus, or fullscreen transitions.
-        mBinding.getRoot().addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateScrollViewport());
-        mBinding.getRoot().post(this::updateScrollViewport);
-    }
-
-    private void updateScrollViewport() {
-        if (mBinding == null || mBinding.getRoot().getHeight() == 0) return;
-        int gap = ResUtil.dp2px(14);
-        int top = Math.max(0, mBinding.row2.getBottom() + gap);
-        int height = Math.max(0, mBinding.getRoot().getHeight() - top);
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mBinding.scroll.getLayoutParams();
-        if (params.topMargin == top && params.height == height && params.getRule(RelativeLayout.ALIGN_PARENT_TOP) == RelativeLayout.TRUE) return;
-        params.removeRule(RelativeLayout.BELOW);
-        params.removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-        params.topMargin = top;
-        params.height = height;
-        mBinding.scroll.setLayoutParams(params);
     }
 
     private void setPlaybackMode() {
@@ -493,9 +472,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void bindMetadataTab(TextView tab, MetadataProvider provider) {
-        tab.setOnFocusChangeListener((view, focused) -> {
-            if (focused) previewMetadata(provider);
-        });
         tab.setOnClickListener(view -> onMetadataTabClick(provider));
     }
 
@@ -895,7 +871,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void updateMetadataFocus() {
         if (mBinding == null) return;
         int firstTab = firstMetadataTabId();
-        int detailDown = isVisible(mBinding.description) ? R.id.description : firstFocusRow();
+        int detailDown = detailDownTargetId();
         mBinding.actor.setNextFocusDownId(firstTab != 0 ? firstTab : detailDown);
         mBinding.tabSource.setNextFocusUpId(R.id.actor);
         mBinding.tabDouban.setNextFocusUpId(R.id.actor);
@@ -904,6 +880,34 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.tabDouban.setNextFocusDownId(detailDown);
         mBinding.tabTmdb.setNextFocusDownId(detailDown);
         mBinding.description.setNextFocusUpId(firstTab != 0 ? firstTab : R.id.actor);
+    }
+
+    /**
+     * First useful stop below the metadata selector.
+     *
+     * <p>Do not point the tabs at a possibly hidden description. Android focus search does not
+     * consistently recover from an explicit {@code nextFocusDown} whose target has just become
+     * {@link View#GONE}; on TV devices that made focus appear to vanish after pressing DOWN on
+     * “source” or “Douban”.</p>
+     */
+    private int detailDownTargetId() {
+        if (isVisible(mBinding.description)) return R.id.description;
+        int action = firstDetailActionId();
+        return action != 0 ? action : firstFocusRow();
+    }
+
+    private int firstDetailActionId() {
+        for (int action : DETAIL_ACTION_IDS) if (isVisible(findViewById(action))) return action;
+        return 0;
+    }
+
+    private int detailUpTargetId() {
+        if (isVisible(mBinding.descriptionMore)) return R.id.descriptionMore;
+        if (isVisible(mBinding.description)) return R.id.description;
+        int tab = firstMetadataTabId();
+        if (tab != 0) return tab;
+        if (isVisible(mBinding.actor)) return R.id.actor;
+        return R.id.video;
     }
 
     private void checkId() {
@@ -976,9 +980,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void onArtworkFocus(int position, MovieArtwork artwork) {
-        if (isFullscreen() || artwork == null || artwork.getUrl().isEmpty()) return;
+        if (isFullscreen()) return;
+        ensureArtworkVisible();
+        if (artwork == null || artwork.getUrl().isEmpty()) return;
         mArtworkAdapter.setSelectedPosition(position);
         mBinding.backdrop.selectCarouselItem(position);
+    }
+
+    /** Keep the focused poster row inside the visible detail viewport after scrolling. */
+    private void ensureArtworkVisible() {
+        mBinding.scroll.post(() -> {
+            if (!mBinding.artworks.hasFocus()) return;
+            int top = Math.max(0, mBinding.artworks.getTop() - mBinding.scroll.getPaddingTop());
+            if (mBinding.scroll.getScrollY() != top) mBinding.scroll.smoothScrollTo(0, top);
+        });
     }
 
     private void onBackdropArtworkChanged(int position) {
@@ -1000,36 +1015,36 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setText(mBinding.remark, 0, item.getRemarks());
     }
 
-    /**
-     * Keeps the description in the detail column instead of hiding it behind the old
-     * "简介" action. Long summaries expose a small inline 更多 affordance and expand in place.
-     */
+    /** Keeps a short, focusable synopsis in the detail column; the full text opens in a dialog. */
     private void setDescription(String description) {
         fullDescription = TextUtils.isEmpty(description) ? "" : description.trim();
-        descriptionExpanded = false;
-        mBinding.content.setTag(fullDescription);
         renderDescription();
     }
 
     private void renderDescription() {
         boolean visible = !TextUtils.isEmpty(fullDescription);
-        boolean expandable = fullDescription.length() > 150 || fullDescription.contains("\n");
         mBinding.description.setVisibility(visible ? View.VISIBLE : View.GONE);
-        mBinding.descriptionMore.setVisibility(visible && expandable ? View.VISIBLE : View.GONE);
-        mBinding.descriptionMore.setText(descriptionExpanded ? R.string.tv_collapse : R.string.tv_more);
-        mBinding.description.setMaxLines(descriptionExpanded ? Integer.MAX_VALUE : 3);
-        mBinding.description.setMinLines(expandable ? 3 : 1);
-        mBinding.description.setEllipsize(descriptionExpanded ? null : TextUtils.TruncateAt.END);
+        mBinding.descriptionMore.setVisibility(View.GONE);
+        mBinding.descriptionMore.setText(R.string.tv_more);
+        mBinding.description.setMaxLines(2);
+        mBinding.description.setMinLines(1);
+        mBinding.description.setEllipsize(TextUtils.TruncateAt.END);
         mBinding.description.setText(fullDescription);
-        mBinding.description.setContentDescription(expandable
-                ? getString(descriptionExpanded ? R.string.tv_collapse : R.string.tv_expand)
-                : null);
+        mBinding.description.setContentDescription(null);
+        if (visible) mBinding.description.post(this::updateDescriptionOverflow);
     }
 
-    private void toggleDescription() {
-        if (fullDescription.length() <= 150 && !fullDescription.contains("\n")) return;
-        descriptionExpanded = !descriptionExpanded;
-        renderDescription();
+    private void updateDescriptionOverflow() {
+        Layout layout = mBinding.description.getLayout();
+        boolean expandable = layout != null && layout.getLineCount() > 1 && layout.getEllipsisCount(layout.getLineCount() - 1) > 0;
+        mBinding.descriptionMore.setVisibility(expandable ? View.VISIBLE : View.GONE);
+        mBinding.description.setContentDescription(expandable ? getString(R.string.tv_expand) : null);
+        updateFocus();
+    }
+
+    private void showDescriptionDialog() {
+        if (TextUtils.isEmpty(fullDescription)) return;
+        ContentDialog.create().content(fullDescription).show(this);
     }
 
     private void setText(TextView view, int resId, String text) {
@@ -1089,14 +1104,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int findFocusDown(int index) {
-        List<Integer> orders = Arrays.asList(R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
-        for (int i = 0; i < orders.size(); i++) if (i > index) if (isVisible(findViewById(orders.get(i)))) return orders.get(i);
+        for (int i = index + 1; i < DETAIL_ROW_IDS.length; i++) if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
         return 0;
     }
 
     private int findFocusUp(int index) {
-        List<Integer> orders = Arrays.asList(R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick);
-        for (int i = orders.size() - 1; i >= 0; i--) if (i < index) if (isVisible(findViewById(orders.get(i)))) return orders.get(i);
+        for (int i = index - 1; i >= 0; i--) if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
         return 0;
     }
 
@@ -1109,6 +1122,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.descriptionMore.setNextFocusDownId(firstRow);
         mBinding.keep.setNextFocusDownId(firstRow);
         mBinding.change.setNextFocusDownId(firstRow);
+        mBinding.content.setNextFocusDownId(firstRow);
+        int detailUp = detailUpTargetId();
+        mBinding.keep.setNextFocusUpId(detailUp);
+        mBinding.change.setNextFocusUpId(detailUp);
+        mBinding.content.setNextFocusUpId(detailUp);
         mPartAdapter.setNextFocusUp(findFocusUp(5));
         mEpisodeAdapter.setNextFocusUp(findFocusUp(3));
         mFlagAdapter.setNextFocusDown(findFocusDown(1));
@@ -1120,9 +1138,126 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int firstFocusRow() {
-        int[] rows = {R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
-        for (int row : rows) if (isVisible(findViewById(row))) return row;
+        for (int row : DETAIL_ROW_IDS) if (isVisible(findViewById(row))) return row;
         return R.id.video;
+    }
+
+    private int adjacentFocusRow(int currentId, boolean down) {
+        int current = -1;
+        for (int i = 0; i < DETAIL_ROW_IDS.length; i++) if (DETAIL_ROW_IDS[i] == currentId) current = i;
+        if (current < 0) return 0;
+        int step = down ? 1 : -1;
+        for (int i = current + step; i >= 0 && i < DETAIL_ROW_IDS.length; i += step) {
+            if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
+        }
+        if (down) return currentId;
+        int action = firstDetailActionId();
+        return action != 0 ? action : detailUpTargetId();
+    }
+
+    private int focusRowId(View focused) {
+        for (int row : DETAIL_ROW_IDS) if (isDescendantOrSelf(focused, findViewById(row))) return row;
+        return 0;
+    }
+
+    private boolean isDescendantOrSelf(View view, View ancestor) {
+        if (view == null || ancestor == null) return false;
+        View current = view;
+        while (current != null) {
+            if (current == ancestor) return true;
+            current = current.getParent() instanceof View ? (View) current.getParent() : null;
+        }
+        return false;
+    }
+
+    /**
+     * Handles vertical focus as a logical graph instead of relying on screen geometry. Rows are
+     * asynchronous and optional, so geometry-based search can choose a clipped or disappearing
+     * child when metadata or playback variants update.
+     */
+    private boolean moveDetailFocus(boolean down) {
+        View focused = getCurrentFocus();
+        if (focused == null || isFullscreen() || isVisible(mBinding.control.getRoot())) return false;
+
+        int target = 0;
+        int row = focusRowId(focused);
+        if (row != 0) {
+            target = adjacentFocusRow(row, down);
+        } else if (isDescendantOrSelf(focused, mBinding.video)) {
+            target = down ? firstFocusRow() : R.id.video;
+        } else if (focused == mBinding.actor) {
+            target = down ? (firstMetadataTabId() != 0 ? firstMetadataTabId() : detailDownTargetId()) : R.id.video;
+        } else if (isDescendantOrSelf(focused, mBinding.metadataTabs)) {
+            target = down ? detailDownTargetId() : (isVisible(mBinding.actor) ? R.id.actor : R.id.video);
+        } else if (focused == mBinding.description) {
+            target = down
+                    ? (isVisible(mBinding.descriptionMore) ? R.id.descriptionMore : firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow())
+                    : (firstMetadataTabId() != 0 ? firstMetadataTabId() : isVisible(mBinding.actor) ? R.id.actor : R.id.video);
+        } else if (focused == mBinding.descriptionMore) {
+            target = down ? (firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow()) : R.id.description;
+        } else if (!down && focused == mBinding.change) {
+            // Source/Douban/TMDB are the semantic parent of the source-switch
+            // action. Prefer the first available provider tab before falling
+            // back to the rest of the metadata/header chain.
+            int tab = firstMetadataTabId();
+            target = tab != 0 ? tab : detailUpTargetId();
+        } else if (isDescendantOrSelf(focused, mBinding.row2)) {
+            target = down ? firstFocusRow() : detailUpTargetId();
+        }
+
+        if (target == 0) return false;
+        View targetView = findViewById(target);
+        if (targetView == null || !isVisible(targetView)) targetView = mBinding.video;
+        if (targetView == focused || targetView.requestFocus(down ? View.FOCUS_DOWN : View.FOCUS_UP)) return true;
+        // Metadata views are populated asynchronously and may remain visible for
+        // a frame after becoming temporarily non-focusable. Never trap an action
+        // button in that transient state: UP must always reach the fixed header.
+        return !down && isDescendantOrSelf(focused, mBinding.row2) && mBinding.video.requestFocus(View.FOCUS_UP);
+    }
+
+    private int adjacentMetadataTab(View focused, boolean right) {
+        View[] tabs = {mBinding.tabSource, mBinding.tabDouban, mBinding.tabTmdb};
+        int current = -1;
+        for (int i = 0; i < tabs.length; i++) if (tabs[i] == focused) current = i;
+        if (current < 0) return 0;
+        int step = right ? 1 : -1;
+        for (int i = current + step; i >= 0 && i < tabs.length; i += step) {
+            if (isVisible(tabs[i])) return tabs[i].getId();
+        }
+        // The first visible provider tab has no tab to its left. Return to the
+        // fixed player instead of leaving focus trapped on the tab.
+        return right ? focused.getId() : R.id.video;
+    }
+
+    private boolean moveDetailFocusHorizontal(boolean right) {
+        View focused = getCurrentFocus();
+        if (focused == null || isFullscreen() || isVisible(mBinding.control.getRoot())) return false;
+        int target = 0;
+        if (isDescendantOrSelf(focused, mBinding.video)) {
+            target = right ? firstDetailActionId() : R.id.video;
+        } else if (isDescendantOrSelf(focused, mBinding.metadataTabs)) {
+            target = adjacentMetadataTab(focused, right);
+        } else if (isDescendantOrSelf(focused, mBinding.row2)) {
+            int current = -1;
+            for (int i = 0; i < DETAIL_ACTION_IDS.length; i++) {
+                View action = findViewById(DETAIL_ACTION_IDS[i]);
+                if (action == focused && isVisible(action)) current = i;
+            }
+            if (current >= 0) {
+                if (!right && focused == mBinding.change) return mBinding.video.requestFocus(View.FOCUS_LEFT);
+                int step = right ? 1 : -1;
+                for (int i = current + step; i >= 0 && i < DETAIL_ACTION_IDS.length; i += step) {
+                    if (isVisible(findViewById(DETAIL_ACTION_IDS[i]))) {
+                        target = DETAIL_ACTION_IDS[i];
+                        break;
+                    }
+                }
+                if (target == 0) target = DETAIL_ACTION_IDS[current];
+            }
+        }
+        if (target == 0) return false;
+        View targetView = findViewById(target);
+        return targetView != null && (targetView == focused || targetView.requestFocus(right ? View.FOCUS_RIGHT : View.FOCUS_LEFT));
     }
 
     @Override
@@ -1152,6 +1287,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mFocus1 = getCurrentFocus();
         mBinding.video.requestFocus();
         mBinding.video.setForeground(null);
+        mBinding.video.setClipToOutline(false);
         mBinding.video.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mBinding.flag.setSelectedPosition(mFlagAdapter.getPosition());
         mKeyDown.setFull(true);
@@ -1160,9 +1296,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void exitFullscreen() {
-        mBinding.video.setForeground(ResUtil.getDrawable(R.drawable.selector_video));
         mBinding.video.setLayoutParams(mFrameParams);
-        getFocus1().requestFocus();
         mKeyDown.setFull(false);
         setFullscreen(false);
         updateAtmosphere();
@@ -1170,6 +1304,21 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setMetadataArtwork(state == null ? null : state.getSelected());
         mFocus2 = null;
         hideInfo();
+
+        // Restore the state-list foreground after the window has completed its
+        // non-fullscreen layout pass. Applying it while the player still has
+        // fullscreen bounds can leave the focused item in the selector's
+        // default state until focus moves away and back again.
+        mBinding.video.postOnAnimation(() -> {
+            View focus = getFocus1();
+            focus.requestFocus();
+            mBinding.video.setClipToOutline(true);
+            // Resolve theme attributes against the Activity theme. ResUtil uses
+            // the application context, which loses the TV focus colors when a
+            // state-list drawable is inflated after leaving fullscreen.
+            mBinding.video.setForeground(ContextCompat.getDrawable(this, R.drawable.selector_video));
+            mBinding.video.refreshDrawableState();
+        });
     }
 
     private void onKeep() {
@@ -1549,6 +1698,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         int visibility = visible ? View.VISIBLE : View.GONE;
         row.setVisibility(visibility);
         list.setVisibility(visibility);
+        // Providers may reveal rows in any order. Refresh the logical links after every change;
+        // otherwise a DOWN from metadata can still target the row that was visible at startup.
+        setR2Callback();
     }
 
     private void saveHistory(boolean exit) {
@@ -1771,6 +1923,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (isFullscreen() && isGone(mBinding.control.getRoot()) && mKeyDown.hasEvent(event) && service() != null) return mKeyDown.onKeyDown(event);
         if (KeyUtil.isMediaFastForward(event)) return onSeekForward();
         if (KeyUtil.isMediaRewind(event)) return onSeekBack();
+        if (KeyUtil.isActionDown(event)) {
+            if (KeyUtil.isRightKey(event) && moveDetailFocusHorizontal(true)) return true;
+            if (KeyUtil.isLeftKey(event) && moveDetailFocusHorizontal(false)) return true;
+            if (KeyUtil.isDownKey(event) && moveDetailFocus(true)) return true;
+            if (KeyUtil.isUpKey(event) && moveDetailFocus(false)) return true;
+        }
         return super.dispatchKeyEvent(event);
     }
 
@@ -1881,6 +2039,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             hideCenter();
         } else if (isFullscreen()) {
             exitFullscreen();
+        } else if (!mBinding.video.hasFocus()) {
+            // Back is a two-step escape on the detail page: first return to the player, then
+            // leave the page. This prevents an accidental BACK from discarding the user's
+            // position after they browse source/episode/metadata rows.
+            mBinding.video.requestFocus();
         } else {
             trace("BACK_STOP_SEARCH_BEGIN");
             mViewModel.stopSearch();

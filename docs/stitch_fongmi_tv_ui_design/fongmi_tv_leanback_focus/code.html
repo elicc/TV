@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "outline-variant": "#504538", "surface-container-lowest": "#0e0e10", "on-tertiary-container": "#53450f", "on-secondary": "#402d00", "surface": "#131315", "on-tertiary": "#3b2f00", "error": "#ffb4ab", "background": "#131315", "inverse-primary": "#835505", "on-error": "#690005", "secondary": "#e7c179", "secondary-container": "#5c4304", "on-error-container": "#ffdad6", "primary-container": "#e5a958", "inverse-surface": "#e5e1e4", "error-container": "#93000a", "tertiary": "#e4cf8c", "surface-container-highest": "#353437", "on-surface-variant": "#d5c4b2", "on-secondary-fixed": "#261900", "primary": "#ffc67b", "on-tertiary-fixed-variant": "#544510", "on-primary": "#462b00", "tertiary-fixed-dim": "#dbc583", "surface-container-high": "#2a2a2c", "surface-container-low": "#1b1b1d", "outline": "#9d8e7e", "inverse-on-surface": "#303032", "on-secondary-container": "#d4b06a", "tertiary-container": "#c8b373", "surface-variant": "#353437", "surface-container": "#201f21", "secondary-fixed": "#ffdea3", "surface-dim": "#131315", "on-surface": "#e5e1e4", "on-tertiary-fixed": "#231b00", "on-primary-container": "#633e00", "primary-fixed-dim": "#f9bb68", "surface-bright": "#39393b", "on-secondary-fixed-variant": "#5c4304", "tertiary-fixed": "#f8e19d", "on-background": "#e5e1e4", "secondary-fixed-dim": "#e7c179", "surface-tint": "#f9bb68", "on-primary-fixed": "#2a1800", "on-primary-fixed-variant": "#643f00", "primary-fixed": "#ffddb6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "36px", "space-3xl": "64px", "space-sm": "12px", "rail-gap": "32px", "safe-overscan-x": "90px", "space-2xl": "48px", "card-gap-y": "28px", "space-lg": "24px", "safe-overscan-y": "54px", "space-xs": "6px", "space-md": "18px", "card-gap-x": "24px" }, "fontFamily": { "label-lg": ["Space Grotesk"], "headline-xl": ["Space Grotesk"], "title-lg": ["Work Sans"], "title-md": ["Work Sans"], "display-hero": ["Space Grotesk"], "body-lg": ["Work Sans"], "headline-lg": ["Space Grotesk"], "body-md": ["Work Sans"], "headline-md": ["Space Grotesk"], "label-md": ["Space Grotesk"] }, "fontSize": { "label-lg": ["20px", { "lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-xl": ["48px", { "lineHeight": "58px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "title-lg": ["26px", { "lineHeight": "34px", "fontWeight": "600" }], "title-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }], "display-hero": ["64px", { "lineHeight": "76px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lg": ["22px", { "lineHeight": "32px", "fontWeight": "400" }], "headline-lg": ["38px", { "lineHeight": "48px", "fontWeight": "600" }], "body-md": ["20px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["30px", { "lineHeight": "38px", "fontWeight": "600" }], "label-md": ["18px", { "lineHeight": "24px", "letterSpacing": "0.04em", "fontWeight": "500" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary"><header class="fixed top-0 left-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-safe-overscan-x flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface-variant"><span class="text-on-surface-variant">FongMi TV</span><span class="text-outline-variant">/</span><span class="text-on-surface-variant">Design System</span><span class="text-outline-variant">/</span><span class="text-primary font-semibold">Focus &amp; Micro-Interactions Spec</span></div></div><div class="flex items-center gap-space-lg"><nav class="hidden xl:flex items-center gap-space-xs p-space-xs bg-surface-container-low rounded-lg" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><a aria-current="page" class="px-space-md py-space-xs transition-colors bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="overview" href="#">Overview</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="elevation-and-halos" href="#">Elevation &amp; Halos</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="media-rails-spec" href="#">Media Rails Spec</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="osd-and-components" href="#">OSD &amp; Components</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="remote-d-pad-lab" href="#">Remote D-Pad Lab</a></nav><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container-high"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-md text-label-md text-secondary">Champagne Dark v1.2</span></div><div class="px-space-sm py-space-xs rounded-full bg-surface-container-high font-label-md text-label-md text-on-surface-variant">1080p 60fps</div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 pb-20 bg-background min-h-screen"><div class="flex flex-col w-full text-on-surface">
+<div class="px-safe-overscan-x py-space-xl flex flex-col gap-space-2xl max-w-[1920px] mx-auto w-full">
+<!-- Top Header Banner & Context -->
+<header class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-lg bg-surface-container-low p-space-xl rounded-xl shadow-lg relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-96 h-96 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-xs z-10">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-space-sm py-1 rounded bg-primary-container text-on-primary-container font-label-md text-label-md">SPEC 2.0</span>
+<span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Champagne Dark v1.2 · Leanback 1080p</span>
+<span class="text-outline-variant font-label-md text-label-md">•</span>
+<span class="font-label-md text-label-md text-outline">TV Safe: 72dp Inset Preserved</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight mt-1">
+          FongMi TV · 10-Foot UI 电视端精细化焦点系统规范
+        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-4xl">
+          解决旧版 3.5dp 纯描边生硬单一问题：全面升级为「内层高精密金环 + 柔和漫反射环境晕 + 动态微光呼吸 + 差异化物理景深」三维分层体系，赋能客堂 3 米视距下沉浸而不刺眼的奢华质感。
+        </p>
+</div>
+<!-- Live Switcher & Specs Pill -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-space-md z-10 shrink-0">
+<div class="flex items-center gap-space-xs bg-surface-container-highest px-space-md py-space-xs rounded-full">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-label-md text-label-md text-on-surface">WCAG 2.1 AA 8.8:1 对比度认证</span>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container px-space-md py-space-xs rounded-full">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">GPU 硬件合成加速 · 0% 外部依赖</span>
+</div>
+</div>
+</header>
+<!-- Main Grid: 3 Major Structural Columns -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-xl">
+<!-- COLUMN 1: Evolution & Layer Anatomy (4 cols) -->
+<section class="xl:col-span-4 flex flex-col gap-space-xl">
+<!-- Before vs After Comparison Card -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-lg shadow-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-1.5 h-5 bg-primary rounded-full"></span>
+<h2 class="font-headline-md text-headline-md text-on-surface">旧版问题 vs 精细化重塑</h2>
+</div>
+<span class="font-label-md text-label-md text-outline">Evolution 01</span>
+</div>
+<!-- Comparative Demos -->
+<div class="grid grid-cols-2 gap-space-md">
+<!-- Old System Card -->
+<div class="flex flex-col gap-space-xs bg-surface-container-lowest p-space-md rounded-lg relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">cancel</span> 旧版 3.5dp
+                </span>
+<span class="font-label-md text-label-md text-outline-variant">Flat Stroke</span>
+</div>
+<div class="mt-2 h-44 rounded-lg bg-surface-container-high flex flex-col items-center justify-center p-3 text-center relative" style="box-shadow: 0 0 0 3.5px #E5A958;">
+<span class="material-symbols-outlined text-outline-variant text-3xl">smart_display</span>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 font-medium">单一硬边框</span>
+<span class="font-body-md text-body-md text-outline text-[13px] leading-tight mt-1">边缘粗糙生硬，直冲瞳孔，遮挡圆角，且无法营造纵深空间感</span>
+</div>
+<div class="text-[14px] text-outline font-body-md mt-2 flex flex-col gap-1">
+<div class="flex items-center gap-1.5">
+<span class="text-error font-bold">✕</span> <span>高对比刺眼，夜间长时间疲劳</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-error font-bold">✕</span> <span>所有组件千篇一律 3.5dp</span>
+</div>
+</div>
+</div>
+<!-- New System Card -->
+<div class="flex flex-col gap-space-xs bg-surface-container-lowest p-space-md rounded-lg relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span> 新版三维晕
+                </span>
+<span class="font-label-md text-label-md text-primary font-semibold">Tiered Glow</span>
+</div>
+<div class="mt-2 h-44 rounded-lg bg-surface-container-high flex flex-col items-center justify-center p-3 text-center relative transition-all duration-300" style="box-shadow: 0 0 0 1.5px rgba(252,213,139,0.95), 0 0 16px -2px rgba(229,169,88,0.55), 0 0 32px 4px rgba(245,158,11,0.22); transform: scale(1.02);">
+<div class="w-8 h-8 rounded-full bg-secondary-container/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-semibold mt-2">分层渐变与漫射</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-[13px] leading-tight mt-1">1.5dp 精密内环 + 16px 环境晕，温润高级，景深通透</span>
+</div>
+<div class="text-[14px] text-on-surface-variant font-body-md mt-2 flex flex-col gap-1">
+<div class="flex items-center gap-1.5">
+<span class="text-secondary font-bold">✓</span> <span>三米外即刻敏锐锁定聚焦点</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-secondary font-bold">✓</span> <span>差异化缩放 (1.01x - 1.03x)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Layer Anatomy Diagram -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-md shadow-md">
+<div class="flex items-center justify-between">
+<h3 class="font-title-lg text-title-lg text-on-surface font-semibold">聚焦三维光学分层解构 (Layer Anatomy)</h3>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-secondary font-label-md text-label-md text-xs">Vector Render</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            将传统单一 Border 拆解为三层互补通道，兼顾「边缘微米级锐度」与「远场视觉光流捕获」：
+          </p>
+<!-- SVG Visual Anatomy Diagram -->
+<div class="w-full bg-surface-container-lowest p-space-md rounded-lg flex flex-col items-center">
+<svg class="w-full h-auto max-w-[460px]" fill="none" viewbox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<filter height="200%" id="outerDiffuseGlow" width="200%" x="-50%" y="-50%">
+<fegaussianblur in="SourceGraphic" stddeviation="16"></fegaussianblur>
+</filter>
+<filter height="160%" id="ambientElevationGlow" width="160%" x="-30%" y="-30%">
+<fegaussianblur in="SourceGraphic" stddeviation="7"></fegaussianblur>
+</filter>
+<lineargradient id="goldGradientRing" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#FFE8A3"></stop>
+<stop offset="60%" stop-color="#FCD58B"></stop>
+<stop offset="100%" stop-color="#C89234"></stop>
+</lineargradient>
+</defs>
+<!-- Layer 3: Outer Diffuse -->
+<rect fill="#E5A958" filter="url(#outerDiffuseGlow)" height="150" opacity="0.18" rx="20" width="320" x="70" y="35"></rect>
+<text fill="#D5C4B2" font-family="Space Grotesk" font-size="11" x="395" y="52">Layer 3: 0 0 32px 漫反射</text>
+<line stroke="#504538" stroke-dasharray="2 2" x1="330" x2="390" y1="48" y2="48"></line>
+<!-- Layer 2: Ambient Elevation Halo -->
+<rect fill="#FCD58B" filter="url(#ambientElevationGlow)" height="120" opacity="0.45" rx="16" width="280" x="90" y="50"></rect>
+<text fill="#E7C179" font-family="Space Grotesk" font-size="11" x="380" y="112">Layer 2: 0 0 16px 呼吸暖晕</text>
+<line stroke="#E7C179" stroke-width="0.8" x1="330" x2="375" y1="108" y2="108"></line>
+<!-- Layer 1: Core Physical Edge -->
+<rect fill="#201F21" height="90" rx="12" stroke="url(#goldGradientRing)" stroke-width="1.8" width="240" x="110" y="65"></rect>
+<text fill="#FFE8A3" font-family="Space Grotesk" font-size="11" text-anchor="start" x="15" y="100">Layer 1: 1.5dp 精密环</text>
+<line stroke="#FFE8A3" stroke-width="0.8" x1="105" x2="140" y1="96" y2="96"></line>
+<!-- Content Mock inside Layer 1 -->
+<circle cx="160" cy="110" fill="#2A2A2C" r="16"></circle>
+<polygon fill="#FCD58B" points="156,102 168,110 156,118"></polygon>
+<rect fill="#E5E1E4" height="8" rx="4" width="100" x="190" y="102"></rect>
+<rect fill="#9D8E7E" height="6" rx="3" width="60" x="190" y="116"></rect>
+<text fill="#9D8E7E" font-family="Space Grotesk" font-size="11" x="15" y="160">Layer 0: 物理基底</text>
+<line stroke="#504538" stroke-dasharray="2 2" x1="90" x2="135" y1="156" y2="156"></line>
+</svg>
+</div>
+<!-- Metric Bullets -->
+<div class="flex flex-col gap-space-xs font-body-md text-body-md text-on-surface-variant">
+<div class="flex items-start gap-space-sm p-space-xs rounded bg-surface-container">
+<span class="text-primary font-label-md text-label-md shrink-0">01</span>
+<div>
+<span class="text-on-surface font-semibold">1.5dp 暖金精密环：</span>
+<span class="text-outline">取代旧 3.5dp，保留卡片圆角曲率不被钝化，像素级契合 1080p 显示栅格。</span>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-xs rounded bg-surface-container">
+<span class="text-primary font-label-md text-label-md shrink-0">02</span>
+<div>
+<span class="text-on-surface font-semibold">16px 中距柔光晕：</span>
+<span class="text-outline">负扩散半径 (-2px) 限制光斑溢出范围，防止邻近轨道卡片相互污染。</span>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-xs rounded bg-surface-container">
+<span class="text-primary font-label-md text-label-md shrink-0">03</span>
+<div>
+<span class="text-on-surface font-semibold">阶梯物理缩放：</span>
+<span class="text-outline">海报 1.03x、控件 1.02x、列表 1.01x，消弭大面积形变带来的眩晕感。</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- COLUMN 2: 4 大核心组件类型精细化落焦展示 (5 cols) -->
+<section class="xl:col-span-5 flex flex-col gap-space-xl">
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-lg shadow-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-1.5 h-5 bg-secondary rounded-full"></span>
+<h2 class="font-headline-md text-headline-md text-on-surface">4 大核心组件精细落焦矩阵</h2>
+</div>
+<span class="font-label-md text-label-md text-outline">Component Matrix</span>
+</div>
+<!-- Tier A: 2:3 Media Poster Card -->
+<div class="flex flex-col gap-space-sm bg-surface-container rounded-lg p-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-label-md text-label-md text-xs">TIER A</span>
+<span class="font-title-md text-title-md text-on-surface font-semibold">2:3 影视海报卡片 (Media Rails Card)</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Scale: 1.03x</span>
+</div>
+<div class="grid grid-cols-2 gap-space-lg items-end mt-1">
+<!-- Default Unfocused -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-outline text-xs uppercase tracking-wider">Default 未获焦</span>
+<div class="h-64 rounded-xl bg-surface-container-high relative overflow-hidden flex flex-col justify-end p-space-sm shadow-sm group">
+<div class="absolute inset-0 bg-cover bg-center opacity-60" data-alt="Cinematic high contrast dramatic movie poster with amber desert sand dunes, dark dramatic shadows, space traveler in hooded cape standing against futuristic sunrise, film grain aesthetic in deep charcoal and gold tones" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCKAgYJ-hE6N2dzun_EcF8qhetmM4UVWF7ZfdwNf9GpFWa9rT9wQTlFVBGjZ18FCPSqLV1yoVQ3GbwYeJUyYwFtyYMIYhtz6rfzjJKylAmqEeze_f4AOvxFcFh5Vu-5BpDzoOSqsCfHlI0W96CuBJuU-Ums-mXASujcHx_4ITNpk_A-VzZPE9Q1GYJWCGO0p6Oja7hpcsUp0-qC7KO5TwGuU74ig7yMOq4YCBYpA4XDuUbafcbVMr4')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/40 to-transparent"></div>
+<div class="relative z-10 flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">沙丘 2 · 极速原盘</span>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-outline font-label-md text-label-md text-[11px]">4K HDR</span>
+<span class="font-label-md text-label-md text-outline-variant text-[12px]">2024 · 动作</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Focused State -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-primary text-xs uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span> Focused 获焦态
+                </span>
+<div class="h-64 rounded-xl bg-surface-container-high relative overflow-hidden flex flex-col justify-end p-space-sm transition-all duration-200" style="transform: scale(1.03); box-shadow: 0 0 0 1.5px rgba(252,213,139,0.95), 0 0 20px -2px rgba(229,169,88,0.6), 0 0 36px 4px rgba(245,158,11,0.22);">
+<div class="absolute inset-0 bg-cover bg-center opacity-90" data-alt="Cinematic high contrast dramatic movie poster with amber desert sand dunes, dark dramatic shadows, space traveler in hooded cape standing against futuristic sunrise, film grain aesthetic in deep charcoal and gold tones" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCDxVyk8Kdk5O3edHpzAmE6r8_F1RwBNUWNdRHvgEdhP2TSywb2NHOM2wGo_POXQPnEA5mHfJQrVwwQa-8DWR8hAM2_Znyf3oQCUTpI6r1x2jqeZaCnFAXQstiunXg8oxvzk_bV7lf_JYo5c3171YiMEOrAMtDi4CoaBFnpWi3ZwzwsWwNy6amCE2UF5aF5AmRAaoHl7R49hwZwP5gmhrgO9f0NS4hC0FGIn-aIhKFVtizo8PszG-A')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/30 to-transparent"></div>
+<!-- OK Remote Cue Pill at top right -->
+<div class="absolute top-2 right-2 bg-surface-container-lowest/80 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 z-20">
+<span class="text-primary font-label-md text-label-md text-[11px] font-bold">OK</span>
+<span class="text-on-surface text-[10px] font-label-md text-label-md">播放</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold truncate">沙丘 2 · 极速原盘</span>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="px-1.5 py-0.5 rounded bg-primary-container text-on-primary-container font-label-md text-label-md text-[11px] font-semibold">4K 120Hz</span>
+<span class="font-label-md text-label-md text-secondary text-[12px]">杜比视界 · 原画</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Tier B: Filter Pills / Chips -->
+<div class="flex flex-col gap-space-sm bg-surface-container rounded-lg p-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-label-md text-label-md text-xs">TIER B</span>
+<span class="font-title-md text-title-md text-on-surface font-semibold">二级筛选胶囊 (Filter &amp; Pill Focus)</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Scale: 1.02x</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md mt-1">
+<!-- Regular Chip Unfocused -->
+<div class="px-space-md py-space-xs rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5">
+<span>全部影片</span>
+</div>
+<!-- Regular Chip 2 Unfocused -->
+<div class="px-space-md py-space-xs rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-outline">hd</span>
+<span>蓝光 1080P</span>
+</div>
+<!-- Focused Chip -->
+<div class="px-space-md py-space-xs rounded-full font-label-md text-label-md text-on-surface flex items-center gap-1.5 transition-all" style="background: linear-gradient(135deg, rgba(252,213,139,0.22), rgba(229,169,88,0.08)); box-shadow: 0 0 0 1.5px rgba(252,213,139,0.95), 0 0 14px -2px rgba(229,169,88,0.5); transform: scale(1.025);">
+<span class="material-symbols-outlined text-[16px] text-primary">local_fire_department</span>
+<span class="text-primary font-bold">4K 臻彩原盘</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary ml-0.5"></span>
+</div>
+</div>
+</div>
+<!-- Tier C: Action Buttons Double-Ring -->
+<div class="flex flex-col gap-space-sm bg-surface-container rounded-lg p-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-label-md text-label-md text-xs">TIER C</span>
+<span class="font-title-md text-title-md text-on-surface font-semibold">主/次操作按钮 (Action Buttons)</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Double-Ring</span>
+</div>
+<div class="grid grid-cols-2 gap-space-md mt-1">
+<!-- Primary Action Focused -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-outline text-xs">实色主按钮 · Focused</span>
+<button class="w-full py-space-sm px-space-md rounded-lg bg-primary-container text-on-primary-container font-label-lg text-label-lg flex items-center justify-center gap-2 transition-all mt-1" style="box-shadow: 0 0 0 2px #131315, 0 0 0 3.5px #FCD58B, 0 0 18px rgba(252,213,139,0.65); transform: scale(1.02);">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+<span>立即续播 EP.04</span>
+</button>
+</div>
+<!-- Secondary Translucent Action Focused -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-outline text-xs">半透次级按钮 · Focused</span>
+<button class="w-full py-space-sm px-space-md rounded-lg text-on-surface font-label-lg text-label-lg flex items-center justify-center gap-2 transition-all mt-1" style="background: rgba(229,169,88,0.18); box-shadow: 0 0 0 1.5px rgba(252,213,139,0.9), 0 0 14px rgba(229,169,88,0.4); transform: scale(1.02);">
+<span class="material-symbols-outlined text-primary text-[20px]">bookmark_add</span>
+<span class="text-on-surface">添加追剧</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Tier D: List Item & Settings Drawer -->
+<div class="flex flex-col gap-space-sm bg-surface-container rounded-lg p-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-label-md text-label-md text-xs">TIER D</span>
+<span class="font-title-md text-title-md text-on-surface font-semibold">列表项与设置行 (Settings Row)</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Indicator Strip</span>
+</div>
+<!-- List Row Focused with 4dp Left Gold Indicator -->
+<div class="flex flex-col gap-2 mt-1">
+<div class="h-14 px-space-md rounded-lg flex items-center justify-between bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline">tune</span>
+<span>解码内核模式切换 (ExoPlayer / IjkPlayer)</span>
+</div>
+<span class="text-outline text-sm">软解优先</span>
+</div>
+<!-- Focused Row Demo -->
+<div class="h-14 px-space-md rounded-lg flex items-center justify-between relative overflow-hidden transition-all" style="background: linear-gradient(90deg, rgba(229,169,88,0.18) 0%, rgba(20,20,22,0.6) 100%); box-shadow: 0 0 16px -4px rgba(229,169,88,0.35);">
+<!-- Left Accent Strip -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary shadow-[0_0_8px_#FCD58B]"></div>
+<div class="flex items-center gap-space-sm pl-2">
+<span class="material-symbols-outlined text-primary">speed</span>
+<span class="text-on-surface font-bold">画质超分辨率增强 (AI Upscaling 4K)</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="text-primary font-label-md text-label-md font-semibold">已激活 Ultra</span>
+<span class="material-symbols-outlined text-primary text-sm">check</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- COLUMN 3: Interaction Lifecycle & Parameters (3 cols) -->
+<section class="xl:col-span-3 flex flex-col gap-space-xl">
+<!-- Interaction Lifecycle 5 States -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-md shadow-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-1.5 h-5 bg-tertiary rounded-full"></span>
+<h2 class="font-headline-md text-headline-md text-on-surface">交互 5 态演进周期</h2>
+</div>
+<span class="font-label-md text-label-md text-outline">Lifecycle</span>
+</div>
+<!-- Timeline Steps -->
+<div class="flex flex-col gap-space-sm mt-1">
+<!-- 1. Default -->
+<div class="p-space-sm rounded-lg bg-surface-container flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-md text-label-md text-outline text-xs shrink-0 mt-0.5">1</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Default (默认静止)</span>
+<span class="font-body-md text-body-md text-outline text-xs">无发光，背景 #1C1C20，对比度稳固在暗场基座。</span>
+</div>
+</div>
+<!-- 2. Focused -->
+<div class="p-space-sm rounded-lg bg-surface-container flex items-start gap-space-sm" style="box-shadow: 0 0 0 1px rgba(252,213,139,0.6);">
+<span class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-label-md text-xs shrink-0 mt-0.5 font-bold">2</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold">Focused (获焦悬浮)</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">1.025x 浮起，1.5dp 金环激活，16px 呼吸暖光渲染。</span>
+</div>
+</div>
+<!-- 3. Active / Pressed -->
+<div class="p-space-sm rounded-lg bg-surface-container flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-md text-label-md text-xs shrink-0 mt-0.5 font-bold">3</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-secondary font-semibold">Active / Press (遥控 OK 瞬时)</span>
+<span class="font-body-md text-body-md text-outline text-xs">0.98x 紧致回弹，高亮白金微光瞬间脉冲，极速触觉反馈。</span>
+</div>
+</div>
+<!-- 4. Selected -->
+<div class="p-space-sm rounded-lg bg-surface-container flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-md text-label-md text-primary text-xs shrink-0 mt-0.5">4</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Selected (持久选中)</span>
+<span class="font-body-md text-body-md text-outline text-xs">焦点离开后保持浅金底色 + 右下角微型对勾标签。</span>
+</div>
+</div>
+<!-- 5. Disabled -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest opacity-40 flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-md text-label-md text-outline text-xs shrink-0 mt-0.5">5</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-outline font-semibold">Disabled (不可用/失效源)</span>
+<span class="font-body-md text-body-md text-outline text-xs">0.4 透明度降阶，遥控器 D-pad 跳过不可落焦。</span>
+</div>
+</div>
+</div>
+</div>
+<!-- TV Engine Parameters Spec Sheet -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-md shadow-md">
+<div class="flex items-center justify-between">
+<h3 class="font-title-lg text-title-lg text-on-surface font-semibold">电视硬件性能参数表</h3>
+<span class="material-symbols-outlined text-outline text-sm">memory</span>
+</div>
+<div class="flex flex-col gap-space-xs text-xs">
+<div class="flex justify-between items-center py-2 bg-surface-container-lowest px-3 rounded">
+<span class="text-outline font-label-md text-label-md">动画时延 (Duration)</span>
+<span class="text-primary font-label-md text-label-md font-bold">180ms - 220ms</span>
+</div>
+<div class="flex justify-between items-center py-2 bg-surface-container-lowest px-3 rounded">
+<span class="text-outline font-label-md text-label-md">贝塞尔曲线 (Easing)</span>
+<span class="text-secondary font-label-md text-label-md">cubic-bezier(0.16, 1, 0.3, 1)</span>
+</div>
+<div class="flex justify-between items-center py-2 bg-surface-container-lowest px-3 rounded">
+<span class="text-outline font-label-md text-label-md">合成层加速 (Layer)</span>
+<span class="text-on-surface font-label-md text-label-md">will-change: transform, box-shadow</span>
+</div>
+<div class="flex justify-between items-center py-2 bg-surface-container-lowest px-3 rounded">
+<span class="text-outline font-label-md text-label-md">最低平台支持 (MinSdk)</span>
+<span class="text-on-surface font-label-md text-label-md">Android 7.0+ (API 24 Leanback)</span>
+</div>
+<div class="flex justify-between items-center py-2 bg-surface-container-lowest px-3 rounded">
+<span class="text-outline font-label-md text-label-md">渲染负载 (Overdraw)</span>
+<span class="text-primary font-label-md text-label-md font-bold">0x (No Redundant GPU Draw)</span>
+</div>
+</div>
+</div>
+<!-- Live D-Pad Simulator Card -->
+<div class="bg-gradient-to-br from-surface-container to-surface-container-low rounded-xl p-space-md flex flex-col gap-space-xs shadow-md">
+<div class="flex items-center gap-space-xs text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-base">settings_remote</span>
+<span>遥控器热键响应机制</span>
+</div>
+<p class="font-body-md text-body-md text-outline text-xs">
+            按下遥控器 [OK] 键时，界面无刷新即时反馈；通过 CSS 变量在全局精准掌控 Halo 强度。
+          </p>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-md text-label-md text-on-surface-variant text-xs">长按 MENU 键呼出微调</span>
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-secondary text-xs font-semibold">Ready</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Implementation Code Snippet & Guidelines -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg flex flex-col gap-space-md shadow-xl overflow-hidden relative">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary">code_blocks</span>
+<h2 class="font-title-lg text-title-lg text-on-surface font-bold">生产环境推荐 CSS / Android XML 聚焦实现 Token</h2>
+</div>
+<span class="font-label-md text-label-md text-outline-variant font-mono text-xs">FongMi_Focus_Tokens.css</span>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg font-mono text-xs text-on-surface-variant overflow-x-auto leading-relaxed">
+<span class="text-secondary font-semibold">/* 核心精细化焦点系统 (Champagne Dark v1.2) */</span><br/>
+<span class="text-primary font-semibold">.leanback-card-focus</span> {<br/>
+          <span class="text-outline">transition:</span> transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);<br/>
+          <span class="text-outline">will-change:</span> transform, box-shadow;<br/>
+        }<br/>
+<span class="text-primary font-semibold">.leanback-card-focus:focus-visible, .leanback-card-focus.is-focused</span> {<br/>
+          <span class="text-outline">transform:</span> scale(1.03);<br/>
+          <span class="text-outline">z-index:</span> 50;<br/>
+          <span class="text-outline">box-shadow:</span> 0 0 0 1.5px rgba(252, 213, 139, 0.95), 0 0 16px -2px rgba(229, 169, 88, 0.55), 0 0 32px 4px rgba(245, 158, 11, 0.22);<br/>
+        }<br/>
+<span class="text-secondary font-semibold">/* 遥控器按下瞬态压缩 */</span><br/>
+<span class="text-primary font-semibold">.leanback-card-focus:active</span> {<br/>
+          <span class="text-outline">transform:</span> scale(0.985);<br/>
+          <span class="text-outline">box-shadow:</span> 0 0 0 2px #FFE8A3, 0 0 24px rgba(255, 232, 163, 0.8);<br/>
+        }
+      </div>
+</section>
+</div>
+</div></main><footer class="fixed bottom-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-safe-overscan-x flex items-center justify-between"><div class="flex items-center gap-space-xl font-label-md text-label-md text-on-surface-variant"><div class="flex items-center gap-space-xs"><span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-semibold">▲▼◀▶</span><span>Navigate Cursor</span></div><div class="flex items-center gap-space-xs"><span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-semibold">OK</span><span>Toggle State Demo</span></div><div class="flex items-center gap-space-xs"><span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-semibold">MENU</span><span>Halo Intensity</span></div><div class="flex items-center gap-space-xs"><span class="px-space-xs py-0.5 rounded bg-surface-container-highest text-primary font-semibold">BACK</span><span>Return Home</span></div></div><div class="flex items-center gap-space-sm font-label-md text-label-md text-outline"><span class="material-symbols-outlined text-sm">tv</span><span>TV Safe Inset: 72dp</span></div></div></footer></body></html>

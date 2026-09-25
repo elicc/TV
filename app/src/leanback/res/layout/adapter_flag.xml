@@ -9,6 +9,8 @@
     android:focusableInTouchMode="true"
     android:stateListAnimator="@animator/tv_focus_scale"
     android:gravity="center"
+    android:drawableStart="@drawable/selector_detail_choice_indicator"
+    android:drawablePadding="6dp"
     android:nextFocusDown="@id/episode"
     android:textColor="@color/selector_flag_choice_text"
     android:textSize="13sp"

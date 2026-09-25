@@ -17,7 +17,7 @@
         android:background="?attr/tvColorSurface"
         android:contentDescription="@string/metadata_artworks"
         android:scaleType="centerCrop"
-        app:shapeAppearanceOverlay="@style/Vod.Grid" />
+        app:shapeAppearanceOverlay="@style/Vod.Grid.Rounded" />
 
     <View
         android:id="@+id/focusRing"

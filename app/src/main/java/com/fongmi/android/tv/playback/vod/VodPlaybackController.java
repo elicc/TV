@@ -51,7 +51,7 @@ public class VodPlaybackController {
 
     public void checkId() {
         String id = resolveVodId();
-        if (id.isEmpty() || id.startsWith(SEARCH_PREFIX)) detailEmpty(false);
+        if (id.isEmpty() || id.startsWith(SEARCH_PREFIX)) detailEmpty();
         else if (!state.isDetailRequested(host.getVodKey(), id)) requestDetail();
     }
 
@@ -74,7 +74,7 @@ public class VodPlaybackController {
         if (detail == null || !detail.matches(host.getVodKey(), host.getVodId())) return;
         trace("DETAIL_RESULT key=" + detail.key() + " id=" + detail.id() + " items=" + detail.result().getList().size());
         Result result = detail.result();
-        if (result.getList().isEmpty()) detailEmpty(result.hasMsg());
+        if (result.getList().isEmpty()) detailEmpty();
         else detailLoaded(result.getVod());
         host.showDetailMessage(result.getMsg());
     }
@@ -370,8 +370,13 @@ public class VodPlaybackController {
         if (state.getHistory() != null) state.getHistory().setRevPlay(revPlay);
     }
 
-    private void detailEmpty(boolean shouldFinish) {
-        if (shouldFinish || host.isFromCollect()) {
+    private void detailEmpty() {
+        trace("DETAIL_EMPTY collect=" + host.isFromCollect() + " nameEmpty=" + host.getVodName().isEmpty());
+        // A provider error is a recoverable detail state, not a navigation command. Finishing
+        // here made a transient empty/error response look exactly like an Activity crash. Keep
+        // the normal detail page open so its error message and source fallback remain usable.
+        // The collect-search route is intentionally temporary and still closes when unresolved.
+        if (host.isFromCollect()) {
             host.finishVod();
             return;
         }

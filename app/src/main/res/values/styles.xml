@@ -11,6 +11,10 @@
         <item name="cornerSizeTopRight">@dimen/tv_radius_card</item>
     </style>
 
+    <style name="Vod.Grid.Rounded">
+        <item name="cornerSize">@dimen/tv_radius_card</item>
+    </style>
+
     <style name="Vod.Grid.Large">
         <item name="cornerSize">8dp</item>
     </style>

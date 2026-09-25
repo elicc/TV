@@ -602,6 +602,7 @@ class TvThemeTests(unittest.TestCase):
     def test_detail_uses_stitch_display_hierarchy_and_safe_chips(self):
         android = "{http://schemas.android.com/apk/res/android}"
         root = ET.parse(RES / "layout/activity_video.xml").getroot()
+        code = (JAVA / "ui/activity/VideoActivity.java").read_text()
         video = next(n for n in root.iter() if n.get(android + "id") == "@+id/video")
         self.assertEqual("@dimen/tv_safe_horizontal", video.get(android + "layout_marginStart"))
         self.assertEqual("@dimen/tv_safe_vertical", video.get(android + "layout_marginTop"))
@@ -611,9 +612,57 @@ class TvThemeTests(unittest.TestCase):
         for chip_id in ["flag", "quality", "episode", "array", "part", "quick"]:
             chip = next(n for n in root.iter() if n.get(android + "id") == "@+id/" + chip_id)
             self.assertEqual("@dimen/tv_safe_horizontal", chip.get(android + "paddingStart"), chip_id)
+            # Keep the grid directly in its row. Wrapping a hidden HorizontalGridView in a
+            # zero-height FrameLayout makes Android TV's HWUI try to create a 128x0 layer for
+            # the adjacent MaterialTextView while the detail request is still loading.
+            self.assertFalse(any(chip in list(parent) for parent in root.iter("FrameLayout")), chip_id)
 
-        code = (JAVA / "ui/activity/VideoActivity.java").read_text()
+        description_more = next(n for n in root.iter() if n.get(android + "id") == "@+id/descriptionMore")
+        self.assertIsNone(description_more.get(android + "background"))
+        description = next(n for n in root.iter() if n.get(android + "id") == "@+id/description")
+        self.assertEqual("2", description.get(android + "maxLines"))
+        self.assertEqual("true", description.get(android + "focusable"))
+        self.assertIn("mBinding.video.setClipToOutline(true);", code)
+        artwork = ET.parse(RES / "layout/adapter_artwork.xml").getroot()
+        artwork_image = next(n for n in artwork.iter() if n.get(android + "id") == "@+id/image")
+        self.assertEqual("@style/Vod.Grid.Rounded", artwork_image.get("{http://schemas.android.com/apk/res-auto}shapeAppearanceOverlay"))
+
+        for filename in ["adapter_flag.xml", "adapter_quality.xml", "adapter_episode.xml"]:
+            choice = ET.parse(RES / "layout" / filename).getroot()
+            self.assertEqual("@drawable/selector_detail_choice_indicator", choice.get(android + "drawableStart"), filename)
+            self.assertEqual("6dp", choice.get(android + "drawablePadding"), filename)
+
+        selected_flag = (RES / "drawable/shape_flag_choice_selected.xml").read_text()
+        self.assertIn('?attr/tvColorSelected', selected_flag)
+        self.assertNotIn('<solid android:color="?attr/tvColorAccent"', selected_flag)
+        self.assertIn('?attr/tvColorAccent', selected_flag)
+
+        metadata_selector = (RES / "drawable/selector_metadata_tab.xml").read_text()
+        self.assertIn('android:state_focused="true" android:state_selected="true"', metadata_selector)
+        focused_tab = (RES / "drawable/shape_metadata_tab_focused.xml").read_text()
+        self.assertIn('?attr/tvColorFocus', focused_tab)
+        self.assertNotIn('<layer-list', focused_tab)
+        focused_choice = (RES / "drawable/shape_detail_choice_focused.xml").read_text()
+        self.assertIn('?attr/tvColorFocus', focused_choice)
+        self.assertNotIn('<layer-list', focused_choice)
+        focused_selected_tab = (RES / "drawable/shape_metadata_tab_focused_selected.xml").read_text()
+        self.assertIn('@drawable/shape_metadata_tab_indicator', focused_selected_tab)
+
+        scroll = next(n for n in root.iter() if n.get(android + "id") == "@+id/scroll")
+        # The scroll viewport starts below a zero-height player anchor.  Its
+        # top padding is the fixed inset, so scrolling the detail rows cannot
+        # collapse the gap against the player.
+        self.assertEqual("@id/videoGap", scroll.get(android + "layout_below"))
+        self.assertEqual("0dp", scroll.get(android + "layout_marginTop"))
+        self.assertEqual("@dimen/tv_gap_md", scroll.get(android + "paddingTop"))
+        self.assertEqual("true", scroll.get(android + "clipToPadding"))
+
         self.assertNotIn("mBinding.fullscreen", code)
+        self.assertNotIn("mBinding.flag.addOnChildViewHolderSelectedListener", code)
+        self.assertNotIn("if (focused) previewMetadata(provider);", code)
+        self.assertNotIn("updateScrollViewport", code)
+        self.assertIn("ContentDialog.create().content(fullDescription).show(this);", code)
+        self.assertIn("ensureArtworkVisible();", code)
         self.assertLess(code.index("mBinding.progressLayout.showContent();"), code.index("showSkeleton(false);", code.index("renderDetail")))
 
     def test_live_drawer_and_osd_use_stitch_tokens(self):
