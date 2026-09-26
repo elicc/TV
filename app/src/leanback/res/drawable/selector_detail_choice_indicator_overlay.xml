@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The playback marker is painted in the existing chip bounds.  As a
+     foreground it never reserves a leading column for unselected choices. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:drawable="@drawable/tv_choice_indicator_overlay" />
+    <item android:drawable="@android:color/transparent" />
+</selector>

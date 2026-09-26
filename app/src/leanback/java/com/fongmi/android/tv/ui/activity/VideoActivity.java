@@ -447,7 +447,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         boolean ready = state.getStatus() != MetadataState.Status.IDLE && state.getStatus() != MetadataState.Status.LOADING;
         metadataReady = ready;
         setMetadataTabsVisible(detailReady && metadataReady);
-        mBinding.skeletonMeta.setVisibility(ready ? View.GONE : View.VISIBLE);
+        // The source response already contains usable title/metadata.  Keep that
+        // content visible while Douban/agent matching runs instead of painting a
+        // second skeleton over the populated detail header.
+        mBinding.skeletonMeta.setVisibility(detailReady || ready ? View.GONE : View.VISIBLE);
         int metadataUp = detailReady && metadataReady ? R.id.tabSource : R.id.actor;
         mBinding.content.setNextFocusUpId(metadataUp);
         mBinding.keep.setNextFocusUpId(metadataUp);
@@ -659,9 +662,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         detailReady = true;
         metadataReady = false;
         mBinding.progressLayout.showContent();
-        // Keep metadata placeholders visible until the provider state resolves.
-        // The detail request and external metadata request complete independently.
-        showSkeleton(true);
+        // The source detail is complete at this point.  External metadata is
+        // optional enrichment and must not replace the usable source header with
+        // a skeleton while Douban/agent matching is still running.
+        showSkeleton(false);
         mBinding.skeletonEpisode.setVisibility(View.GONE);
         mBinding.name.setText(item.getName());
         mBinding.video.requestFocus();

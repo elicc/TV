@@ -2,6 +2,7 @@ package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,7 +25,7 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
     public EpisodeAdapter(OnClickListener listener) {
         mListener = listener;
         mItems = new ArrayList<>();
-        maxWidth = ResUtil.getScreenWidth() - ResUtil.dp2px(48);
+        maxWidth = ResUtil.dp2px(220);
     }
 
     public void addAll(List<Episode> items) {
@@ -85,9 +86,20 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Episode item = mItems.get(position);
         holder.binding.text.setMaxWidth(maxWidth);
-        holder.binding.text.setMaxLines(3);
-        holder.binding.text.setEllipsize(null);
-        holder.binding.text.setSingleLine(false);
+        holder.binding.text.setMaxLines(1);
+        holder.binding.text.setSingleLine(true);
+        holder.binding.text.setHorizontallyScrolling(false);
+        holder.binding.text.setEllipsize(TextUtils.TruncateAt.END);
+        holder.binding.text.setMarqueeRepeatLimit(-1);
+        holder.binding.text.setOnFocusChangeListener((view, focused) -> {
+            if (focused) {
+                holder.binding.text.setHorizontallyScrolling(true);
+                holder.binding.text.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+            } else {
+                holder.binding.text.setHorizontallyScrolling(false);
+                holder.binding.text.setEllipsize(TextUtils.TruncateAt.END);
+            }
+        });
         holder.binding.text.setNextFocusUpId(nextFocusUp);
         holder.binding.text.setNextFocusDownId(nextFocusDown);
         holder.binding.text.setSelected(item.isSelected());

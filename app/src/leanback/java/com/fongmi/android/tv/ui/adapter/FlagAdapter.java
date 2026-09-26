@@ -2,6 +2,7 @@ package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -69,6 +70,15 @@ public class FlagAdapter extends RecyclerView.Adapter<FlagAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Flag item = mItems.get(position);
         holder.binding.text.setText(item.getShow());
+        holder.binding.text.setMaxWidth(com.fongmi.android.tv.utils.ResUtil.dp2px(220));
+        holder.binding.text.setSingleLine(true);
+        holder.binding.text.setHorizontallyScrolling(false);
+        holder.binding.text.setEllipsize(TextUtils.TruncateAt.END);
+        holder.binding.text.setMarqueeRepeatLimit(-1);
+        holder.binding.text.setOnFocusChangeListener((view, focused) -> {
+            holder.binding.text.setHorizontallyScrolling(focused);
+            holder.binding.text.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
+        });
         holder.binding.text.setSelected(item.isSelected());
         holder.binding.text.setNextFocusDownId(nextFocusDown);
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));

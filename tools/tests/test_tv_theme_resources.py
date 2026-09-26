@@ -636,13 +636,12 @@ class TvThemeTests(unittest.TestCase):
 
         for filename in ["adapter_flag.xml", "adapter_quality.xml", "adapter_episode.xml"]:
             choice = ET.parse(RES / "layout" / filename).getroot()
-            self.assertEqual("@drawable/selector_detail_choice_indicator", choice.get(android + "drawableStart"), filename)
-            self.assertEqual("6dp", choice.get(android + "drawablePadding"), filename)
+            self.assertEqual("@drawable/selector_detail_choice_indicator_overlay", choice.get(android + "foreground"), filename)
+            self.assertIsNone(choice.get(android + "drawableStart"), filename)
 
         selected_flag = (RES / "drawable/shape_flag_choice_selected.xml").read_text()
-        self.assertIn('?attr/tvColorSelected', selected_flag)
-        self.assertNotIn('<solid android:color="?attr/tvColorAccent"', selected_flag)
-        self.assertIn('?attr/tvColorAccent', selected_flag)
+        self.assertIn('@android:color/transparent', selected_flag)
+        self.assertNotIn('<stroke', selected_flag)
 
         metadata_selector = (RES / "drawable/selector_metadata_tab.xml").read_text()
         self.assertIn('android:state_focused="true" android:state_selected="true"', metadata_selector)

@@ -34,6 +34,8 @@
     <!-- Shared translucent halo band used beneath the precision ring. -->
     <dimen name="tv_glow_band">3dp</dimen>
     <dimen name="tv_glow_band_outset">-3dp</dimen>
+    <!-- Long detail choices stay within roughly three regular 64dp chips. -->
+    <dimen name="tv_choice_max_width">220dp</dimen>
     <dimen name="tv_keycap_height">32dp</dimen>
     <!-- Compact footer band: match the 24dp keycap height so its lower edge
          sits directly on the screen edge. The top gap remains independent. -->
