@@ -11,6 +11,8 @@
     android:focusableInTouchMode="true"
     android:stateListAnimator="@animator/tv_focus_scale"
     android:gravity="center"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp"
     android:nextFocusUp="@id/episode"
     android:nextFocusDown="@id/part"
     android:textColor="@color/white"

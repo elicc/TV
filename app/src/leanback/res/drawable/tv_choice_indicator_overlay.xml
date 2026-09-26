@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Selected-choice marker: a compact top-end corner triangle instead of a
+     leading dot, so every option keeps the same text alignment. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:gravity="start|center_vertical"
-        android:left="2dp">
-        <shape android:shape="oval">
-            <solid android:color="?attr/tvColorAccent" />
-            <size android:width="6dp" android:height="6dp" />
-        </shape>
-    </item>
+        android:gravity="top|end"
+        android:top="2dp"
+        android:end="2dp"
+        android:width="16dp"
+        android:height="16dp"
+        android:drawable="@drawable/tv_choice_selected_corner" />
+    <item
+        android:gravity="top|end"
+        android:top="3dp"
+        android:end="3dp"
+        android:width="10dp"
+        android:height="10dp"
+        android:drawable="@drawable/ic_choice_check" />
 </layer-list>

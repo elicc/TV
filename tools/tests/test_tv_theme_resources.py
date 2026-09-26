@@ -224,15 +224,35 @@ class TvThemeTests(unittest.TestCase):
         self.assertIn("@interpolator/tv_interp_emphasis", animator)
         home = (RES / "values/tv_home_styles.xml").read_text()
         self.assertIn("@animator/tv_focus_scale", home)
-        # Every focus ring carries the halo band via a second glow stroke.
-        for shape in (RES / "drawable").glob("shape_*_focused.xml"):
+
+    def test_focus_rings_use_one_stroke(self):
+        # Focus surfaces use one edge-aligned ring. Nested glow + ring layers
+        # render as a distracting double border on TV controls and cards.
+        focus_shapes = [
+            path for path in (RES / "drawable").glob("shape_*_focused.xml")
+            if "metadata_tab" not in path.name
+        ]
+        for shape in focus_shapes:
             text = shape.read_text()
-            self.assertIn("tvColorFocusGlow", text, shape.name)
-            self.assertIn("tv_glow_band", text, shape.name)
-        # The hero primary action and the home nav also pick up the halo.
-        for name in ["tv_hero_primary.xml", "tv_home_nav.xml"]:
+            self.assertIn("tvColorFocus", text, shape.name)
+            self.assertNotIn("<layer-list", text, shape.name)
+            self.assertNotIn("tv_glow_band", text, shape.name)
+        for name in [
+            "tv_hero_primary.xml",
+            "tv_home_nav.xml",
+            "tv_nav_pill.xml",
+            "tv_source_pill.xml",
+            "tv_setting_back_selector.xml",
+            "tv_setting_nav_selector.xml",
+            "tv_setting_row_selector.xml",
+            "tv_settings_pill.xml",
+            "tv_empty_card_focus.xml",
+            "selector_artwork_ring.xml",
+            "selector_focus_ring.xml",
+        ]:
             text = (RES / "drawable" / name).read_text()
-            self.assertIn("tvColorFocusGlow", text, name)
+            self.assertIn("tvColorFocus", text, name)
+            self.assertNotIn("tv_glow_band", text, name)
 
     def test_home_nav_selected_state_matches_stitch_glass(self):
         colors = (RES / "values/tv_colors.xml").read_text()
@@ -634,14 +654,24 @@ class TvThemeTests(unittest.TestCase):
         artwork_image = next(n for n in artwork.iter() if n.get(android + "id") == "@+id/image")
         self.assertEqual("@style/Vod.Grid.Rounded", artwork_image.get("{http://schemas.android.com/apk/res-auto}shapeAppearanceOverlay"))
 
-        for filename in ["adapter_flag.xml", "adapter_quality.xml", "adapter_episode.xml"]:
+        for filename in ["adapter_flag.xml", "adapter_quality.xml", "adapter_episode.xml", "adapter_array.xml", "adapter_part.xml"]:
             choice = ET.parse(RES / "layout" / filename).getroot()
             self.assertEqual("@drawable/selector_detail_choice_indicator_overlay", choice.get(android + "foreground"), filename)
             self.assertIsNone(choice.get(android + "drawableStart"), filename)
+            self.assertEqual("10dp", choice.get(android + "paddingStart"), filename)
+            self.assertEqual("10dp", choice.get(android + "paddingEnd"), filename)
 
         selected_flag = (RES / "drawable/shape_flag_choice_selected.xml").read_text()
-        self.assertIn('@android:color/transparent', selected_flag)
+        self.assertIn('?attr/tvColorSurface', selected_flag)
         self.assertNotIn('<stroke', selected_flag)
+
+        selected_choice = (RES / "drawable/shape_detail_choice_selected.xml").read_text()
+        self.assertIn('?attr/tvColorSurface', selected_choice)
+        marker = (RES / "drawable/tv_choice_indicator_overlay.xml").read_text()
+        self.assertIn('android:gravity="top|end"', marker)
+        self.assertIn('@drawable/tv_choice_selected_corner', marker)
+        corner = (RES / "drawable/tv_choice_selected_corner.xml").read_text()
+        self.assertIn('tvColorAccent', corner)
 
         metadata_selector = (RES / "drawable/selector_metadata_tab.xml").read_text()
         self.assertIn('android:state_focused="true" android:state_selected="true"', metadata_selector)
@@ -650,7 +680,7 @@ class TvThemeTests(unittest.TestCase):
         self.assertNotIn('tvColorFocusGlow', focused_tab)
         focused_choice = (RES / "drawable/shape_detail_choice_focused.xml").read_text()
         self.assertIn('?attr/tvColorFocus', focused_choice)
-        self.assertIn('tvColorFocusGlow', focused_choice)
+        self.assertNotIn('tvColorFocusGlow', focused_choice)
         focused_selected_tab = (RES / "drawable/shape_metadata_tab_focused_selected.xml").read_text()
         self.assertIn('@drawable/shape_metadata_tab_focused', focused_selected_tab)
 
@@ -669,6 +699,11 @@ class TvThemeTests(unittest.TestCase):
         self.assertNotIn("updateScrollViewport", code)
         self.assertIn("ContentDialog.create().content(fullDescription).show(this);", code)
         self.assertIn("ensureArtworkVisible();", code)
+        self.assertIn("focusPlayerFromDetail();", code)
+        self.assertIn("isInPictureInPictureMode() || service() == null || !isOwner()", code)
+        self.assertIn("if (isPlaying && pausePlaybackWhenHidden()) return;", code)
+        back = code[code.index("protected void onBackInvoked()") :]
+        self.assertLess(back.index("focusPlayerFromDetail();"), back.index("setAdvancedControls(false);"))
         self.assertLess(code.index("mBinding.progressLayout.showContent();"), code.index("showSkeleton(false);", code.index("renderDetail")))
 
     def test_live_drawer_and_osd_use_stitch_tokens(self):

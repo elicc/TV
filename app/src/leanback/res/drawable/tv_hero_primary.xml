@@ -1,32 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <layer-list>
-            <item>
-                <shape>
-                    <solid android:color="?attr/tvColorAccent" />
-                    <corners android:radius="@dimen/tv_radius_control" />
-                    <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
-                </shape>
-            </item>
-            <item>
-                <shape>
-                    <solid android:color="@android:color/transparent" />
-                    <corners android:radius="@dimen/tv_radius_control" />
-                    <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
-                </shape>
-            </item>
-        </layer-list>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/tvColorAccent" />
+            <corners android:radius="@dimen/tv_radius_control" />
+            <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+        </shape>
     </item>
     <item>
-        <shape>
-            <!-- Keep the idle primary action visually important without impersonating focus.
-                 The solid accent fill is reserved for the actual focused state above. -->
+        <shape android:shape="rectangle">
             <solid android:color="?attr/tvColorSurfaceRaised" />
             <corners android:radius="@dimen/tv_radius_control" />
-            <stroke
-                android:width="1dp"
-                android:color="?attr/tvColorGlassBorder" />
+            <stroke android:width="1dp" android:color="?attr/tvColorGlassBorder" />
         </shape>
     </item>
 </selector>

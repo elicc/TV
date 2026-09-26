@@ -31,7 +31,7 @@
     <dimen name="tv_focus_stroke_offset">1dp</dimen>
     <dimen name="tv_focus_glow">16dp</dimen>
     <dimen name="tv_focus_width">@dimen/tv_focus_stroke</dimen>
-    <!-- Shared translucent halo band used beneath the precision ring. -->
+    <!-- Kept for theme compatibility; focus rings now use one precision stroke. -->
     <dimen name="tv_glow_band">3dp</dimen>
     <dimen name="tv_glow_band_outset">-3dp</dimen>
     <!-- Long detail choices stay within roughly three regular 64dp chips. -->
@@ -43,7 +43,7 @@
     <dimen name="tv_keycaps_top_gap">6dp</dimen>
     <dimen name="tv_keycaps_bottom_inset">0dp</dimen>
     <dimen name="tv_seek_bar_height">4dp</dimen>
-    <dimen name="tv_seek_scrubber_size">18dp</dimen>
+    <dimen name="tv_seek_scrubber_size">14dp</dimen>
     <!-- 380px drawer on the 1920x1080 Stitch raster becomes ~200dp logical. -->
     <dimen name="tv_drawer_width">200dp</dimen>
     <dimen name="tv_text_meta">12sp</dimen>

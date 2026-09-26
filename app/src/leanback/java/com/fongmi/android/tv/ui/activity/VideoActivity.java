@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.activity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,13 +24,16 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.widget.OnChildViewHolderSelectedListener;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
 import androidx.media3.common.VideoSize;
+import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerSeekView;
 import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.SubtitleView;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
@@ -75,6 +79,7 @@ import com.fongmi.android.tv.player.media.PlaySpec;
 import com.fongmi.android.tv.service.PlaybackService;
 import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
+import com.fongmi.android.tv.setting.SubtitleSetting;
 import com.fongmi.android.tv.setting.SpeedSetting;
 import com.fongmi.android.tv.ui.adapter.ArrayAdapter;
 import com.fongmi.android.tv.ui.adapter.EpisodeAdapter;
@@ -301,8 +306,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setIntent(intent);
         updateNavigationKey();
         renderInitialPlaceholder();
+        // The detail page already exposes skeleton placeholders.  Do not add a
+        // second, centered loading spinner over the first frame.
+        mBinding.progressLayout.showContent();
         showSkeleton(true);
-        mBinding.progressLayout.showProgressOverlay();
         checkId();
     }
 
@@ -315,6 +322,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     protected void initView(Bundle savedInstanceState) {
         trace("VIDEO_INIT_BEGIN");
         super.initView(savedInstanceState);
+        applySubtitleWithoutBackground();
         mFrameParams = mBinding.video.getLayoutParams();
         mBinding.atmosphere.setVisibility(isFilmAtmosphereEnabled() ? View.VISIBLE : View.GONE);
         if (!isFilmAtmosphereEnabled()) mBinding.getRoot().setBackgroundColor(TvTheme.color(this, R.attr.tvColorScrimStrong));
@@ -842,8 +850,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (isCast() && !isFullscreen()) enterFullscreen();
         else {
             renderInitialPlaceholder();
+            // The detail page already exposes skeleton placeholders.  Keep the
+            // first frame quiet instead of layering a centered spinner on top.
+            mBinding.progressLayout.showContent();
             showSkeleton(true);
-            mBinding.progressLayout.showProgressOverlay();
         }
     }
 
@@ -859,6 +869,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (show) setMetadataTabsVisible(false);
         mBinding.skeletonMeta.setVisibility(show ? View.VISIBLE : View.GONE);
         mBinding.skeletonEpisode.setVisibility(show ? View.VISIBLE : View.GONE);
+        // Director and actor use a leading accent bar.  Hide both text views
+        // while the header skeleton is visible so empty labels do not leave
+        // stray vertical bars beside the placeholders.
+        if (show) {
+            mBinding.director.setVisibility(View.GONE);
+            mBinding.actor.setVisibility(View.GONE);
+        }
     }
 
     private void setMetadataTabsVisible(boolean visible) {
@@ -1263,6 +1280,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (target == 0) return false;
         View targetView = findViewById(target);
         return targetView != null && (targetView == focused || targetView.requestFocus(right ? View.FOCUS_RIGHT : View.FOCUS_LEFT));
+    }
+
+    /**
+     * Return to the fixed player target when leaving a detail row. RecyclerView can still be
+     * settling its child focus during the back callback, so retry on the next frame instead of
+     * requiring a second remote press.
+     */
+    private void focusPlayerFromDetail() {
+        if (mBinding.video.hasFocus()) return;
+        if (mBinding.video.requestFocus(View.FOCUS_UP) || mBinding.video.requestFocus()) return;
+        mBinding.video.post(() -> {
+            if (isFinishing() || isDestroyed() || isFullscreen() || mBinding.video.hasFocus()) return;
+            if (!mBinding.video.requestFocus(View.FOCUS_UP)) mBinding.video.requestFocusFromTouch();
+        });
     }
 
     @Override
@@ -1770,7 +1801,22 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     protected void onPrepare() {
         trace("VIDEO_PLAYER_PREPARE");
+        // Parsing can finish after HOME, even after onStop has paused the old media.
+        pausePlaybackWhenHidden();
+        applySubtitleWithoutBackground();
         setPlaybackMode();
+    }
+
+    private void applySubtitleWithoutBackground() {
+        SubtitleView subtitles = mBinding.player.getSubtitleView();
+        if (subtitles == null) return;
+        CaptionStyleCompat style = SubtitleSetting.getStyle(this);
+        subtitles.setStyle(new CaptionStyleCompat(style.foregroundColor, Color.TRANSPARENT,
+                Color.TRANSPARENT, style.edgeType, style.edgeColor, style.typeface,
+                style.edgeWidth, style.shadowOffset));
+        // A stream may provide its own black caption box. Retain the user's text,
+        // edge and size settings, but do not draw embedded backgrounds on TV.
+        subtitles.setApplyEmbeddedStyles(false);
     }
 
     @Override
@@ -1820,6 +1866,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onPlayingChanged(boolean isPlaying) {
+        if (isPlaying && pausePlaybackWhenHidden()) return;
         if (isPlaying) {
             hideCenter();
         } else if (isPaused()) {
@@ -2026,15 +2073,31 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.atmosphere.clear();
         mBinding.backdrop.clear();
         super.onStop();
+        // Pause rather than stop: preserve the prepared media and position so
+        // OK can resume when returning from HOME, without a new source request.
+        pausePlaybackWhenHidden();
         if (!isFinishing()) saveHistory(false);
-        if (PlayerSetting.isBackgroundOff()) mClock.stop();
+        if (!isInPictureInPictureMode()) mClock.stop();
         trace("VIDEO_ON_STOP_END");
+    }
+
+    private boolean pausePlaybackWhenHidden() {
+        if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) return false;
+        if (isInPictureInPictureMode() || service() == null || !isOwner()) return false;
+        player().pause();
+        return true;
     }
 
     @Override
     protected void onBackInvoked() {
         trace("BACK_INVOKED");
-        if (isVisible(mBinding.control.getRoot()) && isVisible(mBinding.control.action.advanced)) {
+        // A lingering player badge/OSD must not consume BACK from the detail rows.
+        // Preserve the existing dismissal order when focus is inside the player.
+        if (!isFullscreen() && !mBinding.video.hasFocus()) {
+            hideControl();
+            hideCenter();
+            focusPlayerFromDetail();
+        } else if (isVisible(mBinding.control.getRoot()) && isVisible(mBinding.control.action.advanced)) {
             setAdvancedControls(false);
             mBinding.control.action.more.requestFocus();
             setR1Callback();
@@ -2044,11 +2107,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             hideCenter();
         } else if (isFullscreen()) {
             exitFullscreen();
-        } else if (!mBinding.video.hasFocus()) {
-            // Back is a two-step escape on the detail page: first return to the player, then
-            // leave the page. This prevents an accidental BACK from discarding the user's
-            // position after they browse source/episode/metadata rows.
-            mBinding.video.requestFocus();
         } else {
             trace("BACK_STOP_SEARCH_BEGIN");
             mViewModel.stopSearch();

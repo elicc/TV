@@ -1,34 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Per-item background used INSIDE the menu pill container.
-     Two states matter:
-       focused          → current focus + currently selected page (richest pill)
-       focused (not sel)→ focus on a non-selected tab (still gold ring)
-       selected         → current page pill (subtle solid background)
-       default          → transparent (other tabs)
-     The container already provides the glass + 1dp stroke frame, so we only
-     paint the inner pill; no extra stroke that could clip outside the container. -->
+<!-- Navigation pill with a single precision focus ring. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Keep focused items on a dark glass surface so the theme-colored icon
-         remains visible. Focus itself is carried by the bright outline. -->
     <item android:state_focused="true">
-        <layer-list>
-            <item>
-                <shape android:shape="rectangle">
-                    <corners android:radius="999dp" />
-                    <stroke android:width="@dimen/tv_glow_band" android:color="?attr/tvColorFocusGlow" />
-                </shape>
-            </item>
-            <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="@color/tv_nav_selected" />
-                    <corners android:radius="999dp" />
-                    <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
-                </shape>
-            </item>
-        </layer-list>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tv_nav_selected" />
+            <corners android:radius="999dp" />
+            <stroke android:width="@dimen/tv_focus_width" android:color="?attr/tvColorFocus" />
+        </shape>
     </item>
-
-    <!-- The current route remains subtly visible after focus moves away. -->
     <item android:state_selected="true">
         <shape android:shape="rectangle">
             <solid android:color="@color/tv_nav_selected" />
@@ -36,6 +15,5 @@
             <stroke android:width="0.5dp" android:color="@color/tv_nav_selected_border" />
         </shape>
     </item>
-
     <item android:drawable="@android:color/transparent" />
 </selector>

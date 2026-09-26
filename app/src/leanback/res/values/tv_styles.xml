@@ -48,18 +48,19 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Player seek bar: champagne played segment, translucent buffered band and
-         a glowing scrubber; the gradient overlay itself lives in TvTimeBar. -->
+    <!-- A quiet unfocused bar; TvTimeBar brightens the played segment and
+         animates a compact thumb only while the time bar has D-pad focus. -->
     <style name="Tv.SeekBar" parent="">
         <item name="bar_height">@dimen/tv_seek_bar_height</item>
         <item name="bar_gravity">center</item>
-        <item name="played_color">?attr/tvColorAccent</item>
+        <item name="played_color">#66E5A958</item>
         <item name="buffered_color">#47FFFFFF</item>
         <item name="unplayed_color">#26FFFFFF</item>
-        <item name="scrubber_color">#FFE8A3</item>
-        <item name="scrubber_drawable">@drawable/tv_seek_thumb</item>
-        <item name="scrubber_enabled_size">@dimen/tv_seek_scrubber_size</item>
-        <item name="scrubber_dragged_size">22dp</item>
+        <!-- TvTimeBar paints the thumb after its gradient so the bar does not
+             cut through the centre of the small idle dot. -->
+        <item name="scrubber_color">@android:color/transparent</item>
+        <item name="scrubber_enabled_size">8dp</item>
+        <item name="scrubber_dragged_size">@dimen/tv_seek_scrubber_size</item>
         <item name="touch_target_height">32dp</item>
     </style>
 </resources>

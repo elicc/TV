@@ -1,9 +1,11 @@
 package com.fongmi.android.tv.ui.custom;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.AttributeSet;
@@ -12,17 +14,18 @@ import androidx.media3.ui.DefaultTimeBar;
 import androidx.media3.ui.TimeBar;
 
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.utils.TvTheme;
 
 /**
- * DefaultTimeBar with a champagne gradient painted over the played segment
- * (Stitch: #E5A958 to #FCD58B) while the stock view keeps bars, chapters, ad
- * markers and scrubbing untouched. Remains a DefaultTimeBar so the forked
- * PlayerSeekView's constructor check still passes.
+ * The stock bar retains seeking, chapters and accessibility. A quiet played
+ * tint becomes a brighter gradient and a small pulsing thumb on D-pad focus.
+ * Remains a DefaultTimeBar for PlayerSeekView's constructor check.
  */
 public class TvTimeBar extends DefaultTimeBar {
 
     private final Paint gradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint thumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF segment = new RectF();
     private final int barHeightPx;
     private final int scrubberPaddingPx;
@@ -31,11 +34,17 @@ public class TvTimeBar extends DefaultTimeBar {
     private long scrubPosition = -1;
     private boolean scrubbing;
     private int shaderWidth;
+    private float focusAmount;
+    private float pulseAmount;
+    private ValueAnimator focusAnimator;
+    private ValueAnimator pulseAnimator;
 
     public TvTimeBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         barHeightPx = getResources().getDimensionPixelSize(R.dimen.tv_seek_bar_height);
         scrubberPaddingPx = getResources().getDimensionPixelSize(R.dimen.tv_seek_scrubber_size) / 2;
+        int accent = TvTheme.color(context, R.attr.tvColorAccent);
+        setPlayedColor((accent & 0x00FFFFFF) | 0x66000000);
         addListener(new TimeBar.OnScrubListener() {
             @Override
             public void onScrubStart(TimeBar timeBar, long position) {
@@ -68,6 +77,44 @@ public class TvTimeBar extends DefaultTimeBar {
         this.duration = duration;
     }
 
+    @Override
+    protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
+        super.onFocusChanged(focused, direction, previouslyFocusedRect);
+        if (focusAnimator != null) focusAnimator.cancel();
+        if (pulseAnimator != null) pulseAnimator.cancel();
+        pulseAmount = 0f;
+        if (TvMotion.motionEnabled(this)) {
+            focusAnimator = ValueAnimator.ofFloat(focusAmount, focused ? 1f : 0f);
+            focusAnimator.setDuration(focused ? TvMotion.FOCUS_ON : TvMotion.FOCUS_OFF);
+            focusAnimator.addUpdateListener(animation -> {
+                focusAmount = (float) animation.getAnimatedValue();
+                invalidate();
+            });
+            focusAnimator.start();
+            if (focused) {
+                pulseAnimator = ValueAnimator.ofFloat(0f, 1f);
+                pulseAnimator.setDuration(1200);
+                pulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
+                pulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                pulseAnimator.addUpdateListener(animation -> {
+                    pulseAmount = (float) animation.getAnimatedValue();
+                    invalidate();
+                });
+                pulseAnimator.start();
+            }
+        } else {
+            focusAmount = focused ? 1f : 0f;
+            invalidate();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (focusAnimator != null) focusAnimator.cancel();
+        if (pulseAnimator != null) pulseAnimator.cancel();
+        super.onDetachedFromWindow();
+    }
+
     /** The forked DefaultTimeBar finalizes onDraw, so paint after the stock pass. */
     @Override
     public void draw(Canvas canvas) {
@@ -84,6 +131,19 @@ public class TvTimeBar extends DefaultTimeBar {
             gradientPaint.setShader(new LinearGradient(left, top, left + width, top,
                     TvTheme.color(getContext(), R.attr.tvColorAccent), TvTheme.color(getContext(), R.attr.tvColorFocus), Shader.TileMode.CLAMP));
         }
+        gradientPaint.setAlpha(Math.round(96 + 159 * focusAmount));
         canvas.drawRoundRect(segment, barHeightPx / 2f, barHeightPx / 2f, gradientPaint);
+        if (!isEnabled()) return;
+        float centerY = getHeight() / 2f;
+        int focusColor = TvTheme.color(getContext(), R.attr.tvColorFocus);
+        float density = getResources().getDisplayMetrics().density;
+        if (focusAmount > 0f) {
+            thumbPaint.setColor(focusColor);
+            thumbPaint.setAlpha(Math.round((35 + 20 * pulseAmount) * focusAmount));
+            canvas.drawCircle(right, centerY, (7f + pulseAmount) * density, thumbPaint);
+        }
+        thumbPaint.setColor(focusColor);
+        thumbPaint.setAlpha(Math.round(170 + 85 * focusAmount));
+        canvas.drawCircle(right, centerY, (4f + 2f * focusAmount + pulseAmount * 0.3f) * density, thumbPaint);
     }
 }
