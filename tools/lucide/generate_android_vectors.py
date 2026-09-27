@@ -35,11 +35,8 @@ ICONS = {
     "ic_setting_nav_data.xml": ("shield-check.svg", 24),
     "ic_setting_nav_about.xml": ("info.svg", 24),
     "ic_setting_back.xml": ("chevron-left.svg", 16),
-    "ic_choice_check.xml": ("check.svg", 10),
+    "ic_playback_more.xml": ("chevron-right.svg", 20),
 }
-
-# State colors stay separate from the upstream icon geometry.
-TINTS = {"ic_choice_check.xml": "?attr/tvColorOnAccent"}
 
 
 def number(value: str | None, default: float = 0) -> str:
@@ -90,7 +87,7 @@ def geometry(node: ET.Element) -> str:
     raise ValueError(f"Unsupported Lucide SVG element: {tag}")
 
 
-def convert(source: Path, size: int, tint: str | None = None) -> str:
+def convert(source: Path, size: int) -> str:
     root = ET.parse(source).getroot()
     view_box = root.attrib["viewBox"].split()
     if view_box != ["0", "0", "24", "24"]:
@@ -105,8 +102,6 @@ def convert(source: Path, size: int, tint: str | None = None) -> str:
         '    android:viewportWidth="24"',
         '    android:viewportHeight="24">',
     ]
-    if tint:
-        lines.insert(-2, f'    android:tint="{tint}"')
     for node in root:
         if node.tag.rsplit("}", 1)[-1] in {"defs", "title", "desc"}:
             continue
@@ -132,7 +127,7 @@ def main() -> int:
     args = parser.parse_args()
     stale = False
     for output_name, (source_name, size) in ICONS.items():
-        expected = convert(SOURCE / source_name, size, TINTS.get(output_name))
+        expected = convert(SOURCE / source_name, size)
         output = DRAWABLE / output_name
         actual = output.read_text() if output.exists() else ""
         if args.check:

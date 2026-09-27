@@ -70,6 +70,27 @@
             android:layout_height="match_parent"
             android:visibility="gone" />
 
+        <!-- A minimal always-on progress indicator for fullscreen playback. The
+             active segment is resized from the left edge, so it stays left aligned. -->
+        <FrameLayout
+            android:id="@+id/fullscreenProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_gravity="bottom"
+            android:background="?attr/tvColorSurfaceRaised"
+            android:importantForAccessibility="no"
+            android:visibility="gone"
+            android:translationZ="24dp">
+
+            <View
+                android:id="@+id/fullscreenProgress"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:background="?attr/tvColorAccent"
+                android:importantForAccessibility="no" />
+        </FrameLayout>
+
     </FrameLayout>
 
     <!-- Zero-height anchor keeps the scroll viewport independent from

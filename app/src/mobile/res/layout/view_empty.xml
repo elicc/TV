@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:orientation="vertical"
+    android:focusable="true"
     android:translationY="-40dp">
 
     <com.airbnb.lottie.LottieAnimationView
@@ -21,5 +22,14 @@
         android:text="@string/error_empty"
         android:textColor="@color/white"
         android:textSize="16sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/empty_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:focusable="true"
+        android:text="@string/error_empty"
+        android:visibility="gone" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

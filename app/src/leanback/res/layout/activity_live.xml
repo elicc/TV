@@ -48,10 +48,10 @@
         android:id="@+id/recycler"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_marginStart="@dimen/tv_safe_horizontal"
-        android:layout_marginTop="@dimen/tv_safe_vertical"
-        android:layout_marginBottom="@dimen/tv_safe_vertical"
-        android:background="@drawable/tv_setting_panel"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="0dp"
+        android:background="@drawable/tv_live_panel"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:orientation="horizontal"
@@ -68,12 +68,17 @@
             tools:itemCount="5"
             tools:listitem="@layout/adapter_group" />
 
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/tv_border_subtle"
+            android:importantForAccessibility="no" />
+
         <com.fongmi.android.tv.ui.custom.CustomLiveListView
             android:id="@+id/channel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:clipChildren="false"
-            android:translationX="-12dp"
             android:clipToPadding="false"
             android:padding="12dp"
             tools:itemCount="5"
@@ -81,9 +86,10 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/epgEmpty"
-            android:layout_width="240dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:textAlignment="center"
             android:padding="24dp"
             android:focusable="false"
             android:accessibilityLiveRegion="polite"

@@ -18,12 +18,4 @@
         android:contentDescription="@string/metadata_artworks"
         android:scaleType="centerCrop"
         app:shapeAppearanceOverlay="@style/Vod.Grid.Rounded" />
-
-    <View
-        android:id="@+id/focusRing"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/selector_artwork_ring"
-        android:duplicateParentState="true"
-        android:importantForAccessibility="no" />
 </FrameLayout>

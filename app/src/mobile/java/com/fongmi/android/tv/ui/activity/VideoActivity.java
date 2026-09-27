@@ -657,6 +657,13 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     }
 
     @Override
+    public void renderDetailError(String message) {
+        App.removeCallbacks(mR4);
+        mBinding.progressLayout.showContent();
+        renderFallbackName(getName());
+    }
+
+    @Override
     public void renderFallbackName(String name) {
         mBinding.name.setText(name);
     }

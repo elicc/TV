@@ -67,6 +67,9 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     private boolean bound;
     private boolean stop;
     private boolean lock;
+    /** True when the hidden activity's player still intended to continue playing. */
+    private boolean resumePlaybackAfterHidden;
+    private boolean resumed;
 
     protected MediaController controller() {
         return mController;
@@ -293,6 +296,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
             getSeekView().setPlayer(mController);
             mController.addListener(this);
             updateKeyIncrement();
+            resumePlaybackIfNeeded();
         } catch (Exception ignored) {
         }
     }
@@ -367,6 +371,27 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     private void resumePlayback() {
         if (shouldReclaim()) reclaimPlayback();
         else attachPlayerView();
+    }
+
+    private void captureResumePlaybackIntent() {
+        if (isFinishing() || isInPictureInPictureMode() || mService == null || !isOwner()) {
+            resumePlaybackAfterHidden = false;
+            return;
+        }
+        // ExoPlayer reports isPlaying() as false while buffering. Keep the
+        // playWhenReady intent so a HOME transition does not strand a stream in
+        // BUFFERING after the PlayerView is reattached.
+        resumePlaybackAfterHidden = mController != null && mController.getPlayWhenReady();
+        trace("PLAYBACK_RESUME_INTENT=" + resumePlaybackAfterHidden);
+    }
+
+    private void resumePlaybackIfNeeded() {
+        if (!resumePlaybackAfterHidden || mController == null || !isOwner()) return;
+        if (!resumed) return;
+        if (!mController.isCommandAvailable(Player.COMMAND_PLAY_PAUSE)) return;
+        resumePlaybackAfterHidden = false;
+        trace("PLAYBACK_AUTO_RESUME");
+        mController.play();
     }
 
     private void reclaimPlayback() {
@@ -617,14 +642,17 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     @Override
     protected void onResume() {
         super.onResume();
+        resumed = true;
         claimBinding();
         setRedirect(false);
         dispatchPendingObservers();
         resumePlayback();
+        resumePlaybackIfNeeded();
     }
 
     @Override
     protected void onPause() {
+        resumed = false;
         super.onPause();
         if (isRedirect()) pausePlayback();
     }
@@ -632,6 +660,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     @Override
     protected void onStop() {
         trace("PLAYBACK_ON_STOP_BEGIN");
+        captureResumePlaybackIntent();
         super.onStop();
         if (isOwner() && (isFinishing() || PlayerSetting.isBackgroundOff())) pausePlayback();
         if (!isInPictureInPictureMode()) detachPlayerView();

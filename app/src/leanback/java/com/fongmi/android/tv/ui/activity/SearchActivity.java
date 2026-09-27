@@ -1,5 +1,7 @@
 package com.fongmi.android.tv.ui.activity;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -17,9 +19,12 @@ import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.config.VodConfig;
+import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Word;
 import com.fongmi.android.tv.databinding.ActivitySearchBinding;
 import com.fongmi.android.tv.impl.Callback;
+import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.metadata.MetadataRepository;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.setting.Setting;
@@ -30,6 +35,7 @@ import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.CustomKeyboard;
 import com.fongmi.android.tv.ui.custom.CustomTextListener;
 import com.fongmi.android.tv.ui.dialog.SiteDialog;
+import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.utils.KeyUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.utils.ZhuToPin;
@@ -44,12 +50,14 @@ import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Response;
 
-public class SearchActivity extends BaseActivity implements WordAdapter.OnClickListener, HotMovieAdapter.OnClickListener, RecordAdapter.OnClickListener, CustomKeyboard.Callback {
+public class SearchActivity extends BaseActivity implements WordAdapter.OnClickListener, HotMovieAdapter.OnClickListener, RecordAdapter.OnClickListener, CustomKeyboard.Callback, SiteListener {
 
     private ActivitySearchBinding mBinding;
     private RecordAdapter mRecordAdapter;
     private WordAdapter mWordAdapter;
     private HotMovieAdapter mHotMovieAdapter;
+    private CustomKeyboard mKeyboard;
+    private ObjectAnimator mSourcePulse;
     private AlertDialog historyDialog;
     private int hotRequestToken;
 
@@ -84,7 +92,9 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     protected void initView(Bundle savedInstanceState) {
-        CustomKeyboard.init(this, mBinding);
+        mKeyboard = CustomKeyboard.init(this, mBinding);
+        setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
+        startSourcePulse();
         setRecyclerView();
         checkKeyword();
         onSearch();
@@ -92,6 +102,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     protected void initEvent() {
+        mBinding.sourceRow.setOnClickListener(v -> showSourceDialog());
         mBinding.manageRecords.setOnClickListener(this::manageRecords);
         mBinding.clearRecords.setOnClickListener(this::clearRecords);
         mBinding.keyword.setOnEditorActionListener((textView, actionId, event) -> {
@@ -120,7 +131,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         mBinding.wordRecycler.setLayoutManager(new FlexboxLayoutManager(this, FlexDirection.ROW));
         mBinding.wordRecycler.setAdapter(mWordAdapter = new WordAdapter(this));
         mBinding.hotRecycler.setHasFixedSize(false);
-        mBinding.hotRecycler.setLayoutManager(new GridLayoutManager(this, 4));
+        mBinding.hotRecycler.setLayoutManager(new GridLayoutManager(this, 5));
         mBinding.hotRecycler.setAdapter(mHotMovieAdapter = new HotMovieAdapter(this));
         mBinding.recordRecycler.setHasFixedSize(false);
         mBinding.recordRecycler.setLayoutManager(new FlexboxLayoutManager(this, FlexDirection.ROW));
@@ -265,9 +276,33 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         CollectActivity.start(this, keyword);
     }
 
+    private void showSourceDialog() {
+        SiteDialog.create().show(this);
+    }
+
+    private void setSourceChip(Site site, int statusColor) {
+        String title = site == null || site.getName().isEmpty()
+                ? getString(R.string.tv_source_unconfigured)
+                : site.getName();
+        mBinding.sourceTitle.setText(title);
+        mBinding.sourceTitle.setContentDescription(getString(R.string.tv_source) + "：" + title);
+        mBinding.sourceStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(statusColor));
+    }
+
+    private void startSourcePulse() {
+        if (!TvMotion.motionEnabled(this)) return;
+        mSourcePulse = ObjectAnimator.ofFloat(mBinding.sourceStatus, "alpha", 1f, 0.45f);
+        mSourcePulse.setDuration(1200);
+        mSourcePulse.setRepeatCount(ValueAnimator.INFINITE);
+        mSourcePulse.setRepeatMode(ValueAnimator.REVERSE);
+        mSourcePulse.start();
+    }
+
     @Override
-    public void showDialog() {
-        SiteDialog.create().search().show(this);
+    public void setSite(Site item) {
+        if (item == null || item.isEmpty()) return;
+        VodConfig.get().setHome(item);
+        setSourceChip(item, getColor(R.color.tv_success));
     }
 
     @Override
@@ -277,9 +312,16 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (KeyUtil.isMenuKey(event)) showDialog();
+        if (KeyUtil.isMenuKey(event)) showSourceDialog();
+        if (KeyUtil.isActionDown(event) && KeyUtil.isBackKey(event) && mKeyboard != null && mKeyboard.onBack()) return true;
         if (KeyUtil.isActionDown(event) && findFocus(event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    protected void onBackInvoked() {
+        if (mKeyboard != null && mKeyboard.onBack()) return;
+        super.onBackInvoked();
     }
 
     private boolean findFocus(KeyEvent event) {
@@ -351,8 +393,9 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private boolean handleKeywordKey(KeyEvent event) {
         if (!KeyUtil.isRightKey(event)) return false;
         if (mBinding.keyword.getSelectionEnd() < mBinding.keyword.getText().length()) return false;
+        boolean hasSuggestion = mBinding.wordRecycler.getVisibility() == View.VISIBLE && mWordAdapter.getItemCount() > 0;
         boolean hasRecord = mBinding.recordLayout.getVisibility() == View.VISIBLE;
-        RecyclerView target = hasRecord ? mBinding.recordRecycler
+        RecyclerView target = hasSuggestion ? mBinding.wordRecycler : hasRecord ? mBinding.recordRecycler
                 : mBinding.hotRecycler.getVisibility() == View.VISIBLE ? mBinding.hotRecycler : mBinding.wordRecycler;
         return focusFirst(target);
     }
@@ -430,12 +473,14 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     protected void onResume() {
         super.onResume();
         mBinding.mic.setFocusable(true);
+        setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
         mBinding.keyword.requestFocus();
     }
 
     @Override
     protected void onDestroy() {
         if (historyDialog != null) historyDialog.dismiss();
+        if (mSourcePulse != null) mSourcePulse.cancel();
         super.onDestroy();
         mBinding.mic.destroy();
     }

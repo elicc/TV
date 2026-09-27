@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.databinding.ViewEmptyBinding;
 import com.fongmi.android.tv.databinding.ViewProgressBinding;
 
@@ -24,6 +25,7 @@ public class ProgressLayout extends RelativeLayout {
     private List<View> mContentViews;
     private View mProgressView;
     private View mEmptyView;
+    private View mEmptyAction;
     private State mState;
 
     public ProgressLayout(Context context) {
@@ -50,6 +52,9 @@ public class ProgressLayout extends RelativeLayout {
         mEmptyView = ViewEmptyBinding.inflate(LayoutInflater.from(getContext())).getRoot();
         mEmptyView.setTag(TAG_PROGRESS);
         mEmptyView.setVisibility(GONE);
+        mEmptyView.setFocusable(true);
+        mEmptyAction = mEmptyView.findViewById(R.id.empty_action);
+        if (mEmptyAction != null) mEmptyAction.setVisibility(GONE);
         mProgressView = ViewProgressBinding.inflate(LayoutInflater.from(getContext())).getRoot();
         mProgressView.setTag(TAG_PROGRESS);
         mProgressView.setVisibility(GONE);
@@ -91,6 +96,22 @@ public class ProgressLayout extends RelativeLayout {
         switchState(State.CONTENT);
     }
 
+    /** Adds an optional, focusable action to the empty state (for example, retry). */
+    public void setEmptyAction(CharSequence text, OnClickListener listener) {
+        if (mEmptyAction == null) return;
+        if (text != null) {
+            if (mEmptyAction instanceof android.widget.TextView) ((android.widget.TextView) mEmptyAction).setText(text);
+            mEmptyAction.setOnClickListener(listener);
+            mEmptyAction.setVisibility(VISIBLE);
+            mEmptyView.setFocusable(false);
+            if (mState == State.EMPTY) mEmptyAction.requestFocus();
+        } else {
+            mEmptyAction.setVisibility(GONE);
+            mEmptyAction.setOnClickListener(null);
+            mEmptyView.setFocusable(true);
+        }
+    }
+
     public void showContent(boolean flag, int size) {
         if (flag && size == 0) showEmpty();
         else showContent();
@@ -126,6 +147,8 @@ public class ProgressLayout extends RelativeLayout {
                 mEmptyView.setVisibility(VISIBLE);
                 mProgressView.setVisibility(GONE);
                 setContentVisibility(false);
+                if (mEmptyAction != null && mEmptyAction.getVisibility() == VISIBLE) mEmptyAction.requestFocus();
+                else mEmptyView.requestFocus();
                 break;
         }
     }

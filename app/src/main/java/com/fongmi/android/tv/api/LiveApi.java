@@ -33,11 +33,41 @@ public class LiveApi {
         return item.getEpgXml().stream().map(url -> startXml(item, url)).reduce(false, Boolean::logicalOr);
     }
 
+    public static Epg getCachedEpg(@NonNull Channel item, @NonNull ZoneId zoneId) {
+        String today = LocalDate.now(zoneId).format(Formatters.DATE);
+        Epg result = item.getDataList().stream().filter(epg -> epg.equal(today) && !epg.isError()).findFirst().orElse(null);
+        if (result == null) result = EpgCache.read(item, today);
+        if (result == null) return null;
+        result.setKey(item.getTvgId());
+        if (result.getFetchedAt() == 0) EpgCache.write(item, result);
+        item.setData(result);
+        return result.selected();
+    }
+
+    public static boolean isEpgFresh(Epg epg) {
+        return EpgCache.isFresh(epg);
+    }
+
+    public static void cancelEpg(String tag) {
+        if (tag != null && !tag.isEmpty()) OkHttp.cancel(tag);
+    }
+
     @NonNull
     public static Epg getEpg(@NonNull Channel item, @NonNull ZoneId zoneId) {
+        return getEpg(item, zoneId, null);
+    }
+
+    @NonNull
+    public static Epg getEpg(@NonNull Channel item, @NonNull ZoneId zoneId, String tag) {
         String today = LocalDate.now(zoneId).format(Formatters.DATE);
-        for (int offset : new int[]{-1, 0, 1}) fetchEpgDay(item, zoneId, offset);
-        return item.getDataList().stream().filter(epg -> epg.equal(today)).findFirst().orElseGet(Epg::new).selected();
+        Epg result = fetchEpgDay(item, zoneId, today, true, tag);
+        if (result == null) result = Epg.create(item.getTvgId(), today);
+        result.setKey(item.getTvgId());
+        if (!result.isError()) {
+            item.setData(result);
+            EpgCache.write(item, result);
+        }
+        return result.selected();
     }
 
     @NonNull
@@ -66,10 +96,20 @@ public class LiveApi {
         }
     }
 
-    private static void fetchEpgDay(@NonNull Channel item, @NonNull ZoneId zoneId, int offset) {
-        String date = LocalDate.now(zoneId).plusDays(offset).format(Formatters.DATE);
+    private static Epg fetchEpgDay(@NonNull Channel item, @NonNull ZoneId zoneId, @NonNull String date, boolean force, String tag) {
         String url = item.getEpg().replace("{date}", date);
-        boolean need = url.startsWith("http") && item.getDataList().stream().noneMatch(epg -> epg.equal(date));
-        if (need) item.setData(Epg.objectFrom(OkHttp.string(url), item.getTvgId(), zoneId));
+        Epg existing = item.getDataList().stream().filter(epg -> epg.equal(date) && !epg.isError()).findFirst().orElse(null);
+        if (!force && existing != null) return existing;
+        if (!url.startsWith("http")) return existing;
+        String body = tag == null ? OkHttp.string(url) : OkHttp.string(url, tag);
+        Epg epg = Epg.objectFrom(body, item.getTvgId(), zoneId);
+        if (epg.isError()) {
+            epg.setDate(date);
+            return epg;
+        }
+        epg.setKey(item.getTvgId());
+        if (!date.equals(epg.getDate())) epg.setDate(date);
+        item.setData(epg);
+        return epg;
     }
 }

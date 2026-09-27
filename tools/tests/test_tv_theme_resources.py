@@ -650,6 +650,8 @@ class TvThemeTests(unittest.TestCase):
         self.assertEqual("@id/change", description.get(android + "nextFocusDown"))
         self.assertIn("tab.setOnFocusChangeListener", code)
         self.assertIn("mBinding.video.setClipToOutline(true);", code)
+        self.assertIn("reorderMetadataTabs(state.hasProviderOrCandidate(MetadataProvider.DOUBAN));", code)
+        self.assertIn("mBinding.metadataTabs.indexOfChild(focused)", code)
         artwork = ET.parse(RES / "layout/adapter_artwork.xml").getroot()
         artwork_image = next(n for n in artwork.iter() if n.get(android + "id") == "@+id/image")
         self.assertEqual("@style/Vod.Grid.Rounded", artwork_image.get("{http://schemas.android.com/apk/res-auto}shapeAppearanceOverlay"))
@@ -660,6 +662,7 @@ class TvThemeTests(unittest.TestCase):
             self.assertIsNone(choice.get(android + "drawableStart"), filename)
             self.assertEqual("10dp", choice.get(android + "paddingStart"), filename)
             self.assertEqual("10dp", choice.get(android + "paddingEnd"), filename)
+            self.assertEqual("@color/selector_flag_choice_text", choice.get(android + "textColor"), filename)
 
         selected_flag = (RES / "drawable/shape_flag_choice_selected.xml").read_text()
         self.assertIn('?attr/tvColorSurface', selected_flag)
@@ -668,10 +671,11 @@ class TvThemeTests(unittest.TestCase):
         selected_choice = (RES / "drawable/shape_detail_choice_selected.xml").read_text()
         self.assertIn('?attr/tvColorSurface', selected_choice)
         marker = (RES / "drawable/tv_choice_indicator_overlay.xml").read_text()
-        self.assertIn('android:gravity="top|end"', marker)
-        self.assertIn('@drawable/tv_choice_selected_corner', marker)
-        corner = (RES / "drawable/tv_choice_selected_corner.xml").read_text()
-        self.assertIn('tvColorAccent', corner)
+        self.assertIn('android:gravity="bottom|center_horizontal"', marker)
+        self.assertIn('android:width="20dp"', marker)
+        self.assertIn('android:height="2dp"', marker)
+        self.assertIn('tvColorAccent', marker)
+        self.assertNotIn('tv_choice_selected_corner', marker)
 
         metadata_selector = (RES / "drawable/selector_metadata_tab.xml").read_text()
         self.assertIn('android:state_focused="true" android:state_selected="true"', metadata_selector)
@@ -705,6 +709,11 @@ class TvThemeTests(unittest.TestCase):
         back = code[code.index("protected void onBackInvoked()") :]
         self.assertLess(back.index("focusPlayerFromDetail();"), back.index("setAdvancedControls(false);"))
         self.assertLess(code.index("mBinding.progressLayout.showContent();"), code.index("showSkeleton(false);", code.index("renderDetail")))
+
+        fallback = (MAIN_JAVA / "playback/vod/VodFallbackPolicy.java").read_text()
+        self.assertIn("fallbackToNextLineOrSource(true);", fallback)
+        self.assertIn("if (flag.getEpisodes().isEmpty()) continue;", fallback)
+        self.assertLess(fallback.index("if (fallbackToNextLine()) return;"), fallback.index("if (!host.isSiteChangeable()) return;"))
 
     def test_live_drawer_and_osd_use_stitch_tokens(self):
         android = "{http://schemas.android.com/apk/res/android}"

@@ -19,22 +19,33 @@ import java.util.List;
 
 public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private final List<Integer> icons = Arrays.asList(R.drawable.ic_keyboard_remote, R.drawable.ic_keyboard_left, R.drawable.ic_keyboard_right, R.drawable.ic_keyboard_back, R.drawable.ic_keyboard_search, R.drawable.ic_keyboard, R.drawable.ic_setting_home);
-    private final List<String> enList = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
+    private final List<Integer> icons = Arrays.asList(R.drawable.ic_keyboard_remote, R.drawable.ic_keyboard_left, R.drawable.ic_keyboard_right, R.drawable.ic_keyboard_back, R.drawable.ic_keyboard_search, R.drawable.ic_keyboard);
+    private final List<Group> enGroups = Arrays.asList(
+            new Group("1\n0", new String[]{"1", "0"}),
+            new Group("2\nABC", new String[]{"A", "B", "C", "2"}),
+            new Group("3\nDEF", new String[]{"D", "E", "F", "3"}),
+            new Group("4\nGHI", new String[]{"G", "H", "I", "4"}),
+            new Group("5\nJKL", new String[]{"J", "K", "L", "5"}),
+            new Group("6\nMNO", new String[]{"M", "N", "O", "6"}),
+            new Group("7\nPQRS", new String[]{"P", "Q", "R", "S", "7"}),
+            new Group("8\nTUV", new String[]{"T", "U", "V", "8"}),
+            new Group("9\nWXYZ", new String[]{"W", "X", "Y", "Z", "9"}));
     private final List<String> twList = Arrays.asList("ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ", "ㄋ", "ㄌ", "ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ", "ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ", "ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ", "ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
     private final OnClickListener listener;
     private final List<Object> mItems;
+    private int expandedGroup = -1;
 
     public KeyboardAdapter(OnClickListener listener) {
         this.mItems = new ArrayList<>();
         this.listener = listener;
-        this.mItems.addAll(icons);
-        this.mItems.addAll(Setting.isZhuyin() ? twList : enList);
+        rebuildItems();
     }
 
     public interface OnClickListener {
 
         void onTextClick(String text);
+
+        void onGroupClick(int position);
 
         void onIconClick(int resId);
 
@@ -42,16 +53,49 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     public void toggle() {
+        expandedGroup = -1;
         Setting.putZhuyin(!Setting.isZhuyin());
-        mItems.removeAll(Setting.isZhuyin() ? enList : twList);
-        mItems.addAll(icons.size(), Setting.isZhuyin() ? twList : enList);
-        notifyItemRangeRemoved(icons.size(), Setting.isZhuyin() ? enList.size() : twList.size());
-        notifyItemRangeInserted(icons.size(), Setting.isZhuyin() ? twList.size() : enList.size());
+        rebuildItems();
+        notifyDataSetChanged();
+    }
+
+    public void expand(int position) {
+        if (Setting.isZhuyin() || position < icons.size()) return;
+        int group = position - icons.size();
+        if (group >= enGroups.size()) return;
+        expandedGroup = group;
+        rebuildItems();
+        notifyDataSetChanged();
+    }
+
+    public boolean isExpanded() {
+        return expandedGroup >= 0;
+    }
+
+    public int collapse() {
+        if (!isExpanded()) return -1;
+        int position = icons.size() + expandedGroup;
+        expandedGroup = -1;
+        rebuildItems();
+        notifyDataSetChanged();
+        return position;
+    }
+
+    private void rebuildItems() {
+        mItems.clear();
+        mItems.addAll(icons);
+        if (Setting.isZhuyin()) {
+            mItems.addAll(twList);
+        } else if (isExpanded()) {
+            mItems.addAll(Arrays.asList(enGroups.get(expandedGroup).letters));
+        } else {
+            mItems.addAll(enGroups);
+        }
     }
 
     @Override
     public int getItemViewType(int position) {
-        return mItems.get(position) instanceof String ? 0 : 1;
+        return mItems.get(position) instanceof String || mItems.get(position) instanceof Group ? 0 : 1;
     }
 
     @Override
@@ -92,7 +136,11 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         @Override
         public void onClick(View view) {
-            listener.onTextClick(mItems.get(getLayoutPosition()).toString());
+            int position = getBindingAdapterPosition();
+            if (position == RecyclerView.NO_POSITION) return;
+            Object item = mItems.get(position);
+            if (item instanceof Group) listener.onGroupClick(position);
+            else listener.onTextClick(item.toString());
         }
     }
 
@@ -109,12 +157,31 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         @Override
         public void onClick(View view) {
-            listener.onIconClick((int) mItems.get(getLayoutPosition()));
+            int position = getBindingAdapterPosition();
+            if (position == RecyclerView.NO_POSITION) return;
+            listener.onIconClick((int) mItems.get(position));
         }
 
         @Override
         public boolean onLongClick(View view) {
-            return listener.onLongClick((int) mItems.get(getLayoutPosition()));
+            int position = getBindingAdapterPosition();
+            return position != RecyclerView.NO_POSITION && listener.onLongClick((int) mItems.get(position));
+        }
+    }
+
+    private static class Group {
+
+        private final String title;
+        private final String[] letters;
+
+        private Group(String title, String[] letters) {
+            this.title = title;
+            this.letters = letters;
+        }
+
+        @Override
+        public String toString() {
+            return title;
         }
     }
 }

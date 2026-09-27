@@ -74,8 +74,19 @@ public class VodPlaybackController {
         if (detail == null || !detail.matches(host.getVodKey(), host.getVodId())) return;
         trace("DETAIL_RESULT key=" + detail.key() + " id=" + detail.id() + " items=" + detail.result().getList().size());
         Result result = detail.result();
-        if (result.getList().isEmpty()) detailEmpty();
-        else detailLoaded(result.getVod());
+        if (result.getList().isEmpty()) {
+            String message = result.getMsg();
+            if (!message.isEmpty()) {
+                // Network/configuration failures are not valid "empty detail" responses.
+                // Keeping them on the detail page prevents the delayed fallback from replacing
+                // the skeleton with an inert empty overlay.
+                host.onDetailFallbackCancelled();
+                host.renderDetailError(message);
+                host.showDetailMessage(message);
+            } else detailEmpty();
+            return;
+        }
+        detailLoaded(result.getVod());
         host.showDetailMessage(result.getMsg());
     }
 

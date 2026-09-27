@@ -25,6 +25,8 @@ public class Epg {
     private List<EpgData> list;
 
     private int width;
+    private boolean error;
+    private long fetchedAt;
 
     public static Epg objectFrom(String str, String key, ZoneId zoneId) {
         if (!Json.isObj(str)) return EpgParser.getEpg(str, key, zoneId);
@@ -34,8 +36,15 @@ public class Epg {
             item.setKey(key);
             return item;
         } catch (Exception e) {
-            return new Epg();
+            return error(key);
         }
+    }
+
+    public static Epg error(String key) {
+        Epg item = new Epg();
+        item.setKey(key);
+        item.setError(true);
+        return item;
     }
 
     public static Epg create(String key, String date) {
@@ -68,6 +77,22 @@ public class Epg {
 
     public void setList(List<EpgData> list) {
         this.list = list;
+    }
+
+    public boolean isError() {
+        return error;
+    }
+
+    public void setError(boolean error) {
+        this.error = error;
+    }
+
+    public long getFetchedAt() {
+        return fetchedAt;
+    }
+
+    public void setFetchedAt(long fetchedAt) {
+        this.fetchedAt = fetchedAt;
     }
 
     public int getWidth() {

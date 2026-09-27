@@ -343,6 +343,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     @SuppressLint("ClickableViewAccessibility")
     protected void initEvent() {
+        mBinding.progressLayout.setEmptyAction(getString(R.string.tv_retry), view -> {
+            mBinding.progressLayout.showContent();
+            renderInitialPlaceholder();
+            showSkeleton(true);
+            mVod.requestDetail();
+        });
         mBinding.keep.setOnClickListener(view -> onKeep());
         mBinding.video.setOnClickListener(view -> onVideo());
         mBinding.change.setOnClickListener(view -> onChange());
@@ -357,7 +363,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         bindMetadataTab(mBinding.tabSource, MetadataProvider.SOURCE);
         bindMetadataTab(mBinding.tabDouban, MetadataProvider.DOUBAN);
         bindMetadataTab(mBinding.tabTmdb, MetadataProvider.TMDB);
-        mBinding.control.action.more.setOnClickListener(view -> setAdvancedControls(!isVisible(mBinding.control.action.advanced)));
+        mBinding.control.action.more.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus && !isVisible(mBinding.control.action.advanced)) setAdvancedControls(true);
+        });
+        mBinding.control.action.more.setOnClickListener(view -> {
+            setAdvancedControls(true);
+            mBinding.control.action.speed.requestFocus();
+        });
         mBinding.control.action.text.setOnClickListener(this::onTrack);
         mBinding.control.action.audio.setOnClickListener(this::onTrack);
         mBinding.control.action.video.setOnClickListener(this::onTrack);
@@ -470,6 +482,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.tabSource.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.SOURCE) ? View.VISIBLE : View.GONE);
         mBinding.tabDouban.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
         mBinding.tabTmdb.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
+        // External metadata is the richer detail view.  When Douban has a
+        // resolved record (or a candidate waiting for confirmation), make it
+        // the first visible tab instead of leaving the source-only tab at
+        // index 0.  The order is kept in the view hierarchy so D-pad focus and
+        // accessibility traversal follow the same order users see.
+        reorderMetadataTabs(state.hasProviderOrCandidate(MetadataProvider.DOUBAN));
         mBinding.tabSource.setSelected(state.getSelectedProvider() == MetadataProvider.SOURCE);
         mBinding.tabDouban.setSelected(state.getSelectedProvider() == MetadataProvider.DOUBAN);
         mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
@@ -707,6 +725,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     @Override
+    public void renderDetailError(String message) {
+        detailReady = false;
+        metadataReady = false;
+        App.removeCallbacks(mR4);
+        showSkeleton(false);
+        setMetadataTabsVisible(false);
+        // Keep the detail content tree visible so the player remains a valid focus target and
+        // BACK can leave the Activity even when the provider is unavailable.
+        mBinding.progressLayout.showContent();
+        renderFallbackName(getName());
+        mBinding.video.requestFocus();
+    }
+
+    @Override
     public void renderFallbackName(String name) {
         mBinding.name.setText(name);
     }
@@ -889,10 +921,27 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int firstMetadataTabId() {
-        if (isVisible(mBinding.tabSource)) return R.id.tabSource;
-        if (isVisible(mBinding.tabDouban)) return R.id.tabDouban;
-        if (isVisible(mBinding.tabTmdb)) return R.id.tabTmdb;
+        for (int i = 0; i < mBinding.metadataTabs.getChildCount(); i++) {
+            View child = mBinding.metadataTabs.getChildAt(i);
+            if (isVisible(child)) return child.getId();
+        }
         return 0;
+    }
+
+    private void reorderMetadataTabs(boolean doubanFirst) {
+        View first = doubanFirst ? mBinding.tabDouban : mBinding.tabSource;
+        View second = doubanFirst ? mBinding.tabSource : mBinding.tabDouban;
+        View third = mBinding.tabTmdb;
+        if (mBinding.metadataTabs.getChildAt(0) == first
+                && mBinding.metadataTabs.getChildAt(1) == second
+                && mBinding.metadataTabs.getChildAt(2) == third) return;
+        View focused = getCurrentFocus();
+        boolean restoreFocus = focused != null && isDescendantOrSelf(focused, mBinding.metadataTabs);
+        mBinding.metadataTabs.removeAllViews();
+        mBinding.metadataTabs.addView(first);
+        mBinding.metadataTabs.addView(second);
+        mBinding.metadataTabs.addView(third);
+        if (restoreFocus && isVisible(focused)) focused.requestFocus();
     }
 
     private void updateMetadataFocus() {
@@ -1238,13 +1287,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private int adjacentMetadataTab(View focused, boolean right) {
-        View[] tabs = {mBinding.tabSource, mBinding.tabDouban, mBinding.tabTmdb};
-        int current = -1;
-        for (int i = 0; i < tabs.length; i++) if (tabs[i] == focused) current = i;
+        int current = mBinding.metadataTabs.indexOfChild(focused);
         if (current < 0) return 0;
         int step = right ? 1 : -1;
-        for (int i = current + step; i >= 0 && i < tabs.length; i += step) {
-            if (isVisible(tabs[i])) return tabs[i].getId();
+        for (int i = current + step; i >= 0 && i < mBinding.metadataTabs.getChildCount(); i += step) {
+            View tab = mBinding.metadataTabs.getChildAt(i);
+            if (isVisible(tab)) return tab.getId();
         }
         // The first visible provider tab has no tab to its left. Return to the
         // fixed player instead of leaving focus trapped on the tab.
@@ -1329,12 +1377,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mKeyDown.setFull(true);
         setFullscreen(true);
         mFocus2 = null;
+        updateFullscreenProgress(player().getPosition(), player().getDuration());
     }
 
     private void exitFullscreen() {
         mBinding.video.setLayoutParams(mFrameParams);
         mKeyDown.setFull(false);
         setFullscreen(false);
+        mBinding.fullscreenProgressBar.setVisibility(View.GONE);
         updateAtmosphere();
         MetadataState state = mViewModel == null ? null : mViewModel.getMetadata().getValue();
         setMetadataArtwork(state == null ? null : state.getSelected());
@@ -1569,13 +1619,23 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setAdvancedControls(boolean expanded) {
+        setAdvancedControls(expanded, true);
+    }
+
+    private void setAdvancedControls(boolean expanded, boolean restoreFocus) {
+        boolean openingFromArrow = expanded && mBinding.control.action.more.hasFocus();
         mBinding.control.action.advanced.setVisibility(expanded ? View.VISIBLE : View.GONE);
-        mBinding.control.action.more.setText(expanded ? R.string.tv_playback_less : R.string.tv_playback_more);
+        mBinding.control.action.more.setContentDescription(getString(R.string.tv_playback_more));
         mBinding.control.action.more.setSelected(expanded);
-        mBinding.control.action.next.setNextFocusLeftId(expanded ? R.id.ending : R.id.more);
-        mBinding.control.action.more.setNextFocusRightId(expanded ? R.id.player : R.id.next);
+        // The arrow is only an entry affordance. Once it receives focus, hand focus
+        // to the first advanced option and remove the affordance from the open row.
+        mBinding.control.action.more.setVisibility(expanded ? View.GONE : View.VISIBLE);
+        mBinding.control.action.more.setNextFocusRightId(expanded ? R.id.speed : R.id.next);
+        if (openingFromArrow && mBinding.control.action.speed.getVisibility() == View.VISIBLE) {
+            mBinding.control.action.speed.requestFocus();
+        }
         // Preserve a reachable focus target when advanced controls are collapsed.
-        if (!expanded && isAdvancedControl(getCurrentFocus())) mBinding.control.action.more.requestFocus();
+        if (!expanded && restoreFocus && isAdvancedControl(getCurrentFocus())) mBinding.control.action.more.requestFocus();
     }
 
     private boolean isAdvancedControl(View view) {
@@ -1589,6 +1649,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void showControl(View view) {
         if (isAdvancedControl(view)) setAdvancedControls(true);
         View osd = mBinding.control.getRoot();
+        mBinding.fullscreenProgressBar.setVisibility(View.GONE);
         boolean arriving = osd.getVisibility() != View.VISIBLE;
         osd.animate().cancel();
         osd.setVisibility(View.VISIBLE);
@@ -1616,11 +1677,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
                         osd.setVisibility(View.GONE);
                         osd.setAlpha(1f);
                         osd.setTranslationY(0f);
+                        updateFullscreenProgress(player().getPosition(), player().getDuration());
                     }).start();
         } else {
             osd.setVisibility(View.GONE);
             osd.setAlpha(1f);
             osd.setTranslationY(0f);
+            updateFullscreenProgress(player().getPosition(), player().getDuration());
         }
         // The center pause badge and time info stay on screen while playback is paused.
         if (!isMediaPaused()) hideInfo();
@@ -1854,6 +1917,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             case Player.STATE_READY:
                 hideProgress();
                 player().reset();
+                updateFullscreenProgress(player().getPosition(), player().getDuration());
                 mClock.setCallback(this);
                 break;
             case Player.STATE_ENDED:
@@ -1886,7 +1950,32 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         long position = player().getPosition();
         long duration = player().getDuration();
         if (position < 0 || duration <= 0) return;
+        updateFullscreenProgress(position, duration);
         mVod.onTimeChanged(time, position, duration);
+    }
+
+    /** Updates the thin fullscreen-only progress line without affecting the OSD controls. */
+    private void updateFullscreenProgress(long position, long duration) {
+        if (!isFullscreen() || isVisible(mBinding.control.getRoot())) return;
+        if (duration <= 0 || position < 0) {
+            mBinding.fullscreenProgress.setScaleX(0f);
+            ViewGroup.LayoutParams resetParams = mBinding.fullscreenProgress.getLayoutParams();
+            resetParams.width = 0;
+            mBinding.fullscreenProgress.setLayoutParams(resetParams);
+            mBinding.fullscreenProgressBar.setVisibility(View.GONE);
+            return;
+        }
+        float fraction = Math.max(0f, Math.min(1f, (float) position / duration));
+        mBinding.fullscreenProgressBar.setVisibility(View.VISIBLE);
+        int trackWidth = mBinding.fullscreenProgressBar.getWidth();
+        if (trackWidth <= 0) {
+            mBinding.fullscreenProgressBar.post(() -> updateFullscreenProgress(position, duration));
+            return;
+        }
+        ViewGroup.LayoutParams params = mBinding.fullscreenProgress.getLayoutParams();
+        params.width = Math.round(trackWidth * fraction);
+        mBinding.fullscreenProgress.setLayoutParams(params);
+        mBinding.fullscreenProgress.setScaleX(1f);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -1964,7 +2053,57 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private View getFocus2() {
-        return mFocus2 == null || mFocus2.getVisibility() != View.VISIBLE || mFocus2 == mBinding.control.action.opening || mFocus2 == mBinding.control.action.ending ? mBinding.control.action.next : mFocus2;
+        return mFocus2 == null || mFocus2.getVisibility() != View.VISIBLE ? mBinding.control.action.next : mFocus2;
+    }
+
+    /**
+     * The action row is a logical carousel. Android's focus search stops at the
+     * last child of a HorizontalScrollView, so explicitly wrap both ends to
+     * the first/last visible action instead of relying on stale XML targets.
+     */
+    private boolean movePlaybackActionFocus(boolean right) {
+        if (!isVisible(mBinding.control.getRoot())) return false;
+        View focused = getCurrentFocus();
+        View[] actions = {
+                mBinding.control.action.next,
+                mBinding.control.action.prev,
+                mBinding.control.action.opening,
+                mBinding.control.action.ending,
+                mBinding.control.action.scale,
+                mBinding.control.action.text,
+                mBinding.control.action.audio,
+                mBinding.control.action.video,
+                mBinding.control.action.danmaku,
+                mBinding.control.action.more,
+                mBinding.control.action.speed,
+                mBinding.control.action.parse,
+                mBinding.control.action.player,
+                mBinding.control.action.decode,
+                mBinding.control.action.reset,
+                mBinding.control.action.replay,
+                mBinding.control.action.repeat,
+                mBinding.control.action.edition,
+                mBinding.control.action.chapter,
+        };
+        ArrayList<View> visible = new ArrayList<>();
+        for (View action : actions) if (isPlaybackActionVisible(action) && action.isFocusable()) visible.add(action);
+        int index = visible.indexOf(focused);
+        if (index < 0 || visible.isEmpty()) return false;
+        int targetIndex = (index + (right ? 1 : -1) + visible.size()) % visible.size();
+        View target = visible.get(targetIndex);
+        // This is an explicit logical carousel jump; do not pass a directional
+        // hint, which can make FocusFinder continue searching from the target
+        // and land on a sibling outside the playback action row.
+        return target == focused || target.requestFocus();
+    }
+
+    private boolean isPlaybackActionVisible(View view) {
+        View current = view;
+        while (current != null && current != mBinding.control.action.getRoot()) {
+            if (!isVisible(current)) return false;
+            current = current.getParent() instanceof View ? (View) current.getParent() : null;
+        }
+        return current == mBinding.control.action.getRoot() && isVisible(current);
     }
 
     @Override
@@ -1976,6 +2115,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (KeyUtil.isMediaFastForward(event)) return onSeekForward();
         if (KeyUtil.isMediaRewind(event)) return onSeekBack();
         if (KeyUtil.isActionDown(event)) {
+            if (isVisible(mBinding.control.getRoot()) && KeyUtil.isRightKey(event) && movePlaybackActionFocus(true)) return true;
+            if (isVisible(mBinding.control.getRoot()) && KeyUtil.isLeftKey(event) && movePlaybackActionFocus(false)) return true;
             if (KeyUtil.isRightKey(event) && moveDetailFocusHorizontal(true)) return true;
             if (KeyUtil.isLeftKey(event) && moveDetailFocusHorizontal(false)) return true;
             if (KeyUtil.isDownKey(event) && moveDetailFocus(true)) return true;
@@ -1986,6 +2127,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onSeeking(long time) {
+        // CustomKeyDownVod reports a seek delta, while the progress line needs
+        // the previewed absolute position.
+        long duration = player().getDuration();
+        long previewPosition = Math.max(0, Math.min(duration, player().getPosition() + time));
+        updateFullscreenProgress(previewPosition, duration);
         mBinding.widget.duration.setText(player().getDurationTime());
         mBinding.widget.position.setText(player().getPositionTime(time));
         mBinding.widget.action.setImageResource(time > 0 ? R.drawable.ic_widget_forward : R.drawable.ic_widget_rewind);
@@ -2093,14 +2239,16 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         trace("BACK_INVOKED");
         // A lingering player badge/OSD must not consume BACK from the detail rows.
         // Preserve the existing dismissal order when focus is inside the player.
-        if (!isFullscreen() && !mBinding.video.hasFocus()) {
+        if (!isFullscreen() && isVisible(mBinding.video) && !mBinding.video.hasFocus()) {
             hideControl();
             hideCenter();
             focusPlayerFromDetail();
         } else if (isVisible(mBinding.control.getRoot()) && isVisible(mBinding.control.action.advanced)) {
-            setAdvancedControls(false);
-            mBinding.control.action.more.requestFocus();
-            setR1Callback();
+            // Restore the default collapsed state before hiding the panel. The next
+            // panel reveal must show the arrow, never reopen the last advanced item.
+            mFocus2 = mBinding.control.action.next;
+            setAdvancedControls(false, false);
+            hideControl();
         } else if (isVisible(mBinding.control.getRoot())) {
             hideControl();
         } else if (isVisible(mBinding.widget.center)) {

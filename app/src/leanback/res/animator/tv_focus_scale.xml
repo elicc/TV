@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Focus lift: 1.03x scale (Stitch Focused state) plus a translationZ bump so the
-     halo ring is never clipped by neighbours. OK press settles to 0.98x first. -->
+<!-- Focus lift for controls/cards. Do not scale the view itself: TextView content
+     is rendered inside the view, so scaleX/scaleY also changes the apparent font
+     size and causes a distracting text "jump". Focus backgrounds provide the
+     visual emphasis while translationZ preserves the lift/depth motion. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true" android:state_focused="true">
         <set android:ordering="together"
             android:interpolator="@interpolator/tv_interp_emphasis"
             android:duration="@integer/tv_motion_focus_on">
-            <objectAnimator android:propertyName="scaleX" android:valueTo="0.98" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="0.98" />
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" />
             <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
         </set>
     </item>
@@ -15,8 +17,8 @@
         <set android:ordering="together"
             android:interpolator="@interpolator/tv_interp_emphasis"
             android:duration="@integer/tv_motion_focus_on">
-            <objectAnimator android:propertyName="scaleX" android:valueTo="1.03" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="1.03" />
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" />
             <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
         </set>
     </item>

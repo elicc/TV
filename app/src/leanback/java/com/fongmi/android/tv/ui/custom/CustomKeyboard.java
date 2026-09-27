@@ -1,5 +1,8 @@
 package com.fongmi.android.tv.ui.custom;
 
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.databinding.ActivitySearchBinding;
 import com.fongmi.android.tv.ui.adapter.KeyboardAdapter;
@@ -10,8 +13,10 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
     private final Callback callback;
     private KeyboardAdapter adapter;
 
-    public static void init(Callback callback, ActivitySearchBinding binding) {
-        new CustomKeyboard(callback, binding).initView();
+    public static CustomKeyboard init(Callback callback, ActivitySearchBinding binding) {
+        CustomKeyboard keyboard = new CustomKeyboard(callback, binding);
+        keyboard.initView();
+        return keyboard;
     }
 
     public CustomKeyboard(Callback callback, ActivitySearchBinding binding) {
@@ -22,7 +27,8 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
     private void initView() {
         binding.keyboard.setItemAnimator(null);
         binding.keyboard.setHasFixedSize(false);
-        binding.keyboard.addItemDecoration(new SpaceItemDecoration(7, 8));
+        binding.keyboard.addItemDecoration(new SpaceItemDecoration(3, 8));
+        ((GridLayoutManager) binding.keyboard.getLayoutManager()).setSpanCount(3);
         binding.keyboard.setAdapter(adapter = new KeyboardAdapter(this));
     }
 
@@ -34,19 +40,51 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
         sb.insert(cursor, text);
         binding.keyword.setText(sb.toString());
         binding.keyword.setSelection(cursor + 1);
+        if (adapter.isExpanded()) focusGroup(adapter.collapse());
+    }
+
+    @Override
+    public void onGroupClick(int position) {
+        adapter.expand(position);
+        focusPosition(7);
     }
 
     @Override
     public void onIconClick(int resId) {
         StringBuilder sb = new StringBuilder(binding.keyword.getText().toString());
         int cursor = binding.keyword.getSelectionStart();
-        if (resId == R.drawable.ic_setting_home) callback.showDialog();
-        else if (resId == R.drawable.ic_keyboard_remote) callback.onRemote();
+        if (resId == R.drawable.ic_keyboard_remote) callback.onRemote();
         else if (resId == R.drawable.ic_keyboard_search) callback.onSearch();
         else if (resId == R.drawable.ic_keyboard_left) onMoveLeft(cursor);
         else if (resId == R.drawable.ic_keyboard_right) onMoveRight(cursor);
         else if (resId == R.drawable.ic_keyboard_back) onBackspace(sb, cursor);
         else if (resId == R.drawable.ic_keyboard) adapter.toggle();
+    }
+
+    public boolean onBack() {
+        if (!adapter.isExpanded()) return false;
+        focusGroup(adapter.collapse());
+        return true;
+    }
+
+    private void focusGroup(int position) {
+        if (position < 0) return;
+        focusPosition(position);
+    }
+
+    private void focusPosition(int position) {
+        binding.keyboard.post(() -> {
+            RecyclerView.ViewHolder holder = binding.keyboard.findViewHolderForAdapterPosition(position);
+            if (holder != null) {
+                holder.itemView.requestFocus();
+            } else {
+                binding.keyboard.scrollToPosition(position);
+                binding.keyboard.post(() -> {
+                    RecyclerView.ViewHolder retry = binding.keyboard.findViewHolderForAdapterPosition(position);
+                    if (retry != null) retry.itemView.requestFocus();
+                });
+            }
+        });
     }
 
     private void onMoveLeft(int cursor) {
@@ -72,8 +110,6 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
     }
 
     public interface Callback {
-
-        void showDialog();
 
         void onRemote();
 

@@ -133,7 +133,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
                     return result;
                 },
                 detail::postValue,
-                error -> detail.postValue(new VodDetailResult(key, id, handleError(error))));
+                error -> detail.postValue(new VodDetailResult(key, id, handleDetailError(error))));
     }
 
     @Override
@@ -158,7 +158,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
                     return result;
                 },
                 output::postValue,
-                error -> output.postValue(new PlaybackResult<>(request, handleError(error))));
+                error -> output.postValue(new PlaybackResult<>(request, handlePlaybackError(error))));
     }
 
     private static void trace(String event) {
@@ -196,7 +196,14 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
         }
     }
 
-    private Result handleError(Throwable error) {
+    private Result handleDetailError(Throwable error) {
+        error.printStackTrace();
+        String message = error.getMessage();
+        if (message == null || message.isEmpty()) message = error.getClass().getSimpleName();
+        return Result.error(message);
+    }
+
+    private Result handlePlaybackError(Throwable error) {
         error.printStackTrace();
         return error instanceof ExtractException ? Result.error(error.getMessage()) : Result.empty();
     }

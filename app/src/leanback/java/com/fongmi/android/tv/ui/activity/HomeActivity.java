@@ -1214,7 +1214,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     public void onItemClick(History item) {
         if (item.getCid() == VodConfig.getCid()) {
-            openHistory(item);
+            if (canOpenHistory(item)) openHistory(item);
             return;
         }
         Config config = Config.find(item.getCid());
@@ -1273,6 +1273,31 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
         VideoActivity.start(this, item.getSiteKey(), item.getVodId(), item.getVodName(), item.getVodPic());
     }
 
+    /**
+     * History rows can outlive the source list that produced them. Do not open a detail
+     * Activity while the source configuration is still loading (or with a missing provider):
+     * that path used to issue a request with an empty URL, turn the exception into an empty
+     * result, and leave the detail screen in a non-focusable empty state.
+     */
+    private boolean canOpenHistory(History item) {
+        if (mConfigLoading) {
+            Notify.show(R.string.tv_history_config_loading);
+            return false;
+        }
+        if (mConfigFailed || TextUtils.isEmpty(getConfig().getUrl()) || VodConfig.get().getSites().isEmpty()) {
+            if (TextUtils.isEmpty(mConfigError)) Notify.show(R.string.tv_history_source_unavailable);
+            else Notify.show(mConfigError);
+            return false;
+        }
+        Site site = VodConfig.get().getSite(item.getSiteKey());
+        boolean invalidApi = site.getType() != 3 && !site.getApi().startsWith("http");
+        if (site.isEmpty() || invalidApi) {
+            Notify.show(R.string.tv_history_source_unavailable);
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void onItemFocus(History item) {
         if (mPresenter.isDelete() || item.equals(mFocusedHistory)) return;
@@ -1297,6 +1322,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void scheduleDetailPrefetch(History item) {
         App.removeCallbacks(mPrefetch);
         mPrefetchTarget = item;
+        Site site = VodConfig.get().getSite(item.getSiteKey());
+        if (mConfigLoading || mConfigFailed || VodConfig.get().getSites().isEmpty()
+                || site.isEmpty() || (site.getType() != 3 && !site.getApi().startsWith("http"))) return;
         App.post(mPrefetch, 250);
     }
 

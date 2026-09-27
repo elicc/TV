@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The playback underline uses foreground bounds and never shifts labels. -->
+<!-- Keep the overflow affordance visually light in every focus state. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_selected="true" android:drawable="@drawable/tv_choice_indicator_overlay" />
     <item android:drawable="@android:color/transparent" />
 </selector>

@@ -96,4 +96,20 @@
         <item name="android:textSize">@dimen/tv_text_button</item>
     </style>
 
+    <!-- Playback OSD controls use quiet labels at rest and rely on focus
+         contrast rather than a hard outer ring to make the active item clear. -->
+    <style name="PlaybackControl" parent="Control">
+        <item name="android:background">@drawable/selector_playback_control</item>
+        <item name="android:textColor">@color/selector_playback_control_text</item>
+    </style>
+
+    <!-- The overflow affordance is an icon, not another pill-shaped button. -->
+    <style name="PlaybackMore" parent="PlaybackControl">
+        <item name="android:background">@drawable/selector_playback_more</item>
+        <item name="android:drawableTint">@color/selector_playback_control_text</item>
+        <item name="android:minWidth">40dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+    </style>
+
 </resources>

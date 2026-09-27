@@ -74,6 +74,11 @@ public interface VodPlaybackHost {
 
     void renderEmptyDetail();
 
+    /** Renders a recoverable detail-load error without converting it to an empty result. */
+    default void renderDetailError(String message) {
+        renderFallbackName(getVodName());
+    }
+
     void renderFallbackName(String name);
 
     void renderFlags(List<Flag> items);

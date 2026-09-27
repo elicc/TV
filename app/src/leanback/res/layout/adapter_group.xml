@@ -5,15 +5,18 @@
     android:layout_height="wrap_content"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:gravity="center"
+    android:background="@drawable/selector_live"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
     android:orientation="horizontal"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
     android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/selector_live"
         android:duplicateParentState="true"
         android:ellipsize="marquee"
         android:singleLine="true"

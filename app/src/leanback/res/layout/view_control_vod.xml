@@ -8,7 +8,7 @@
     android:paddingStart="@dimen/tv_safe_horizontal"
     android:paddingTop="12dp"
     android:paddingEnd="@dimen/tv_safe_horizontal"
-    android:paddingBottom="@dimen/tv_safe_vertical">
+    android:paddingBottom="@dimen/tv_gap_xs">
 
     <androidx.media3.ui.PlayerSeekView
         android:id="@+id/seek"

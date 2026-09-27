@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- code.html .tv-focus-nav uses scale(1.04). Keep this nav-only so card and
-     primary-action focus motion retain their stronger 1.05 treatment. -->
+<!-- Navigation focus lift. Keep the view at 1x so navigation labels/icons do not
+     change apparent size when focus moves; the focused background and Z lift
+     still provide the scale-like emphasis without text jitter. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Selected is a persistent page marker, not code.html's transient
          tv-focus-nav state, so it keeps the authored 1.0 scale. -->
@@ -17,8 +18,8 @@
         <set android:ordering="together"
             android:interpolator="@interpolator/tv_interp_emphasis"
             android:duration="@integer/tv_motion_focus_on">
-            <objectAnimator android:propertyName="scaleX" android:valueTo="0.98" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="0.98" />
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" />
             <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
         </set>
     </item>
@@ -26,8 +27,8 @@
         <set android:ordering="together"
             android:interpolator="@interpolator/tv_interp_emphasis"
             android:duration="@integer/tv_motion_focus_on">
-            <objectAnimator android:propertyName="scaleX" android:valueTo="1.04" />
-            <objectAnimator android:propertyName="scaleY" android:valueTo="1.04" />
+            <objectAnimator android:propertyName="scaleX" android:valueTo="1.0" />
+            <objectAnimator android:propertyName="scaleY" android:valueTo="1.0" />
             <objectAnimator android:propertyName="translationZ" android:valueTo="4" />
         </set>
     </item>

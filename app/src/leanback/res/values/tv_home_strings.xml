@@ -25,6 +25,8 @@
     <string name="tv_history_switch_message">This record belongs to %1$s. The current configuration is %2$s. Switch configurations and continue playback?</string>
     <string name="tv_history_switch_confirm">Switch and play</string>
     <string name="tv_history_source_missing">The original VOD configuration is unavailable. Searching the current configuration instead.</string>
+    <string name="tv_history_config_loading">The VOD source is still loading. Try again in a moment.</string>
+    <string name="tv_history_source_unavailable">This history item belongs to an unavailable VOD source. Check the source configuration first.</string>
     <string name="tv_keep_empty_title">No saved films yet</string>
     <string name="tv_keep_empty_body">Save a film from its details page to find it here.</string>
     <string name="tv_find_films">Find films</string>

@@ -34,6 +34,7 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     private final ViewModelTaskRunner<TaskType> tasks;
     private final LivePlaybackState playbackState;
     private volatile ZoneId zoneId;
+    private volatile String epgTag;
 
     public LiveViewModel() {
         this.epg = new MutableLiveData<>();
@@ -90,7 +91,19 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     }
 
     public void getEpg(Channel item) {
-        execute(TaskType.EPG, () -> LiveApi.getEpg(item, zoneId), epg::postValue, error -> epg.postValue(new Epg()));
+        LiveApi.cancelEpg(epgTag);
+        String tag = epgTag = "epg:" + item.getTvgId() + ":" + System.nanoTime();
+        execute(TaskType.EPG_CACHE, () -> LiveApi.getCachedEpg(item, zoneId), cached -> {
+            if (cached != null) {
+                epg.postValue(cached);
+                if (LiveApi.isEpgFresh(cached)) return;
+            }
+            requestEpg(item, tag);
+        }, error -> requestEpg(item, tag));
+    }
+
+    private void requestEpg(Channel item, String tag) {
+        execute(TaskType.EPG, () -> LiveApi.getEpg(item, zoneId, tag), epg::postValue, error -> epg.postValue(Epg.error(item.getTvgId())));
     }
 
     @Override
@@ -127,6 +140,7 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
 
     @Override
     protected void onCleared() {
+        LiveApi.cancelEpg(epgTag);
         tasks.cancelAll();
         playbackState.reset();
     }
@@ -134,6 +148,7 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     private enum TaskType {
 
         LIVE(Constant.TIMEOUT_LIVE),
+        EPG_CACHE(Constant.TIMEOUT_EPG),
         EPG(Constant.TIMEOUT_EPG),
         XML(Constant.TIMEOUT_XML),
         URL(Constant.TIMEOUT_PARSE_LIVE);

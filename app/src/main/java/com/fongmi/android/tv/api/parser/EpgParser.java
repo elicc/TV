@@ -80,7 +80,7 @@ public class EpgParser {
             return epg;
         } catch (Exception e) {
             Logger.t(TAG).e(e, "getEpg parse failed key=" + key);
-            return new Epg();
+            return Epg.error(key);
         }
     }
 

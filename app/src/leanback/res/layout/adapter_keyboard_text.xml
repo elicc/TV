@@ -8,6 +8,9 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:gravity="center"
+    android:maxLines="2"
+    android:includeFontPadding="false"
+    android:lineSpacingMultiplier="0.9"
     android:textColor="@color/white"
     android:textSize="16sp"
     tools:text="0" />

@@ -11,4 +11,5 @@
     <include layout="@layout/view_hot_movie_skeleton" />
     <include layout="@layout/view_hot_movie_skeleton" />
     <include layout="@layout/view_hot_movie_skeleton" />
+    <include layout="@layout/view_hot_movie_skeleton" />
 </com.fongmi.android.tv.ui.custom.SkeletonLayout>

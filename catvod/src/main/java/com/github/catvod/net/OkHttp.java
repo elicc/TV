@@ -121,7 +121,18 @@ public class OkHttp {
         }
     }
 
+    public static String string(String url, String tag) {
+        if (!url.startsWith("http")) return "";
+        try (Response res = newCall(url, tag).execute()) {
+            return res.body().string();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
     public static Call newCall(String url) {
+        if (url == null || url.trim().isEmpty()) throw new IllegalArgumentException("Empty request URL");
         return client().newCall(new Request.Builder().url(url).build());
     }
 
@@ -181,7 +192,9 @@ public class OkHttp {
     }
 
     private static HttpUrl buildUrl(String url, ArrayMap<String, String> params) {
-        HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
+        HttpUrl parsed = HttpUrl.parse(url);
+        if (parsed == null) throw new IllegalArgumentException("Invalid request URL: " + url);
+        HttpUrl.Builder builder = parsed.newBuilder();
         for (Map.Entry<String, String> entry : params.entrySet()) builder.addQueryParameter(entry.getKey(), entry.getValue());
         return builder.build();
     }

@@ -98,8 +98,9 @@ public final class EmptySourcePresenter extends Presenter {
         if (!visible) return;
         b.vaultRestore.setOnClickListener(v -> listener.onEmptyAction(Action.RESTORE));
         b.vaultRestore.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) v.animate().scaleX(1.04f).scaleY(1.04f).setDuration(180).start();
-            else v.animate().scaleX(1f).scaleY(1f).setDuration(160).start();
+            // Keep the focus lift/depth without scaling the TextView itself; scaling
+            // the view also scales its label and produces a visible text jump.
+            v.animate().translationZ(hasFocus ? 4f : 0f).setDuration(hasFocus ? 180 : 160).start();
         });
     }
 
@@ -140,8 +141,9 @@ public final class EmptySourcePresenter extends Presenter {
         }
         card.getRoot().setOnClickListener(v -> listener.onEmptyAction(action));
         card.getRoot().setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) v.animate().scaleX(1.04f).scaleY(1.04f).setDuration(180).start();
-            else v.animate().scaleX(1f).scaleY(1f).setDuration(160).start();
+            // The focused card drawable supplies the visual enlargement; do not
+            // scale the card hierarchy and make every child label resize with it.
+            v.animate().translationZ(hasFocus ? 4f : 0f).setDuration(hasFocus ? 180 : 160).start();
         });
     }
 

@@ -1,42 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.fongmi.android.tv.ui.custom.CustomLeftRightLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/selector_live"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:gravity="center"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
     android:orientation="horizontal"
     android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/number"
-        android:layout_width="wrap_content"
+        android:layout_width="36dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="6dp"
         android:duplicateParentState="true"
         android:fontFeatureSettings="tnum"
-        android:textColor="@color/text"
+        android:gravity="center"
+        android:textColor="?attr/tvColorTextSecondary"
         android:textSize="16sp"
         tools:text="01" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/logo"
-        android:layout_width="48dp"
-        android:layout_height="36dp"
-        android:layout_marginEnd="12dp"
+        android:layout_width="32dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="8dp"
         android:visibility="gone" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:duplicateParentState="true"
         android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
         android:singleLine="true"
-        android:textColor="@color/text"
-        android:textSize="@dimen/tv_text_card_title"
+        android:textColor="?attr/tvColorTextPrimary"
+        android:textSize="18sp"
         tools:text="CNN" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/epgArrow"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="4dp"
+        android:contentDescription="@string/tv_playback_epg_open"
+        android:src="@drawable/ic_keyboard_right"
+        android:tint="?attr/tvColorTextSecondary"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </com.fongmi.android.tv.ui.custom.CustomLeftRightLayout>

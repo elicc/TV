@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -67,6 +68,10 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ViewHold
         item.loadLogo(holder.binding.logo);
         holder.binding.name.setText(item.getShow());
         holder.binding.number.setText(item.getNumber());
+        // The arrow is a stable D-pad affordance for the channel's second-level
+        // programme view.  The view itself handles an empty guide state, so the
+        // affordance must not disappear while EPG data is loading.
+        holder.binding.epgArrow.setVisibility(View.VISIBLE);
         holder.binding.getRoot().setSelected(item.isSelected());
         holder.binding.getRoot().setRightListener(() -> mListener.showEpg(item));
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));

@@ -25,6 +25,8 @@
     <string name="tv_history_switch_message">此播放记录来自 %1$s，当前配置为 %2$s。是否切换配置并继续播放？</string>
     <string name="tv_history_switch_confirm">切换并播放</string>
     <string name="tv_history_source_missing">原点播配置已不可用，将改为在当前配置中搜索。</string>
+    <string name="tv_history_config_loading">点播数据源仍在加载，请稍后重试。</string>
+    <string name="tv_history_source_unavailable">此播放记录所属的数据源不可用，请先检查数据源配置。</string>
     <string name="tv_keep_empty_title">还没有收藏影片</string>
     <string name="tv_keep_empty_body">在影片详情页收藏，便可在这里快速找到。</string>
     <string name="tv_find_films">去找影片</string>

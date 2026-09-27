@@ -24,11 +24,14 @@ class VodFallbackPolicy {
     }
 
     void playbackError() {
-        fallbackToNextLineOrSource();
+        // A source can expose several lines, and the user may have selected that
+        // source manually (which clears autoFallback).  A fatal playback error
+        // must still walk the remaining sources after its last line fails.
+        fallbackToNextLineOrSource(true);
     }
 
     void emptyFlag() {
-        fallbackToNextLineOrSource();
+        fallbackToNextLineOrSource(true);
     }
 
     void emptyDetail() {
@@ -57,19 +60,26 @@ class VodFallbackPolicy {
         host.onSearchResult();
     }
 
-    private void fallbackToNextLineOrSource() {
-        if (!host.isSiteChangeable()) return;
+    private void fallbackToNextLineOrSource(boolean allowSourceFallback) {
+        // The changeable flag controls cross-source fallback, not trying the
+        // remaining lines that already belong to the active source.
         if (fallbackToNextLine()) return;
-        fallbackToNextSource(false);
+        if (!host.isSiteChangeable()) return;
+        fallbackToNextSource(allowSourceFallback);
     }
 
     private boolean fallbackToNextLine() {
         int position = state.getFlagPosition() + 1;
-        if (position >= state.getFlags().size()) return false;
-        Flag flag = state.getFlags().get(position);
-        host.showSwitchLine(flag);
-        controller.selectFlag(flag);
-        return true;
+        while (position < state.getFlags().size()) {
+            Flag flag = state.getFlags().get(position++);
+            // Some providers return an empty line label alongside playable
+            // lines.  Do not stop the fallback chain on that placeholder.
+            if (flag.getEpisodes().isEmpty()) continue;
+            host.showSwitchLine(flag);
+            controller.selectFlag(flag);
+            return true;
+        }
+        return false;
     }
 
     private void fallbackToNextSource(boolean force) {
