@@ -150,6 +150,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private boolean detailReady;
     private boolean metadataReady;
     private boolean actorExpanded;
+    private boolean choiceEnterConsumed;
     private String fullDescription = "";
 
     public static void push(FragmentActivity activity, String text) {
@@ -1224,8 +1225,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
         }
         if (down) return currentId;
-        int action = firstDetailActionId();
-        return action != 0 ? action : detailUpTargetId();
+        // Detail choice rows sit below the fixed player. Once the first visible
+        // row is reached, UP must return to the player rather than jumping into
+        // the source-switch actions in the header.
+        return R.id.video;
     }
 
     private int focusRowId(View focused) {
@@ -1328,6 +1331,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (target == 0) return false;
         View targetView = findViewById(target);
         return targetView != null && (targetView == focused || targetView.requestFocus(right ? View.FOCUS_RIGHT : View.FOCUS_LEFT));
+    }
+
+    /** Whether focus is on the currently active line, quality, or episode choice. */
+    private boolean isCurrentPlaybackChoice(View focused) {
+        if (focused == null || isFullscreen() || !focused.isSelected()) return false;
+        return isDescendantOrSelf(focused, mBinding.flag)
+                || isDescendantOrSelf(focused, mBinding.quality)
+                || isDescendantOrSelf(focused, mBinding.episode);
     }
 
     /**
@@ -1956,12 +1967,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     /** Updates the thin fullscreen-only progress line without affecting the OSD controls. */
     private void updateFullscreenProgress(long position, long duration) {
+        long buffered = controller() == null ? C.TIME_UNSET : controller().getContentBufferedPosition();
+        updateFullscreenProgress(position, duration, buffered);
+    }
+
+    private void updateFullscreenProgress(long position, long duration, long bufferedPosition) {
         if (!isFullscreen() || isVisible(mBinding.control.getRoot())) return;
         if (duration <= 0 || position < 0) {
             mBinding.fullscreenProgress.setScaleX(0f);
             ViewGroup.LayoutParams resetParams = mBinding.fullscreenProgress.getLayoutParams();
             resetParams.width = 0;
             mBinding.fullscreenProgress.setLayoutParams(resetParams);
+            ViewGroup.LayoutParams bufferedParams = mBinding.fullscreenBufferedProgress.getLayoutParams();
+            bufferedParams.width = 0;
+            mBinding.fullscreenBufferedProgress.setLayoutParams(bufferedParams);
             mBinding.fullscreenProgressBar.setVisibility(View.GONE);
             return;
         }
@@ -1976,6 +1995,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         params.width = Math.round(trackWidth * fraction);
         mBinding.fullscreenProgress.setLayoutParams(params);
         mBinding.fullscreenProgress.setScaleX(1f);
+
+        float bufferedFraction = bufferedPosition <= 0 ? 0f : Math.max(0f, Math.min(1f, (float) bufferedPosition / duration));
+        ViewGroup.LayoutParams bufferedParams = mBinding.fullscreenBufferedProgress.getLayoutParams();
+        bufferedParams.width = Math.round(trackWidth * bufferedFraction);
+        mBinding.fullscreenBufferedProgress.setLayoutParams(bufferedParams);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -2109,6 +2133,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (isFullscreen() && KeyUtil.isMenuKey(event)) onToggle();
+        if (KeyUtil.isEnterKey(event)) {
+            // Activity dispatch sees the key before RecyclerView turns it into a
+            // child click. Consume both halves so the active choice enters the
+            // player without also re-selecting/reloading that item.
+            if (choiceEnterConsumed) {
+                if (KeyUtil.isActionUp(event)) choiceEnterConsumed = false;
+                return true;
+            }
+            if (KeyUtil.isActionDown(event) && isCurrentPlaybackChoice(getCurrentFocus())) {
+                choiceEnterConsumed = true;
+                enterFullscreen();
+                return true;
+            }
+        }
         if (isVisible(mBinding.control.getRoot())) setR1Callback();
         if (isVisible(mBinding.control.getRoot())) mFocus2 = getCurrentFocus();
         if (isFullscreen() && isGone(mBinding.control.getRoot()) && mKeyDown.hasEvent(event) && service() != null) return mKeyDown.onKeyDown(event);

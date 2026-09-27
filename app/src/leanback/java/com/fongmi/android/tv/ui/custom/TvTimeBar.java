@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.custom;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -19,18 +20,23 @@ import com.fongmi.android.tv.utils.TvTheme;
 
 /**
  * The stock bar retains seeking, chapters and accessibility. A quiet played
- * tint becomes a brighter gradient and a small pulsing thumb on D-pad focus.
- * Remains a DefaultTimeBar for PlayerSeekView's constructor check.
+ * tint becomes a brighter gradient, the buffered range remains visible, and a
+ * small pulsing thumb appears on D-pad focus. Remains a DefaultTimeBar for
+ * PlayerSeekView's constructor check.
  */
 public class TvTimeBar extends DefaultTimeBar {
 
     private final Paint gradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint bufferedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint thumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF segment = new RectF();
+    private final RectF track = new RectF();
     private final int barHeightPx;
     private final int scrubberPaddingPx;
     private long position = -1;
     private long duration = -1;
+    private long bufferedPosition = -1;
     private long scrubPosition = -1;
     private boolean scrubbing;
     private int shaderWidth;
@@ -43,8 +49,14 @@ public class TvTimeBar extends DefaultTimeBar {
         super(context, attrs);
         barHeightPx = getResources().getDimensionPixelSize(R.dimen.tv_seek_bar_height);
         scrubberPaddingPx = getResources().getDimensionPixelSize(R.dimen.tv_seek_scrubber_size) / 2;
-        int accent = TvTheme.color(context, R.attr.tvColorAccent);
-        setPlayedColor((accent & 0x00FFFFFF) | 0x66000000);
+        // DefaultTimeBar draws its own played segment before TvTimeBar draws the
+        // themed gradient. Two independently rounded segments use slightly
+        // different endpoints and leave a visible seam at the playhead. Keep
+        // the stock track transparent and let this class paint one continuous
+        // track/buffered/played pair instead.
+        setPlayedColor(Color.TRANSPARENT);
+        setBufferedColor(Color.TRANSPARENT);
+        setUnplayedColor(Color.TRANSPARENT);
         addListener(new TimeBar.OnScrubListener() {
             @Override
             public void onScrubStart(TimeBar timeBar, long position) {
@@ -75,6 +87,14 @@ public class TvTimeBar extends DefaultTimeBar {
     public void setDuration(long duration) {
         super.setDuration(duration);
         this.duration = duration;
+        if (duration <= 0) this.bufferedPosition = -1;
+    }
+
+    @Override
+    public void setBufferedPosition(long bufferedPosition) {
+        super.setBufferedPosition(bufferedPosition);
+        this.bufferedPosition = bufferedPosition;
+        invalidate();
     }
 
     @Override
@@ -125,6 +145,15 @@ public class TvTimeBar extends DefaultTimeBar {
         float width = getWidth() - 2f * scrubberPaddingPx;
         float right = left + Math.min(current / (float) duration, 1f) * width;
         float top = (getHeight() - barHeightPx) / 2f;
+        track.set(left, top, left + width, top + barHeightPx);
+        trackPaint.setColor(Color.argb(38, 255, 255, 255));
+        canvas.drawRoundRect(track, barHeightPx / 2f, barHeightPx / 2f, trackPaint);
+        if (bufferedPosition > 0) {
+            float bufferedRight = left + Math.min(bufferedPosition / (float) duration, 1f) * width;
+            bufferedPaint.setColor(Color.argb(76, 255, 255, 255));
+            track.set(left, top, Math.max(bufferedRight, left + 1f), top + barHeightPx);
+            canvas.drawRoundRect(track, barHeightPx / 2f, barHeightPx / 2f, bufferedPaint);
+        }
         segment.set(left, top, Math.max(right, left + 1f), top + barHeightPx);
         if (shaderWidth != (int) width) {
             shaderWidth = (int) width;

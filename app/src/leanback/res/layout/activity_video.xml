@@ -75,12 +75,20 @@
         <FrameLayout
             android:id="@+id/fullscreenProgressBar"
             android:layout_width="match_parent"
-            android:layout_height="0.5dp"
+            android:layout_height="0.25dp"
             android:layout_gravity="bottom"
             android:background="?attr/tvColorSurfaceRaised"
             android:importantForAccessibility="no"
             android:visibility="gone"
             android:translationZ="24dp">
+
+            <View
+                android:id="@+id/fullscreenBufferedProgress"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:background="?attr/tvColorTextMuted"
+                android:importantForAccessibility="no" />
 
             <View
                 android:id="@+id/fullscreenProgress"
@@ -683,6 +691,8 @@
                 android:paddingEnd="@dimen/tv_safe_horizontal"
                 android:visibility="gone" />
 
+            <!-- The label column and each choices row share a horizontal line. Keep the grid's
+                 start padding as a hard clipping edge so scrolling chips never draw over a label. -->
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/flagRow"
                 android:layout_width="match_parent"
@@ -711,7 +721,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone"
@@ -745,7 +755,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone"
@@ -779,7 +789,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone" />
@@ -812,7 +822,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone" />
@@ -845,7 +855,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone" />
@@ -878,7 +888,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
-                    android:clipToPadding="false"
+                    android:clipToPadding="true"
                     android:paddingStart="@dimen/tv_safe_horizontal"
                     android:paddingEnd="@dimen/tv_safe_horizontal"
                     android:visibility="gone" />
