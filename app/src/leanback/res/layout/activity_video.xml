@@ -353,6 +353,30 @@
         android:textSize="@dimen/tv_text_meta"
         tools:text="導演：FongMi" />
 
+    <!-- Keep the score in a dedicated, fixed position. The source metadata row
+         can already consume the full right column on TV, so appending the badge
+         there makes it fall outside the visible bounds. -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/rating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/name"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/tv_rating_badge"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:paddingStart="7dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="7dp"
+        android:paddingBottom="2dp"
+        android:textColor="?attr/tvColorAccent"
+        android:textSize="@dimen/tv_text_meta"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="★ 8.5 · 107.0万" />
+
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/actor"
         android:translationZ="8dp"
