@@ -19,6 +19,12 @@
         <item name="cornerSize">8dp</item>
     </style>
 
+    <!-- Metadata rails use compact landscape/person cards; the regular 16dp
+         poster radius reads as an oversized pill at this scale. -->
+    <style name="MetadataCard">
+        <item name="cornerSize">6dp</item>
+    </style>
+
     <style name="Vod.Circle">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>

@@ -11,11 +11,14 @@ import com.fongmi.android.tv.metadata.MovieArtwork;
 import com.fongmi.android.tv.utils.ImgUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Small, focusable TV gallery for provider-supplied landscape photos. */
 public class ArtworkAdapter extends RecyclerView.Adapter<ArtworkAdapter.ViewHolder> {
     private final List<MovieArtwork> items = new ArrayList<>();
+    private final Set<ViewHolder> attachedHolders = new HashSet<>();
     private final OnArtworkFocusListener listener;
     private int selectedPosition = -1;
 
@@ -43,10 +46,29 @@ public class ArtworkAdapter extends RecyclerView.Adapter<ArtworkAdapter.ViewHold
 
     public void setSelectedPosition(int position) {
         if (position < 0 || position >= items.size() || position == selectedPosition) return;
-        int previous = selectedPosition;
         selectedPosition = position;
-        if (previous >= 0) notifyItemChanged(previous);
-        notifyItemChanged(selectedPosition);
+        // Leanback can dispatch focus during layout. Selection is view state,
+        // not changed artwork data: notifying here would re-enter RecyclerView.
+        for (ViewHolder holder : attachedHolders) updateSelection(holder);
+    }
+
+    private void updateSelection(ViewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
+        holder.itemView.setSelected(position != RecyclerView.NO_POSITION && position == selectedPosition);
+    }
+
+    @Override
+    public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        attachedHolders.add(holder);
+        // Cached children may reattach without being rebound.
+        updateSelection(holder);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull ViewHolder holder) {
+        attachedHolders.remove(holder);
+        super.onViewDetachedFromWindow(holder);
     }
 
     @Override

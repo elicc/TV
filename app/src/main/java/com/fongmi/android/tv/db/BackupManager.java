@@ -66,6 +66,10 @@ public final class BackupManager {
         return restore(file);
     }
 
+    static boolean isRestorable(File file) {
+        return !Backup.objectFrom(FileUtil.readGzip(file)).getConfig().isEmpty();
+    }
+
     private static boolean restore(File file) {
         Backup backup = Backup.objectFrom(FileUtil.readGzip(file));
         boolean valid = !backup.getConfig().isEmpty();

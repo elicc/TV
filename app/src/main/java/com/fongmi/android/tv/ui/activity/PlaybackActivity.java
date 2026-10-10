@@ -141,6 +141,11 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         return mService != null && mService.ownsBinding(getNavigationCallback());
     }
 
+    /** The only Activity allowed to react to events from the shared playback service. */
+    protected boolean isActivePlaybackOwner() {
+        return isBindingOwner() && isOwner();
+    }
+
     protected boolean hasPlaybackSource() {
         return mService != null && isOwner() && !player().isEmpty();
     }
@@ -197,7 +202,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     }
 
     protected boolean isPaused() {
-        return mController != null && !isBuffering() && !isIdle();
+        return mController != null && !mController.isPlaying() && !isBuffering() && !isIdle();
     }
 
     private boolean isPlaybackState(int state) {
@@ -374,7 +379,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     }
 
     private void captureResumePlaybackIntent() {
-        if (isFinishing() || isInPictureInPictureMode() || mService == null || !isOwner()) {
+        if (isFinishing() || isInPictureInPictureMode() || mService == null || !isActivePlaybackOwner()) {
             resumePlaybackAfterHidden = false;
             return;
         }
@@ -456,7 +461,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     }
 
     private void syncDanmakuSource() {
-        if (mService == null || !isOwner()) return;
+        if (!isActivePlaybackOwner()) return;
         getPlayerView().setDanmakuSource(player().getSelectedDanmakuUri());
     }
 
@@ -530,53 +535,54 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
         @Override
         public void onPrepare() {
-            if (isOwner()) PlaybackActivity.this.onPrepare();
+            if (isActivePlaybackOwner()) PlaybackActivity.this.onPrepare();
         }
 
         @Override
         public void onTracksChanged() {
-            if (isOwner()) PlaybackActivity.this.onTracksChanged();
+            if (!isActivePlaybackOwner()) return;
+            PlaybackActivity.this.onTracksChanged();
             if (PlayerSetting.isDebug() && !getPlayerView().isDebugViewVisible()) getPlayerView().toggleDebugView();
         }
 
         @Override
         public void onDecodeChanged() {
-            if (isOwner()) PlaybackActivity.this.onDecodeChanged();
+            if (isActivePlaybackOwner()) PlaybackActivity.this.onDecodeChanged();
         }
 
         @Override
         public void onMediaOptionsChanged() {
-            if (isOwner()) PlaybackActivity.this.onMediaOptionsChanged();
+            if (isActivePlaybackOwner()) PlaybackActivity.this.onMediaOptionsChanged();
         }
 
         @Override
         public void onError(String msg) {
-            if (isOwner()) PlaybackActivity.this.onError(msg);
+            if (isActivePlaybackOwner()) PlaybackActivity.this.onError(msg);
         }
 
         @Override
         public void onPlayerRebuild(Player player) {
-            if (isOwner()) syncPlayerView(player);
+            if (isActivePlaybackOwner()) syncPlayerView(player);
         }
 
         @Override
         public void onDanmakuSourceChanged(Uri uri) {
-            if (isOwner()) getPlayerView().setDanmakuSource(uri);
+            if (isActivePlaybackOwner()) getPlayerView().setDanmakuSource(uri);
         }
 
         @Override
         public void onDanmakuConfigChanged(DanmakuConfig config) {
-            if (isOwner()) getPlayerView().setDanmakuConfig(config);
+            if (isActivePlaybackOwner()) getPlayerView().setDanmakuConfig(config);
         }
 
         @Override
         public void onDanmakuEnabledChanged(boolean enabled) {
-            if (isOwner()) getPlayerView().setDanmakuEnabled(enabled);
+            if (isActivePlaybackOwner()) getPlayerView().setDanmakuEnabled(enabled);
         }
 
         @Override
         public void onDanmakuSent(String text) {
-            if (isOwner()) getPlayerView().sendDanmaku(text);
+            if (isActivePlaybackOwner()) getPlayerView().sendDanmaku(text);
         }
     };
 
@@ -592,31 +598,36 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     @Override
     public void onEvents(@NonNull Player player, @NonNull Player.Events events) {
-        if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_PLAYBACK_STATE_CHANGED, Player.EVENT_AVAILABLE_COMMANDS_CHANGED)) updateKeyIncrement();
+        if (isActivePlaybackOwner() && events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_PLAYBACK_STATE_CHANGED, Player.EVENT_AVAILABLE_COMMANDS_CHANGED)) updateKeyIncrement();
     }
 
     @Override
     public void onIsPlayingChanged(boolean isPlaying) {
-        if (!isOwner()) return;
+        if (!isActivePlaybackOwner()) return;
         if (isPlaying) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else if (!isBuffering()) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         onPlayingChanged(isPlaying);
     }
 
     @Override
+    public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+        if (isActivePlaybackOwner()) trace("PLAYER_PLAY_WHEN_READY value=" + playWhenReady + " reason=" + reason);
+    }
+
+    @Override
     public void onPlaybackStateChanged(int state) {
         trace("PLAYER_STATE state=" + state);
-        if (isOwner()) onStateChanged(state);
+        if (isActivePlaybackOwner()) onStateChanged(state);
     }
 
     @Override
     public void onRenderedFirstFrame() {
-        if (isOwner()) trace("PLAYER_FIRST_FRAME");
+        if (isActivePlaybackOwner()) trace("PLAYER_FIRST_FRAME");
     }
 
     @Override
     public void onVideoSizeChanged(@NonNull VideoSize size) {
-        if (isOwner()) onSizeChanged(size);
+        if (isActivePlaybackOwner()) onSizeChanged(size);
     }
 
     @Override
@@ -654,7 +665,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     protected void onPause() {
         resumed = false;
         super.onPause();
-        if (isRedirect()) pausePlayback();
+        if (isRedirect() && isActivePlaybackOwner()) pausePlayback();
     }
 
     @Override
@@ -662,7 +673,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         trace("PLAYBACK_ON_STOP_BEGIN");
         captureResumePlaybackIntent();
         super.onStop();
-        if (isOwner() && (isFinishing() || PlayerSetting.isBackgroundOff())) pausePlayback();
+        if (isActivePlaybackOwner() && (isFinishing() || PlayerSetting.isBackgroundOff())) pausePlayback();
         if (!isInPictureInPictureMode()) detachPlayerView();
         trace("PLAYBACK_ON_STOP_END");
     }

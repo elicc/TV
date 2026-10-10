@@ -112,4 +112,16 @@
         <item name="android:paddingEnd">0dp</item>
     </style>
 
+    <!-- Two badge rows must fit inside the unchanged title-height viewport.
+         Override drawable padding locally; other detail tags keep their sizing. -->
+    <style name="DetailBadgeCompact">
+        <item name="android:textSize">11sp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:layout_marginTop">0dp</item>
+        <item name="android:layout_marginBottom">1dp</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
 </resources>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="176dp"
-    android:layout_height="100dp"
+    android:layout_width="120dp"
+    android:layout_height="50dp"
     android:layout_marginEnd="8dp"
-    android:background="@drawable/shape_vod_list"
-    android:foreground="@drawable/selector_vod_grid"
+    android:background="@drawable/shape_metadata_card"
+    android:foreground="@drawable/selector_metadata_card"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:stateListAnimator="@animator/tv_focus_scale">
@@ -17,5 +17,5 @@
         android:background="?attr/tvColorSurface"
         android:contentDescription="@string/metadata_artworks"
         android:scaleType="centerCrop"
-        app:shapeAppearanceOverlay="@style/Vod.Grid.Rounded" />
+        app:shapeAppearanceOverlay="@style/MetadataCard" />
 </FrameLayout>

@@ -4,6 +4,7 @@
     android:id="@+id/text"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:minHeight="36dp"
     android:background="@drawable/selector_flag_choice"
     android:foreground="@drawable/selector_detail_choice_indicator_overlay"
     android:focusable="true"

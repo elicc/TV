@@ -14,4 +14,8 @@ public interface MetadataProviderClient {
     /** Best-effort enrichment for records cached before artwork support existed. */
     default void enrichArtwork(MovieMetadata metadata, boolean tv) throws IOException {
     }
+
+    /** Best-effort enrichment for cast credits and avatars. */
+    default void enrichCast(MovieMetadata metadata, boolean tv) throws IOException {
+    }
 }

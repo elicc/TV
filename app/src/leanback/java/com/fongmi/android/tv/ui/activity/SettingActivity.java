@@ -566,6 +566,8 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onConfigEvent(ConfigEvent event) {
         if (event.type() != ConfigEvent.Type.COMMON) return;
+        setOtherText();
+        setVaultText();
         mBinding.vodUrl.setText(VodConfig.getDesc());
         mBinding.liveUrl.setText(LiveConfig.getDesc());
         mBinding.wallUrl.setText(WallConfig.getDesc());

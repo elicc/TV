@@ -32,6 +32,9 @@ public class MovieMetadata {
     private int duration;
     /** Landscape photos suitable for a detail-page horizontal gallery. */
     private List<MovieArtwork> artworks = new ArrayList<>();
+    /** Provider cast credits. Names remain in {@link #actors} for matching/fallback. */
+    private List<MovieCast> cast = new ArrayList<>();
+    private boolean castLoaded;
 
     public MovieMetadata() {
     }
@@ -71,6 +74,8 @@ public class MovieMetadata {
         copy.ratingCount = ratingCount;
         copy.duration = duration;
         copy.artworks = new ArrayList<>(artworks == null ? List.of() : artworks);
+        copy.cast = new ArrayList<>(cast == null ? List.of() : cast);
+        copy.castLoaded = castLoaded;
         return copy;
     }
 
@@ -114,6 +119,11 @@ public class MovieMetadata {
     public List<MovieArtwork> getArtworks() { return artworks == null ? List.of() : artworks; }
     public void setArtworks(List<MovieArtwork> artworks) { this.artworks = artworks == null ? new ArrayList<>() : new ArrayList<>(artworks); }
     public boolean hasArtworks() { return !getArtworks().isEmpty(); }
+    public List<MovieCast> getCast() { return cast == null ? List.of() : cast; }
+    public void setCast(List<MovieCast> cast) { this.cast = cast == null ? new ArrayList<>() : new ArrayList<>(cast); }
+    public boolean hasCast() { return !getCast().isEmpty(); }
+    public boolean isCastLoaded() { return castLoaded; }
+    public void markCastLoaded() { castLoaded = true; }
 
     public String getRatingText() {
         return rating > 0 ? String.format(java.util.Locale.US, "%.1f (%d)", rating, ratingCount) : "";

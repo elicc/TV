@@ -129,6 +129,20 @@ public final class ConfigVault {
         });
     }
 
+    /** The source dialog owns the user's recovery decision, including a refusal on later starts. */
+    public static void deferAutoRestore() {
+        prefs().edit().putBoolean(KEY_ATTEMPTED, true).apply();
+    }
+
+    /** Inspect actual snapshot contents without restoring or writing the current configuration. */
+    public static void findRestoreSource(Consumer<VaultPolicy.Source> done) {
+        Task.executeSerial(() -> {
+            VaultPolicy.Source source = !isWritable() ? VaultPolicy.Source.NONE
+                    : VaultPolicy.pickSource(!usableBackups().isEmpty(), SourceBootstrap.exists());
+            App.post(() -> done.accept(source));
+        });
+    }
+
     /**
      * Restore because the viewer asked for it. No latch: an explicit request is always honoured.
      * The result is delivered on the main thread.
@@ -176,7 +190,7 @@ public final class ConfigVault {
     }
 
     private static List<File> usableBackups() {
-        return BackupManager.getFiles();
+        return BackupManager.getFiles().stream().filter(BackupManager::isRestorable).toList();
     }
 
     /**

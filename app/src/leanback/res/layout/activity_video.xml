@@ -116,10 +116,10 @@
         android:translationZ="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/row1"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="24dp"
+        android:layout_alignTop="@+id/video"
+        android:layout_marginEnd="8dp"
         android:layout_toEndOf="@+id/video"
+        android:maxWidth="240dp"
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
@@ -201,39 +201,38 @@
             android:backgroundTint="?attr/tvColorSurfaceRaised" />
     </com.fongmi.android.tv.ui.custom.SkeletonLayout>
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/remark"
+
+    <!-- Keep the media stack compact: its bottom anchors reserve the remaining
+         height for the two-line synopsis without stretching the player. -->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/detailTabs"
         android:translationZ="8dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/row1"
-        android:layout_toEndOf="@+id/row1"
-        android:layout_marginStart="8dp"
+        android:layout_width="0dp"
+        android:layout_height="24dp"
+        android:layout_above="@+id/mediaRail"
+        android:layout_alignStart="@+id/name"
+        android:layout_toEndOf="@+id/video"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="2dp"
         android:layout_marginEnd="24dp"
-        android:ellipsize="end"
-        android:singleLine="true"
-        android:background="@drawable/shape_detail_tag"
-        android:textColor="?attr/tvColorTextSecondary"
-        android:textSize="@dimen/tv_text_meta"
-        tools:text="更新到第二季" />
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:visibility="gone"
+        android:orientation="horizontal">
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/metadataTabs"
-        android:translationZ="8dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/actor"
-        android:layout_alignStart="@+id/name"
-        android:layout_marginTop="4dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:visibility="gone"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabSource"
             android:layout_width="wrap_content"
-            android:layout_height="26dp"
+            android:layout_height="match_parent"
             android:layout_marginEnd="6dp"
             android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
@@ -248,7 +247,7 @@
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabDouban"
             android:layout_width="wrap_content"
-            android:layout_height="26dp"
+            android:layout_height="match_parent"
             android:layout_marginEnd="6dp"
             android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
@@ -262,7 +261,7 @@
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tabTmdb"
             android:layout_width="wrap_content"
-            android:layout_height="26dp"
+            android:layout_height="match_parent"
             android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
@@ -274,64 +273,182 @@
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/row1"
-        android:translationZ="8dp"
+        android:id="@+id/mediaTabs"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/video"
-        android:layout_alignStart="@+id/name"
-        android:layout_marginTop="0dp"
-        android:layout_marginEnd="24dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="6dp"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/site"
+            android:id="@+id/tabArtworks"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/shape_detail_tag_primary"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="?attr/tvColorOnAccent"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/selector_metadata_tab"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="@string/metadata_artworks"
+            android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_meta"
-            tools:text="站源：泥巴" />
+            android:visibility="gone" />
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/year"
+            android:id="@+id/tabCasts"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/shape_detail_tag"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="?attr/tvColorTextSecondary"
+            android:layout_height="match_parent"
+            android:background="@drawable/selector_metadata_tab"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="@string/metadata_cast"
+            android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_meta"
-            tools:text="年份：2022" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/area"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/shape_detail_tag"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="@dimen/tv_text_meta"
-            tools:text="地區：台灣" />
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/type"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/shape_detail_tag"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="@dimen/tv_text_meta"
-            tools:text="類型：科幻" />
-
+            android:visibility="gone" />
     </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <FrameLayout
+        android:id="@+id/mediaRail"
+        android:translationZ="8dp"
+        android:layout_width="0dp"
+        android:layout_height="54dp"
+        android:layout_above="@id/row2"
+        android:layout_alignStart="@id/name"
+        android:layout_toEndOf="@id/video"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="2dp"
+        android:layout_marginEnd="24dp"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:visibility="gone">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/artworkTitle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <androidx.leanback.widget.HorizontalGridView
+            android:id="@+id/artworks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            android:paddingStart="@dimen/tv_gap_xs"
+            android:paddingEnd="@dimen/tv_gap_xs"
+            android:visibility="gone" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/castTitle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <androidx.leanback.widget.HorizontalGridView
+            android:id="@+id/casts"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            android:paddingStart="@dimen/tv_gap_xs"
+            android:paddingEnd="@dimen/tv_gap_xs"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- This viewport inherits only the title height. Wrapped badges are clipped
+         here, including remarks, and can never paint over the separate rating. -->
+    <FrameLayout
+        android:id="@+id/row1"
+        android:translationZ="8dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_alignTop="@id/name"
+        android:layout_alignBottom="@id/name"
+        android:layout_toEndOf="@id/name"
+        android:layout_toStartOf="@id/rating"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_marginEnd="8dp"
+        android:clipChildren="true"
+        android:clipToPadding="true">
+
+        <com.google.android.flexbox.FlexboxLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            app:flexWrap="wrap"
+            app:alignItems="center"
+            app:alignContent="flex_start">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/site"
+                style="@style/DetailBadgeCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/shape_detail_tag_primary"
+                android:ellipsize="end"
+                android:singleLine="true"
+                app:layout_flexShrink="0"
+                android:textColor="?attr/tvColorOnAccent"
+                tools:text="站源：泥巴" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/year"
+                style="@style/DetailBadgeCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/shape_detail_tag"
+                android:ellipsize="end"
+                android:singleLine="true"
+                app:layout_flexShrink="0"
+                android:textColor="?attr/tvColorTextSecondary"
+                tools:text="年份：2022" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/area"
+                style="@style/DetailBadgeCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/shape_detail_tag"
+                android:ellipsize="end"
+                android:singleLine="true"
+                app:layout_flexShrink="0"
+                android:textColor="?attr/tvColorTextSecondary"
+                tools:text="地區：台灣" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/type"
+                style="@style/DetailBadgeCompact"
+                android:layout_marginEnd="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/shape_detail_tag"
+                android:ellipsize="end"
+                android:singleLine="true"
+                app:layout_flexShrink="0"
+                android:textColor="?attr/tvColorTextSecondary"
+                tools:text="類型：科幻" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/remark"
+                style="@style/DetailBadgeCompact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:background="@drawable/shape_detail_tag"
+                android:textColor="?attr/tvColorTextSecondary"
+                app:layout_flexShrink="0"
+                tools:text="更新到第二季" />
+
+        </com.google.android.flexbox.FlexboxLayout>
+    </FrameLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/director"
@@ -342,7 +459,7 @@
         android:layout_alignStart="@+id/name"
         android:layout_toEndOf="@+id/video"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="24dp"
         android:nextFocusDown="@id/actor"
         android:drawableStart="@drawable/tv_accent_bar"
@@ -404,14 +521,14 @@
         android:id="@+id/description"
         android:translationZ="8dp"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/metadataTabs"
-        android:layout_above="@+id/row2"
+        android:layout_height="0dp"
+        android:layout_below="@+id/actor"
+        android:layout_above="@+id/detailTabs"
         android:layout_alignStart="@+id/name"
         android:layout_toEndOf="@+id/video"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="2dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="2dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/selector_detail_text_focus"
         android:ellipsize="end"
@@ -419,9 +536,9 @@
         android:focusableInTouchMode="true"
         android:maxLines="2"
         android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:paddingEnd="52dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         android:includeFontPadding="false"
         android:nextFocusUp="@id/actor"
         android:nextFocusDown="@id/change"
@@ -430,17 +547,18 @@
         android:visibility="gone"
         tools:text="影片简介文字显示在详情页中，最多展示两行，点击更多查看完整内容。" />
 
-    <!-- Avoid a background on this hidden zero-height view: HWUI otherwise allocates a 128x0 layer. -->
+    <!-- Reserve the synopsis end gutter for this inline affordance, never a third row. -->
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/descriptionMore"
         android:translationZ="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/description"
-        android:layout_above="@+id/row2"
-        android:layout_alignStart="@+id/description"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="8dp"
+        android:layout_alignBottom="@+id/description"
+        android:layout_alignEnd="@+id/description"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="2dp"
+        android:singleLine="true"
+        android:includeFontPadding="false"
         android:gravity="center"
         android:text="@string/tv_more"
         android:textColor="?attr/tvColorAccent"
@@ -469,7 +587,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:background="@drawable/selector_item"
-            android:minHeight="40dp"
+            android:minHeight="36dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:focusable="true"
@@ -489,12 +607,11 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/change"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="88dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:background="@drawable/selector_item"
-            android:minHeight="40dp"
+            android:minHeight="36dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:focusable="true"
@@ -515,11 +632,10 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/keep"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:background="@drawable/selector_item"
-            android:minHeight="40dp"
+            android:minHeight="36dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:focusable="true"
@@ -688,33 +804,6 @@
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </com.fongmi.android.tv.ui.custom.SkeletonLayout>
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/artworkTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
-                android:drawableStart="@drawable/tv_accent_bar"
-                android:drawablePadding="6dp"
-                android:includeFontPadding="false"
-                android:text="@string/metadata_artworks"
-                android:textColor="?attr/tvColorTextSecondary"
-                android:textSize="@dimen/tv_text_meta"
-                android:visibility="gone" />
-
-            <androidx.leanback.widget.HorizontalGridView
-                android:id="@+id/artworks"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:nextFocusUp="@id/description"
-                android:nextFocusDown="@id/flag"
-                android:paddingStart="@dimen/tv_safe_horizontal"
-                android:paddingEnd="@dimen/tv_safe_horizontal"
-                android:visibility="gone" />
-
             <!-- The label column and each choices row share a horizontal line. Keep the grid's
                  start padding as a hard clipping edge so scrolling chips never draw over a label. -->
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -724,7 +813,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -760,7 +849,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -794,7 +883,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -827,7 +916,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -860,7 +949,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">
@@ -893,7 +982,7 @@
                 android:clipToPadding="false"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/tv_safe_horizontal"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="@dimen/tv_gap_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:visibility="gone">

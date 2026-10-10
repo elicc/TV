@@ -98,4 +98,10 @@
     <!-- 点播大厅: 底部按键提示 -->
     <string name="tv_hint_vod_ok">Open · hold to refresh</string>
     <string name="tv_hint_filter">Filter</string>
+    <string name="tv_vault_permission_title">授权文件访问</string>
+    <string name="tv_vault_permission_body">授权后可检查本机的历史备份，并由你选择是否恢复。也可暂不授权，继续手动配置。</string>
+    <string name="tv_vault_manual">继续手动配置</string>
+    <string name="tv_vault_restore_accept">恢复备份</string>
+    <string name="tv_vault_restore_confirm">发现历史备份，是否恢复原来的数据源、设置、收藏和播放记录？恢复会替换当前数据和源输入。</string>
+    <string name="tv_vault_restore_sources_confirm">发现历史数据源配置，是否恢复并填入？此备份不包含播放记录和收藏。恢复会替换对应数据源。</string>
 </resources>

@@ -81,8 +81,10 @@ public final class SourceBootstrap {
     }
 
     static boolean exists() {
-        File file = getFile();
-        return file.isFile() && file.length() > 0;
+        Snapshot snapshot = readSnapshot();
+        if (snapshot == null) return false;
+        for (Source source : snapshot.sources) if (source != null && source.isValid()) return true;
+        return false;
     }
 
     /**

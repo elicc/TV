@@ -1,12 +1,18 @@
 package com.fongmi.android.tv.ui.dialog;
 
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.FragmentActivity;
@@ -20,8 +26,12 @@ import com.fongmi.android.tv.bean.Config;
 import com.fongmi.android.tv.databinding.DialogConfigBinding;
 import com.fongmi.android.tv.db.ConfigVault;
 import com.fongmi.android.tv.db.SourceBootstrap;
+import com.fongmi.android.tv.db.VaultPolicy;
+import com.fongmi.android.tv.event.ConfigEvent;
+import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.ConfigListener;
+import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.Util;
 import com.fongmi.android.tv.ui.custom.CustomTextListener;
@@ -44,8 +54,38 @@ public class ConfigDialog extends BaseAlertDialog {
     private boolean edit;
     private String url;
     private int type;
-    /** Set while a file-access grant is in flight; a refusal only surfaces on resume. */
-    private boolean mVaultPending;
+    private boolean vaultEntryHandled;
+    private boolean vaultChecking;
+    private boolean vaultCheckRunning;
+    private boolean vaultRestoring;
+    private int vaultPrompt; // 0: none, 1: permission, 2: full backup, 3: sources only
+    private AlertDialog vaultDialog;
+    private Bundle restoredState;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        restoredState = savedInstanceState;
+        if (savedInstanceState == null) return;
+        type = savedInstanceState.getInt("config.type");
+        edit = savedInstanceState.getBoolean("config.edit");
+        vaultEntryHandled = savedInstanceState.getBoolean("vault.entryHandled");
+        vaultChecking = savedInstanceState.getBoolean("vault.checking");
+        vaultPrompt = savedInstanceState.getInt("vault.prompt");
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("config.type", type);
+        outState.putBoolean("config.edit", edit);
+        outState.putString("config.url", url);
+        outState.putString("config.text", binding.text.getText().toString());
+        outState.putString("config.name", binding.name.getText().toString());
+        outState.putBoolean("vault.entryHandled", vaultEntryHandled);
+        outState.putBoolean("vault.checking", vaultChecking);
+        outState.putInt("vault.prompt", vaultPrompt);
+    }
 
     public static ConfigDialog create() {
         return new ConfigDialog();
@@ -88,10 +128,15 @@ public class ConfigDialog extends BaseAlertDialog {
     @Override
     protected void initView() {
         binding.text.setText(url = getUrl());
-        binding.text.setSelection(TextUtils.isEmpty(url) ? 0 : url.length());
+        if (restoredState != null) {
+            url = restoredState.getString("config.url", url);
+            binding.text.setText(restoredState.getString("config.text", url));
+            binding.name.setText(restoredState.getString("config.name", ""));
+        }
+        binding.text.setSelection(binding.text.length());
         boolean firstSourceSetup = isSourceType() && !edit && TextUtils.isEmpty(url);
         binding.choose.setVisibility(firstSourceSetup ? View.GONE : View.VISIBLE);
-        updatePositiveText(url);
+        updatePositiveText(binding.text.getText().toString());
         binding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(4), 200, 0));
         String mainAddress = Server.get().getAddress();
         String info;
@@ -127,12 +172,7 @@ public class ConfigDialog extends BaseAlertDialog {
 
     @Override
     protected void initEvent() {
-        binding.vaultGrant.setOnClickListener(v -> PermissionUtil.requestAllFiles(requireActivity(), granted -> {
-            refreshVaultBanner();
-            // Only reachable when the device has no such settings screen — a plain refusal is
-            // never reported — and the viewer deserves to hear why nothing changed.
-            if (!ConfigVault.isWritable()) Notify.show(R.string.tv_vault_denied);
-        }));
+        binding.vaultGrant.setOnClickListener(v -> requestVaultPermission());
         binding.choose.setOnClickListener(this::onChoose);
         binding.positive.setOnClickListener(this::onPositive);
         binding.negative.setOnClickListener(this::onNegative);
@@ -180,10 +220,11 @@ public class ConfigDialog extends BaseAlertDialog {
     }
 
     private void onPositive(View view) {
+        if (vaultRestoring) return;
         String name = binding.name.getText().toString().trim();
         String text = binding.text.getText().toString().trim();
         if (!edit && text.isEmpty() && isSourceType()) {
-            requestRestoreOrChoose();
+            requestFileChooser();
         } else if (ContentResolver.SCHEME_FILE.equalsIgnoreCase(UrlUtil.scheme(text))) {
             PermissionUtil.requestFile(this, allGranted -> {
                 if (!allGranted || !isAdded()) return;
@@ -194,30 +235,110 @@ public class ConfigDialog extends BaseAlertDialog {
         }
     }
 
-    private void requestRestoreOrChoose() {
-        if (PermissionUtil.allFilesAccess(requireActivity()) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
-            requestFileChooser();
-            return;
-        }
-        mVaultPending = true;
-        // A supported settings screen completes on grant; a refusal is settled from onResume.
-        // Unsupported firmware took the local chooser path above and never enters this flow.
-        PermissionUtil.requestAllFiles(requireActivity(), granted -> resolveRestore());
+    private boolean isDialogActive() {
+        return isAdded() && !isRemoving() && getDialog() != null && getDialog().isShowing();
     }
 
-    private void resolveRestore() {
-        if (!mVaultPending) return;
-        mVaultPending = false;
-        if (!ConfigVault.isWritable()) {
-            refreshVaultBanner();
-            Notify.show(R.string.tv_vault_denied);
-        } else {
-            SourceBootstrap.find(type, config -> {
-                if (!isAdded()) return;
-                if (config == null) FileChooser.from(launcher).show();
-                else applyConfig(config);
-            });
+    private void beginVaultFlow() {
+        // Once per opening, not once per installation. Returning from Settings must not loop.
+        if (!isSourceType() || vaultEntryHandled) return;
+        vaultEntryHandled = true;
+        ConfigVault.deferAutoRestore();
+        if (ConfigVault.isWritable()) checkRestoreSource();
+        else {
+            vaultPrompt = 1;
+            showVaultPrompt();
         }
+    }
+
+    private void showVaultPrompt() {
+        if (!isDialogActive() || !isResumed() || vaultPrompt == 0 || vaultDialog != null) return;
+        boolean permission = vaultPrompt == 1;
+        boolean unsupported = permission && PermissionUtil.allFilesAccess(requireActivity()) == PermissionUtil.AllFilesAccess.UNSUPPORTED;
+        vaultDialog = builder()
+                .setTitle(permission ? R.string.tv_vault_permission_title : R.string.tv_vault_restore_title)
+                .setMessage(permission ? (unsupported ? R.string.tv_vault_unsupported_source : R.string.tv_vault_permission_body)
+                        : vaultPrompt == 2 ? R.string.tv_vault_restore_confirm : R.string.tv_vault_restore_sources_confirm)
+                .setNegativeButton(R.string.tv_vault_manual, (dialog, which) -> vaultPrompt = 0)
+                .setOnCancelListener(dialog -> vaultPrompt = 0)
+                .create();
+        if (!unsupported) vaultDialog.setButton(AlertDialog.BUTTON_POSITIVE,
+                getString(permission ? R.string.tv_vault_grant : R.string.tv_vault_restore_accept), (dialog, which) -> {
+                    vaultPrompt = 0;
+                    if (permission) requestVaultPermission();
+                    else restoreVault();
+                });
+        vaultDialog.setOnDismissListener(dialog -> vaultDialog = null);
+        vaultDialog.show();
+    }
+
+    private void requestVaultPermission() {
+        ConfigVault.deferAutoRestore();
+        if (ConfigVault.isWritable()) {
+            checkRestoreSource();
+            return;
+        }
+        if (PermissionUtil.allFilesAccess(requireActivity()) == PermissionUtil.AllFilesAccess.UNSUPPORTED) {
+            Notify.show(R.string.tv_vault_unsupported);
+            return;
+        }
+        // Own this result instead of relying on PermissionX's grant-only callback or onResume,
+        // which also fires before Settings has actually opened. A refusal is a result too.
+        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                Uri.parse("package:" + requireContext().getPackageName()));
+        if (intent.resolveActivity(requireActivity().getPackageManager()) == null)
+            intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+        try {
+            vaultPermissionLauncher.launch(intent);
+        } catch (ActivityNotFoundException | SecurityException e) {
+            Notify.show(R.string.tv_vault_unsupported);
+        }
+    }
+
+    private void checkRestoreSource() {
+        if (!isDialogActive() || !ConfigVault.isWritable() || vaultCheckRunning) return;
+        vaultChecking = true;
+        vaultCheckRunning = true;
+        ConfigVault.findRestoreSource(source -> {
+            vaultChecking = false;
+            vaultCheckRunning = false;
+            if (!isDialogActive()) return;
+            vaultPrompt = switch (source) {
+                case BACKUP -> 2;
+                case BOOTSTRAP -> 3;
+                default -> 0;
+            };
+            showVaultPrompt();
+        });
+    }
+
+    private void restoreVault() {
+        if (!isDialogActive() || vaultRestoring) return;
+        vaultRestoring = true;
+        binding.positive.setEnabled(false);
+        ConfigVault.restore(source -> {
+            vaultRestoring = false;
+            if (source != VaultPolicy.Source.NONE) {
+                VodConfig.get().init().load(new Callback());
+                LiveConfig.get().init().load();
+                WallConfig.get().init().load();
+                ConfigEvent.common();
+                RefreshEvent.history();
+                RefreshEvent.keep();
+            }
+            if (!isDialogActive()) return;
+            binding.positive.setEnabled(true);
+            if (source == VaultPolicy.Source.NONE) {
+                Notify.show(R.string.tv_vault_restore_missing);
+                return;
+            }
+            Config config = type == 0 ? VodConfig.get().getConfig() : LiveConfig.get().getConfig();
+            binding.name.setText(config.getName());
+            binding.text.setText(url = config.getUrl());
+            binding.text.setSelection(binding.text.length());
+            binding.choose.setVisibility(View.VISIBLE);
+            Notify.show(R.string.tv_vault_restored);
+        });
     }
 
     private boolean isSourceType() {
@@ -265,7 +386,7 @@ public class ConfigDialog extends BaseAlertDialog {
     public void onServerEvent(ServerEvent event) {
         if (event.type() != ServerEvent.Type.SETTING) return;
         String text = event.text();
-        if (TextUtils.isEmpty(text) || !isAdded()) return;
+        if (TextUtils.isEmpty(text) || !isAdded() || vaultRestoring) return;
         // The H5 panel posts the URL+name the user confirmed on their phone.
         // Apply it straight away instead of just filling the input and
         // requiring a redundant confirm click on the TV; the same flow now
@@ -280,9 +401,10 @@ public class ConfigDialog extends BaseAlertDialog {
     @Override
     public void onResume() {
         super.onResume();
-        // Coming back from the file-access settings screen.
-        resolveRestore();
         refreshVaultBanner();
+        if (!vaultEntryHandled) beginVaultFlow();
+        else if (vaultChecking) checkRestoreSource();
+        else showVaultPrompt();
     }
 
     @Override
@@ -297,6 +419,21 @@ public class ConfigDialog extends BaseAlertDialog {
         super.onStop();
         EventBus.getDefault().unregister(this);
     }
+
+    @Override
+    public void onDestroyView() {
+        if (vaultDialog != null) vaultDialog.dismiss();
+        vaultDialog = null;
+        super.onDestroyView();
+    }
+
+    private final ActivityResultLauncher<Intent> vaultPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                vaultChecking = ConfigVault.isWritable();
+                if (!isDialogActive()) return;
+                refreshVaultBanner();
+                if (vaultChecking) checkRestoreSource();
+            });
 
     private final ActivityResultLauncher<Intent> launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> FileChooser.getUri(result, this::setConfig));
 

@@ -31,4 +31,7 @@
     <string name="detail_episode_range">选集范围</string>
     <string name="detail_part">分段</string>
     <string name="detail_sources">其他源</string>
+    <string name="metadata_cast">演职人员</string>
+    <string name="metadata_artworks_count">影片海报 %1$d</string>
+    <string name="metadata_cast_count">演职人员 %1$d</string>
 </resources>

@@ -49,6 +49,15 @@ public class MetadataAgentClient {
         return response.toMetadata();
     }
 
+    public List<MovieCast> cast(String externalId, boolean tv) throws IOException {
+        String url = MetadataAgentSetting.getUrl() + "/api/v1/metadata/douban/" + externalId + "/cast"
+                + "?external_type=" + (tv ? "tv" : "movie");
+        String json = execute(new Request.Builder().url(url).headers(okhttp3.Headers.of(headers())).build());
+        CastPayload response = App.gson().fromJson(json, CastPayload.class);
+        if (response == null || response.cast == null) throw new IOException("Empty metadata agent cast response");
+        return response.cast;
+    }
+
     private String execute(Request request) throws IOException {
         try (Response response = OkHttp.client(TIMEOUT).newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
@@ -157,6 +166,7 @@ public class MetadataAgentClient {
         private int ratingCount;
         private int duration;
         private List<MovieArtwork> artworks;
+        private List<MovieCast> cast;
 
         private MovieMetadata toMetadata() {
             MovieMetadata result = new MovieMetadata();
@@ -179,8 +189,16 @@ public class MetadataAgentClient {
             result.setRatingCount(ratingCount);
             result.setDuration(duration);
             result.setArtworks(artworks == null ? List.of() : artworks);
+            result.setCast(cast == null ? List.of() : cast);
+            // Detail payloads may contain an empty default list without having
+            // fetched credits. Only the dedicated cast response confirms empty.
+            if (result.hasCast()) result.markCastLoaded();
             return result;
         }
+    }
+
+    private static class CastPayload {
+        private List<MovieCast> cast;
     }
 
     private static String value(String value) {

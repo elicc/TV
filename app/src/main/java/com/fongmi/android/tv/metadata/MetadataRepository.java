@@ -173,6 +173,43 @@ public class MetadataRepository {
         });
     }
 
+    /** Loads optional cast credits after a trusted provider match. */
+    public void loadCast(MovieIdentity identity, MovieMetadata metadata, Consumer<List<MovieCast>> callback) {
+        if (identity == null || metadata == null || metadata.getProvider() != MetadataProvider.DOUBAN
+                || !identity.isValid() || metadata.getExternalId().isEmpty()) {
+            App.post(() -> callback.accept(List.of()));
+            return;
+        }
+        Task.execute(() -> {
+            List<MovieCast> result = metadata.getCast();
+            try {
+                if (!metadata.isCastLoaded()) {
+                    boolean loaded = false;
+                    if (agent.isConfigured()) {
+                        try {
+                            result = agent.cast(metadata.getExternalId(), isTv(identity, metadata));
+                            loaded = true;
+                        } catch (Throwable error) {
+                            Log.d(TAG, "remote cast unavailable for " + identity.title() + ", using local provider", error);
+                        }
+                    }
+                    if (!loaded) {
+                        douban.enrichCast(metadata, isTv(identity, metadata));
+                        result = metadata.getCast();
+                    } else {
+                        metadata.setCast(result);
+                        metadata.markCastLoaded();
+                    }
+                    save(identity.mappingKey(MetadataProvider.DOUBAN), identity, metadata, metadata.getExternalId(), false);
+                }
+            } catch (Throwable error) {
+                Log.d(TAG, "cast unavailable for " + identity.title(), error);
+            }
+            List<MovieCast> cast = result == null ? List.of() : List.copyOf(result);
+            App.post(() -> callback.accept(cast));
+        });
+    }
+
     /**
      * Resolves only the artwork needed by the TV home backdrop. This deliberately
      * reuses the same matching/caching policy as the detail screen: low-confidence

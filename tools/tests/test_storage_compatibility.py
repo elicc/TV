@@ -18,12 +18,14 @@ class StorageCompatibilityTests(unittest.TestCase):
             self.assertIn(state, source)
         self.assertIn("allFilesAccess(FragmentActivity activity)", source)
 
-    def test_source_setup_falls_back_when_vault_is_unavailable(self):
+    def test_source_setup_keeps_manual_configuration_available(self):
         source = (LEANBACK / "ui/dialog/ConfigDialog.java").read_text()
-        request = source[source.index("private void requestRestoreOrChoose()") :]
-        request = request[: request.index("private void resolveRestore()")]
-        unsupported = request.split("AllFilesAccess.UNSUPPORTED", 1)[1]
-        self.assertIn("requestFileChooser()", unsupported)
+        positive = source.split("private void onPositive(View view)", 1)[1].split("private boolean isDialogActive()", 1)[0]
+        self.assertIn("requestFileChooser()", positive)
+        self.assertNotIn("restore", positive.lower())
+        request = source.split("private void requestVaultPermission()", 1)[1].split("private void checkRestoreSource()", 1)[0]
+        self.assertIn("AllFilesAccess.UNSUPPORTED", request)
+        self.assertIn("tv_vault_unsupported", request)
 
     def test_settings_reports_unsupported_firmware_separately(self):
         source = (LEANBACK / "ui/activity/SettingActivity.java").read_text()

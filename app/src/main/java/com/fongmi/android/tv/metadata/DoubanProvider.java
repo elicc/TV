@@ -13,8 +13,8 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.Response;
@@ -174,6 +174,32 @@ public class DoubanProvider implements MetadataProviderClient {
         }
     }
 
+    @Override
+    public void enrichCast(MovieMetadata metadata, boolean tv) throws IOException {
+        if (metadata == null || TextUtils.isEmpty(metadata.getExternalId()) || metadata.isCastLoaded()) return;
+        if ("tv".equals(metadata.getExternalType())) tv = true;
+        else if ("movie".equals(metadata.getExternalType())) tv = false;
+        String path = (tv ? "/api/v2/tv/" : "/api/v2/movie/") + metadata.getExternalId() + "/celebrities";
+        JsonObject root = request(path, new ArrayMap<>());
+        Map<String, MovieCast> unique = new LinkedHashMap<>();
+        for (JsonElement element : array(root, "actors")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject actor = element.getAsJsonObject();
+            String name = castString(actor, "name");
+            if (name.isEmpty()) continue;
+            String externalId = castString(actor, "id");
+            JsonObject avatar = object(actor, "avatar");
+            String avatarUrl = castImage(castString(avatar, "normal"));
+            if (avatarUrl.isEmpty()) avatarUrl = castImage(castString(avatar, "large"));
+            if (!avatarUrl.isEmpty()) avatarUrl = artworkUrl(avatarUrl);
+            MovieCast cast = new MovieCast(externalId, name, castString(actor, "character"), avatarUrl, castString(actor, "url"));
+            String key = externalId.isEmpty() ? "name:" + name : "id:" + externalId;
+            if (!unique.containsKey(key)) unique.put(key, cast);
+        }
+        metadata.setCast(new ArrayList<>(unique.values()));
+        metadata.markCastLoaded();
+    }
+
     private JsonObject request(String path, ArrayMap<String, String> params) throws IOException {
         params.put("apiKey", API_KEY);
         try (Response response = OkHttp.newCall(BASE_URL + path, HEADERS, params).execute()) {
@@ -278,6 +304,19 @@ public class DoubanProvider implements MetadataProviderClient {
 
     private static String artworkUrl(String url) {
         return url.contains("@Referer=") ? url : url + "@Referer=https://movie.douban.com/@User-Agent=Mozilla/5.0";
+    }
+
+    private static String castString(JsonObject object, String key) {
+        JsonElement value = object.get(key);
+        if (value == null || !value.isJsonPrimitive() || value.getAsJsonPrimitive().isBoolean()) return "";
+        return value.getAsString().trim();
+    }
+
+    private static String castImage(String url) {
+        String value = url.toLowerCase(java.util.Locale.ROOT);
+        if ((!url.startsWith("https://") && !url.startsWith("http://"))
+                || value.contains("personage-default") || value.contains("celebrity-default")) return "";
+        return url;
     }
 
     private static int integer(JsonObject object, String key) {

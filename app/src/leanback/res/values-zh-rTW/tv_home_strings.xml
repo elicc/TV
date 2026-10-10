@@ -97,4 +97,10 @@
     <!-- 点播大厅: 底部按键提示 -->
     <string name="tv_hint_vod_ok">開啟 · 長按重新整理</string>
     <string name="tv_hint_filter">篩選</string>
+    <string name="tv_vault_permission_title">授權檔案存取</string>
+    <string name="tv_vault_permission_body">授權後可檢查本機的歷史備份，並由你選擇是否還原。也可暫不授權，繼續手動設定。</string>
+    <string name="tv_vault_manual">繼續手動設定</string>
+    <string name="tv_vault_restore_accept">還原備份</string>
+    <string name="tv_vault_restore_confirm">發現歷史備份，是否還原原來的資料源、設定、收藏和播放記錄？還原會取代目前資料和來源輸入。</string>
+    <string name="tv_vault_restore_sources_confirm">發現歷史資料源設定，是否還原並填入？此備份不包含播放記錄和收藏。還原會取代對應資料源。</string>
 </resources>

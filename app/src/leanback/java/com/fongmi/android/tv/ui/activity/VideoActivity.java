@@ -65,8 +65,10 @@ import com.fongmi.android.tv.metadata.MetadataProvider;
 import com.fongmi.android.tv.metadata.MetadataState;
 import com.fongmi.android.tv.metadata.MetadataCandidate;
 import com.fongmi.android.tv.metadata.MovieArtwork;
+import com.fongmi.android.tv.metadata.MovieCast;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.ui.adapter.ArtworkAdapter;
+import com.fongmi.android.tv.ui.adapter.CastAdapter;
 import com.fongmi.android.tv.playback.PlaybackAction;
 import com.fongmi.android.tv.playback.PlaybackIntent;
 import com.fongmi.android.tv.playback.PlaybackReset;
@@ -124,7 +126,7 @@ import java.util.Objects;
 public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private static final String TRACE_TAG = "PlaybackTrace";
-    private static final int[] DETAIL_ROW_IDS = {R.id.artworks, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
+    private static final int[] DETAIL_ROW_IDS = {R.id.artworks, R.id.casts, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
     private static final int[] DETAIL_ACTION_IDS = {R.id.content, R.id.change, R.id.keep};
 
     private ActivityVideoBinding mBinding;
@@ -137,6 +139,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private PartAdapter mPartAdapter;
     private QuickAdapter mQuickAdapter;
     private ArtworkAdapter mArtworkAdapter;
+    private CastAdapter mCastAdapter;
     private ViewGroup.LayoutParams mFrameParams;
     private CustomKeyDownVod mKeyDown;
     private Clock mClock;
@@ -152,6 +155,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private boolean detailReady;
     private boolean metadataReady;
     private boolean actorExpanded;
+    private boolean showArtworks = true;
     private boolean choiceEnterConsumed;
     private String fullDescription = "";
 
@@ -295,9 +299,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (TextUtils.isEmpty(intent.getStringExtra("id")) || isSameVideo(intent)) return;
+        mViewModel.clearMetadata();
         mBinding.atmosphere.clear();
         mBinding.backdrop.clear();
         mArtworkAdapter.clear();
+        clearCast();
         mBinding.artworks.setVisibility(View.GONE);
         mBinding.artworkTitle.setVisibility(View.GONE);
         detailReady = false;
@@ -366,6 +372,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         bindMetadataTab(mBinding.tabSource, MetadataProvider.SOURCE);
         bindMetadataTab(mBinding.tabDouban, MetadataProvider.DOUBAN);
         bindMetadataTab(mBinding.tabTmdb, MetadataProvider.TMDB);
+        mBinding.tabArtworks.setOnClickListener(view -> selectMediaTab(true));
+        mBinding.tabCasts.setOnClickListener(view -> selectMediaTab(false));
+        mBinding.tabArtworks.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus) selectMediaTab(true);
+        });
+        mBinding.tabCasts.setOnFocusChangeListener((view, hasFocus) -> {
+            if (hasFocus) selectMediaTab(false);
+        });
         mBinding.control.action.more.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus && !isVisible(mBinding.control.action.advanced)) setAdvancedControls(true);
         });
@@ -420,8 +434,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         // its adapter is empty, then grows on the next frame when data arrives.
         // That intermediate measurement is what made the rows below the poster
         // visibly jump during the initial detail load.
-        mBinding.artworks.setRowHeight(ResUtil.dp2px(100));
+        mBinding.artworks.setRowHeight(ResUtil.dp2px(50));
         mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter(this::onArtworkFocus));
+        mBinding.casts.setHorizontalSpacing(ResUtil.dp2px(2));
+        mBinding.casts.setRowHeight(ResUtil.dp2px(54));
+        mBinding.casts.setAdapter(mCastAdapter = new CastAdapter());
         mBinding.flag.setHorizontalSpacing(ResUtil.dp2px(8));
         mBinding.flag.setRowHeight(ResUtil.dp2px(36));
         mBinding.flag.setAdapter(mFlagAdapter = new FlagAdapter(this));
@@ -461,6 +478,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mVod = mViewModel.createPlaybackController(this);
         observeWhenServiceReady(mViewModel.getDetail(), this::onDetailObserved);
         observeWhenServiceReady(mViewModel.getMetadata(), this::onMetadataObserved);
+        observeWhenServiceReady(mViewModel.getCast(), this::onCastObserved);
         observeWhenServiceReady(mViewModel.getSearch(), this::onSearchObserved);
         observeWhenServiceReady(mViewModel.getPreload(), this::onPreloadObserved);
         observeWhenServiceReady(mViewModel.getPlayback(), this::onPlaybackObserved);
@@ -473,6 +491,33 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void onMetadataObserved(MetadataState state) {
         if (state == null) return;
         commitDetailLayout(() -> applyMetadataState(state));
+    }
+
+    private void onCastObserved(List<MovieCast> cast) {
+        if (!detailReady) return;
+        commitDetailLayout(() -> applyCast(cast));
+    }
+
+    private void applyCast(List<MovieCast> cast) {
+        if (cast == null || cast.isEmpty()) {
+            clearCast();
+            return;
+        }
+        mCastAdapter.addAll(cast);
+        updateMediaTabs();
+        setR2Callback();
+    }
+
+    private void clearCast() {
+        boolean hadFocus = mBinding.casts.hasFocus() || mBinding.castTitle.hasFocus();
+        if (mCastAdapter != null) mCastAdapter.clear();
+        updateMediaTabs();
+        if (hadFocus) {
+            int target = firstFocusRow();
+            View next = target == 0 ? mBinding.video : findViewById(target);
+            if (next != null) next.requestFocus();
+        }
+        setR2Callback();
     }
 
     /** Applies a complete metadata snapshot as one layout transaction. */
@@ -492,10 +537,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         // content visible while Douban/agent matching runs instead of painting a
         // second skeleton over the populated detail header.
         mBinding.skeletonMeta.setVisibility(View.GONE);
-        int metadataUp = R.id.tabSource;
-        mBinding.content.setNextFocusUpId(metadataUp);
-        mBinding.keep.setNextFocusUpId(metadataUp);
-        mBinding.change.setNextFocusUpId(metadataUp);
         MovieMetadata metadata = state.getSelected();
         if (metadata != null) setMetadataText(metadata);
         // A candidate state intentionally keeps SOURCE selected until the user
@@ -505,20 +546,38 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setMetadataRating(findRatingMetadata(state, metadata));
         setMetadataArtwork(metadata);
         boolean tabsVisible = detailReady && metadataReady;
-        mBinding.tabSource.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.SOURCE) ? View.VISIBLE : View.GONE);
-        mBinding.tabDouban.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
-        mBinding.tabTmdb.setVisibility(tabsVisible && state.hasProviderOrCandidate(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
-        // External metadata is the richer detail view.  When Douban has a
-        // resolved record (or a candidate waiting for confirmation), make it
-        // the first visible tab instead of leaving the source-only tab at
-        // index 0.  The order is kept in the view hierarchy so D-pad focus and
-        // accessibility traversal follow the same order users see.
+        // Once an external record is resolved, it is the authoritative detail
+        // view. Keep the source/provider selector out of the way and reserve
+        // that row for the two media views (artwork and cast). The source tab
+        // remains available only while the source record is active or a
+        // candidate still needs confirmation.
+        boolean externalSelected = metadata != null
+                && metadata.getProvider() != MetadataProvider.SOURCE
+                && state.getStatus() == MetadataState.Status.SUCCESS;
+        mBinding.metadataTabs.setVisibility(externalSelected ? View.GONE : View.VISIBLE);
+        mBinding.tabSource.setVisibility(tabsVisible && !externalSelected
+                && state.hasProviderOrCandidate(MetadataProvider.SOURCE) ? View.VISIBLE : View.GONE);
+        mBinding.tabDouban.setVisibility(tabsVisible && !externalSelected
+                && state.hasProviderOrCandidate(MetadataProvider.DOUBAN) ? View.VISIBLE : View.GONE);
+        mBinding.tabTmdb.setVisibility(tabsVisible && !externalSelected
+                && state.hasProviderOrCandidate(MetadataProvider.TMDB) ? View.VISIBLE : View.GONE);
+        // While a candidate is still pending, keep Douban first so the richer
+        // record is easy to confirm. Once it is resolved the provider tabs are
+        // hidden above and this ordering only affects the fallback state.
         reorderMetadataTabs(state.hasProviderOrCandidate(MetadataProvider.DOUBAN));
         mBinding.tabSource.setSelected(state.getSelectedProvider() == MetadataProvider.SOURCE);
         mBinding.tabDouban.setSelected(state.getSelectedProvider() == MetadataProvider.DOUBAN);
         mBinding.tabTmdb.setSelected(state.getSelectedProvider() == MetadataProvider.TMDB);
         setCandidateIndicator(mBinding.tabDouban, state.isPendingCandidate(MetadataProvider.DOUBAN));
         setCandidateIndicator(mBinding.tabTmdb, state.isPendingCandidate(MetadataProvider.TMDB));
+        int metadataUp = firstMetadataTabId();
+        if (metadataUp == 0) metadataUp = firstMediaTabId();
+        if (metadataUp == 0) metadataUp = R.id.video;
+        mBinding.content.setNextFocusUpId(metadataUp);
+        mBinding.keep.setNextFocusUpId(metadataUp);
+        mBinding.change.setNextFocusUpId(metadataUp);
+        refreshDetailTabsVisibility();
+        updateMetadataFocus();
         setR2Callback();
     }
 
@@ -682,6 +741,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         getIntent().putExtra("id", item.getId());
         putPic(getIntent(), item.getPic());
         mBinding.scroll.scrollTo(0, 0);
+        clearCast();
         mClock.setCallback(null);
         updateNavigationKey();
         player().reset();
@@ -738,6 +798,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         // measured frame of the new detail page.
         setMetadataTabsVisible(false);
         mArtworkAdapter.clear();
+        clearCast();
         mBinding.artworkTitle.setVisibility(View.GONE);
         mBinding.artworks.setVisibility(View.GONE);
         mBinding.backdrop.clear();
@@ -971,8 +1032,62 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             mBinding.tabSource.setVisibility(View.GONE);
             mBinding.tabDouban.setVisibility(View.GONE);
             mBinding.tabTmdb.setVisibility(View.GONE);
+            mBinding.tabArtworks.setVisibility(View.GONE);
+            mBinding.tabCasts.setVisibility(View.GONE);
+            mBinding.mediaRail.setVisibility(View.GONE);
         }
+        refreshDetailTabsVisibility();
         updateMetadataFocus();
+    }
+
+    private int firstMediaTabId() {
+        if (isVisible(mBinding.tabArtworks)) return R.id.tabArtworks;
+        if (isVisible(mBinding.tabCasts)) return R.id.tabCasts;
+        return 0;
+    }
+
+    private int selectedMediaTabId() {
+        return showArtworks && isVisible(mBinding.tabArtworks) ? R.id.tabArtworks
+                : isVisible(mBinding.tabCasts) ? R.id.tabCasts : firstMediaTabId();
+    }
+
+    private int selectedMediaRailId() {
+        return showArtworks && isVisible(mBinding.artworks) ? R.id.artworks
+                : isVisible(mBinding.casts) ? R.id.casts : 0;
+    }
+
+    private void refreshDetailTabsVisibility() {
+        boolean provider = isVisible(mBinding.metadataTabs);
+        boolean media = isVisible(mBinding.tabArtworks) || isVisible(mBinding.tabCasts);
+        mBinding.detailTabs.setVisibility(provider || media ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateMediaTabs() {
+        boolean hasArtworks = mArtworkAdapter != null && mArtworkAdapter.getItemCount() > 0;
+        boolean hasCasts = mCastAdapter != null && mCastAdapter.getItemCount() > 0;
+        if (hasArtworks) mBinding.tabArtworks.setText(getString(R.string.metadata_artworks_count, mArtworkAdapter.getItemCount()));
+        if (hasCasts) mBinding.tabCasts.setText(getString(R.string.metadata_cast_count, mCastAdapter.getItemCount()));
+        mBinding.tabArtworks.setVisibility(hasArtworks ? View.VISIBLE : View.GONE);
+        mBinding.tabCasts.setVisibility(hasCasts ? View.VISIBLE : View.GONE);
+        if (!hasArtworks && !hasCasts) {
+            mBinding.mediaRail.setVisibility(View.GONE);
+            refreshDetailTabsVisibility();
+            return;
+        }
+        if (showArtworks && !hasArtworks) showArtworks = false;
+        if (!showArtworks && !hasCasts) showArtworks = true;
+        mBinding.mediaRail.setVisibility(View.VISIBLE);
+        mBinding.artworks.setVisibility(showArtworks && hasArtworks ? View.VISIBLE : View.GONE);
+        mBinding.casts.setVisibility(!showArtworks && hasCasts ? View.VISIBLE : View.GONE);
+        mBinding.tabArtworks.setSelected(showArtworks && hasArtworks);
+        mBinding.tabCasts.setSelected(!showArtworks && hasCasts);
+        refreshDetailTabsVisibility();
+        updateMetadataFocus();
+    }
+
+    private void selectMediaTab(boolean artworks) {
+        showArtworks = artworks;
+        updateMediaTabs();
     }
 
     private int firstMetadataTabId() {
@@ -1002,15 +1117,26 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void updateMetadataFocus() {
         if (mBinding == null) return;
         int firstTab = firstMetadataTabId();
+        int firstDetailTab = firstTab != 0 ? firstTab : firstMediaTabId();
         int detailDown = detailDownTargetId();
-        mBinding.actor.setNextFocusDownId(firstTab != 0 ? firstTab : detailDown);
+        int actorDown = isVisible(mBinding.description)
+                ? R.id.description
+                : firstDetailTab != 0 ? firstDetailTab : detailDown;
+        mBinding.actor.setNextFocusDownId(actorDown);
         mBinding.tabSource.setNextFocusUpId(R.id.actor);
         mBinding.tabDouban.setNextFocusUpId(R.id.actor);
         mBinding.tabTmdb.setNextFocusUpId(R.id.actor);
         mBinding.tabSource.setNextFocusDownId(detailDown);
         mBinding.tabDouban.setNextFocusDownId(detailDown);
         mBinding.tabTmdb.setNextFocusDownId(detailDown);
-        mBinding.description.setNextFocusUpId(firstTab != 0 ? firstTab : R.id.actor);
+        mBinding.tabArtworks.setNextFocusUpId(R.id.actor);
+        mBinding.tabCasts.setNextFocusUpId(R.id.actor);
+        int mediaRail = selectedMediaRailId();
+        mBinding.tabArtworks.setNextFocusDownId(mediaRail != 0 ? mediaRail : detailDown);
+        mBinding.tabCasts.setNextFocusDownId(mediaRail != 0 ? mediaRail : detailDown);
+        mBinding.artworks.setNextFocusUpId(selectedMediaTabId());
+        mBinding.casts.setNextFocusUpId(selectedMediaTabId());
+        mBinding.description.setNextFocusUpId(firstDetailTab != 0 ? firstDetailTab : R.id.actor);
     }
 
     /**
@@ -1023,6 +1149,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
      */
     private int detailDownTargetId() {
         if (isVisible(mBinding.description)) return R.id.description;
+        int mediaTab = firstMediaTabId();
+        if (mediaTab != 0) return mediaTab;
         int action = firstDetailActionId();
         return action != 0 ? action : firstFocusRow();
     }
@@ -1119,8 +1247,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         // Fill the fixed-size adapter before exposing its row. Otherwise the
         // empty HorizontalGridView is measured at zero height for one frame and
         // pushes every property row down when its children arrive.
-        mBinding.artworkTitle.setVisibility(available ? View.VISIBLE : View.GONE);
-        mBinding.artworks.setVisibility(available ? View.VISIBLE : View.GONE);
+        updateMediaTabs();
         setR2Callback();
         if (providerArtwork && !isFullscreen()) {
             if (urls.isEmpty() && item.hasBackdrop()) urls.add(item.getBackdrop());
@@ -1139,19 +1266,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onArtworkFocus(int position, MovieArtwork artwork) {
         if (isFullscreen()) return;
-        ensureArtworkVisible();
         if (artwork == null || artwork.getUrl().isEmpty()) return;
         mArtworkAdapter.setSelectedPosition(position);
         mBinding.backdrop.selectCarouselItem(position);
-    }
-
-    /** Keep the focused poster row inside the visible detail viewport after scrolling. */
-    private void ensureArtworkVisible() {
-        mBinding.scroll.post(() -> {
-            if (!mBinding.artworks.hasFocus()) return;
-            int top = Math.max(0, mBinding.artworks.getTop() - mBinding.scroll.getPaddingTop());
-            if (mBinding.scroll.getScrollY() != top) mBinding.scroll.smoothScrollTo(0, top);
-        });
     }
 
     private void onBackdropArtworkChanged(int position) {
@@ -1195,7 +1312,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void updateDescriptionOverflow() {
         Layout layout = mBinding.description.getLayout();
-        boolean expandable = layout != null && layout.getLineCount() > 1 && layout.getEllipsisCount(layout.getLineCount() - 1) > 0;
+        boolean expandable = isVisible(mBinding.description) && layout != null && layout.getLineCount() > 0
+                && layout.getEllipsisCount(layout.getLineCount() - 1) > 0;
         mBinding.descriptionMore.setVisibility(expandable ? View.VISIBLE : View.GONE);
         mBinding.description.setContentDescription(expandable ? getString(R.string.tv_expand) : null);
         updateFocus();
@@ -1284,10 +1402,14 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.keep.setNextFocusUpId(detailUp);
         mBinding.change.setNextFocusUpId(detailUp);
         mBinding.content.setNextFocusUpId(detailUp);
-        mPartAdapter.setNextFocusUp(findFocusUp(5));
-        mEpisodeAdapter.setNextFocusUp(findFocusUp(3));
-        mFlagAdapter.setNextFocusDown(findFocusDown(1));
-        mEpisodeAdapter.setNextFocusDown(findFocusDown(3));
+        mBinding.artworks.setNextFocusUpId(findFocusUp(0));
+        mBinding.artworks.setNextFocusDownId(findFocusDown(0));
+        mBinding.casts.setNextFocusUpId(findFocusUp(1));
+        mBinding.casts.setNextFocusDownId(findFocusDown(1));
+        mPartAdapter.setNextFocusUp(findFocusUp(6));
+        mEpisodeAdapter.setNextFocusUp(findFocusUp(4));
+        mFlagAdapter.setNextFocusDown(findFocusDown(2));
+        mEpisodeAdapter.setNextFocusDown(findFocusDown(4));
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         notifyItemChanged(mBinding.part, mPartAdapter);
         notifyItemChanged(mBinding.flag, mFlagAdapter);
@@ -1345,13 +1467,19 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         } else if (isDescendantOrSelf(focused, mBinding.video)) {
             target = down ? firstFocusRow() : R.id.video;
         } else if (focused == mBinding.actor) {
-            target = down ? (firstMetadataTabId() != 0 ? firstMetadataTabId() : detailDownTargetId()) : R.id.video;
-        } else if (isDescendantOrSelf(focused, mBinding.metadataTabs)) {
-            target = down ? detailDownTargetId() : (isVisible(mBinding.actor) ? R.id.actor : R.id.video);
+            target = down
+                    ? (isVisible(mBinding.description) ? R.id.description
+                    : firstMetadataTabId() != 0 ? firstMetadataTabId() : detailDownTargetId())
+                    : R.id.video;
+        } else if (isDescendantOrSelf(focused, mBinding.detailTabs)) {
+            target = down
+                    ? (isDescendantOrSelf(focused, mBinding.mediaTabs) && selectedMediaRailId() != 0
+                            ? selectedMediaRailId() : detailDownTargetId())
+                    : (isVisible(mBinding.actor) ? R.id.actor : R.id.video);
         } else if (focused == mBinding.description) {
             target = down
-                    ? (firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow())
-                    : (firstMetadataTabId() != 0 ? firstMetadataTabId() : isVisible(mBinding.actor) ? R.id.actor : R.id.video);
+                    ? (firstMediaTabId() != 0 ? firstMediaTabId() : firstDetailActionId() != 0 ? firstDetailActionId() : firstFocusRow())
+                    : (firstMetadataTabId() != 0 ? firstMetadataTabId() : firstMediaTabId() != 0 ? firstMediaTabId() : isVisible(mBinding.actor) ? R.id.actor : R.id.video);
         } else if (!down && focused == mBinding.change) {
             // Source/Douban/TMDB are the semantic parent of the source-switch
             // action. Prefer the first available provider tab before falling
@@ -1385,6 +1513,17 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         return right ? focused.getId() : R.id.video;
     }
 
+    private int adjacentMediaTab(View focused, boolean right) {
+        int current = mBinding.mediaTabs.indexOfChild(focused);
+        if (current < 0) return 0;
+        int step = right ? 1 : -1;
+        for (int i = current + step; i >= 0 && i < mBinding.mediaTabs.getChildCount(); i += step) {
+            View tab = mBinding.mediaTabs.getChildAt(i);
+            if (isVisible(tab)) return tab.getId();
+        }
+        return right ? focused.getId() : (firstMetadataTabId() != 0 ? firstMetadataTabId() : R.id.video);
+    }
+
     private boolean moveDetailFocusHorizontal(boolean right) {
         View focused = getCurrentFocus();
         if (focused == null || isFullscreen() || isVisible(mBinding.control.getRoot())) return false;
@@ -1393,6 +1532,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             target = right ? firstDetailActionId() : R.id.video;
         } else if (isDescendantOrSelf(focused, mBinding.metadataTabs)) {
             target = adjacentMetadataTab(focused, right);
+        } else if (isDescendantOrSelf(focused, mBinding.mediaTabs)) {
+            target = adjacentMediaTab(focused, right);
         } else if (isDescendantOrSelf(focused, mBinding.row2)) {
             int current = -1;
             for (int i = 0; i < DETAIL_ACTION_IDS.length; i++) {
@@ -2090,7 +2231,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onRefreshEvent(RefreshEvent event) {
-        if (isRedirect()) return;
+        if (isRedirect() || !isActivePlaybackOwner()) return;
         if (event.getType() == RefreshEvent.Type.DETAIL) mVod.requestDetail();
         else if (event.getType() == RefreshEvent.Type.PLAYER) mVod.refresh();
         else if (event.getType() == RefreshEvent.Type.VOD) mVod.updateVod(event.getVod());
@@ -2346,14 +2487,17 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         // Pause rather than stop: preserve the prepared media and position so
         // OK can resume when returning from HOME, without a new source request.
         pausePlaybackWhenHidden();
-        if (!isFinishing()) saveHistory(false);
+        if (!isFinishing() && isActivePlaybackOwner()) saveHistory(false);
         if (!isInPictureInPictureMode()) mClock.stop();
         trace("VIDEO_ON_STOP_END");
     }
 
     private boolean pausePlaybackWhenHidden() {
         if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) return false;
-        if (isInPictureInPictureMode() || service() == null || !isOwner()) return false;
+        // A hidden Activity can remain subscribed while another detail Activity owns the
+        // shared playback service. Never let that stale observer pause the new session.
+        if (isInPictureInPictureMode() || service() == null || !isActivePlaybackOwner()) return false;
+        trace("VIDEO_PAUSE_HIDDEN");
         player().pause();
         return true;
     }
