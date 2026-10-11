@@ -9,7 +9,7 @@
     <integer name="tv_motion_drawer">280</integer>
     <integer name="tv_motion_osd_fade">500</integer>
     <integer name="tv_motion_osd_timeout">3000</integer>
-    <integer name="tv_motion_keycap">320</integer>
+    <integer name="tv_motion_keycap">260</integer>
     <integer name="tv_motion_skip">1500</integer>
     <integer name="tv_motion_press">350</integer>
     <integer name="tv_motion_shimmer">4500</integer>

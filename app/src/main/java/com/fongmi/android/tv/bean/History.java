@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.fongmi.android.tv.App;
@@ -15,6 +16,7 @@ import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.impl.Diffable;
+import com.fongmi.android.tv.playback.vod.VodResumeStore;
 import com.fongmi.android.tv.utils.Task;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
@@ -65,6 +67,22 @@ public class History implements Diffable<History> {
 
     private transient long saveTime;
 
+    // Supplemental resume metadata lives in preferences, not the Room schema.
+    @Ignore private transient long progressTime;
+    @Ignore private transient int episodeIndex = -1;
+    @Ignore private transient String resumeYear = "";
+    @Ignore private transient String resumeType = "";
+
+    public int getEpisodeIndex() { return episodeIndex; }
+    public void setEpisodeIndex(int value) { episodeIndex = value; }
+
+    public long getProgressTime() { return progressTime > 0 ? progressTime : canSave() ? createTime : 0; }
+    public void setProgressTime(long value) { progressTime = value; }
+    public String getResumeYear() { return resumeYear == null ? "" : resumeYear; }
+    public void setResumeYear(String value) { resumeYear = value; }
+    public String getResumeType() { return resumeType == null ? "" : resumeType; }
+    public void setResumeType(String value) { resumeType = value; }
+
     public History() {
         this.speed = 1;
         this.scale = -1;
@@ -109,6 +127,8 @@ public class History implements Diffable<History> {
     }
 
     public static void delete(int cid) {
+        for (History history : AppDatabase.get().getHistoryDao().findAll())
+            if (history.getCid() == cid) VodResumeStore.forget(history.getKey());
         AppDatabase.get().getHistoryDao().delete(cid);
     }
 
@@ -117,7 +137,10 @@ public class History implements Diffable<History> {
     }
 
     public static void clearAll() {
-        Task.executeSerial(() -> AppDatabase.get().getHistoryDao().delete());
+        Task.executeSerial(() -> {
+            for (History history : AppDatabase.get().getHistoryDao().findAll()) VodResumeStore.forget(history.getKey());
+            AppDatabase.get().getHistoryDao().delete();
+        });
     }
 
     public static void sync(List<History> targets) {
@@ -339,6 +362,10 @@ public class History implements Diffable<History> {
         item.speed = speed;
         item.scale = scale;
         item.cid = cid;
+        item.progressTime = progressTime;
+        item.episodeIndex = episodeIndex;
+        item.resumeYear = resumeYear;
+        item.resumeType = resumeType;
         return item;
     }
 
@@ -354,7 +381,8 @@ public class History implements Diffable<History> {
         List<History> matches = items.stream().filter(item -> item.shouldMerge(this, force)).toList();
         if (matches.isEmpty()) return this;
         matches.get(0).copyTo(this);
-        matches.forEach(History::delete);
+        // Source records are resume checkpoints, not duplicate display rows.
+        // Never delete another source's watched episode/progress during a save.
         return this;
     }
 
@@ -374,6 +402,7 @@ public class History implements Diffable<History> {
     }
 
     public History delete() {
+        VodResumeStore.forget(getKey());
         AppDatabase.get().getHistoryDao().delete(getCid(), getKey());
         AppDatabase.get().getTrackDao().delete(getKey());
         return this;

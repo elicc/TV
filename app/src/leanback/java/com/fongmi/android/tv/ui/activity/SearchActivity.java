@@ -111,12 +111,6 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         mBinding.sourceRow.setOnClickListener(v -> showSourceDialog());
         mBinding.manageRecords.setOnClickListener(this::manageRecords);
         mBinding.clearRecords.setOnClickListener(this::clearRecords);
-        mBinding.moreRecords.setOnClickListener(v -> {
-            boolean expand = !mRecordAdapter.isExpanded();
-            mRecordAdapter.setExpanded(expand);
-            updateRecordLayout();
-            if (!expand) mBinding.manageRecords.requestFocus();
-        });
         mBinding.recordRecycler.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             if (right - left != oldRight - oldLeft) mBinding.recordRecycler.post(this::updateRecordLayout);
         });
@@ -277,8 +271,24 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     private void updateRecordLayout() {
         mRecordAdapter.updateCollapsedCount(mBinding.recordRecycler);
-        mBinding.moreRecords.setVisibility(!mRecordAdapter.isEditing() && mRecordAdapter.hasOverflow() ? View.VISIBLE : View.GONE);
-        mBinding.moreRecords.setText(mRecordAdapter.isExpanded() ? R.string.tv_search_less : R.string.tv_search_more);
+    }
+
+    @Override
+    public void onToggleExpanded() {
+        int firstHidden = mRecordAdapter.getTogglePosition();
+        if (firstHidden == RecyclerView.NO_POSITION) return;
+        boolean expand = !mRecordAdapter.isExpanded();
+        mRecordAdapter.setExpanded(expand);
+        updateRecordLayout();
+        mBinding.recordRecycler.post(() -> {
+            if (isFinishing() || isDestroyed() || mRecordAdapter.isEditing()
+                    || mRecordAdapter.isExpanded() != expand) return;
+            int toggle = mRecordAdapter.getTogglePosition();
+            if (toggle == RecyclerView.NO_POSITION) return;
+            int target = expand ? Math.min(firstHidden, toggle - 1) : toggle;
+            RecyclerView.ViewHolder holder = mBinding.recordRecycler.findViewHolderForAdapterPosition(target);
+            if (holder != null) holder.itemView.requestFocus();
+        });
     }
 
     private void manageRecords(View view) {
@@ -431,13 +441,6 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         }
         if (current == mBinding.doubanStatus && KeyUtil.isUpKey(event)) return selectedCollectionTab().requestFocus();
         if (current == mBinding.keyword) return handleKeywordKey(event);
-        if (current == mBinding.moreRecords) {
-            if (KeyUtil.isUpKey(event)) {
-                View last = findNearestInLastRow(mBinding.recordRecycler, 0);
-                return last != null && last.requestFocus();
-            }
-            if (KeyUtil.isDownKey(event)) return focusDiscovery();
-        }
         if (current == mBinding.manageRecords || current == mBinding.clearRecords) {
             if (KeyUtil.isDownKey(event)) return focusFirst(mBinding.recordRecycler);
             if (KeyUtil.isUpKey(event)) return true;
@@ -525,7 +528,6 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         if (KeyUtil.isRightKey(event)) return isLastInRow(mBinding.wordRecycler, item);
         if (KeyUtil.isDownKey(event)) return isLastRow(mBinding.wordRecycler, item);
         if (KeyUtil.isUpKey(event) && isFirstRow(mBinding.wordRecycler, item)) {
-            if (mBinding.moreRecords.getVisibility() == View.VISIBLE) return mBinding.moreRecords.requestFocus();
             if (mBinding.recordLayout.getVisibility() == View.VISIBLE) {
                 View child = findNearestInLastRow(mBinding.recordRecycler, item.getLeft());
                 if (child != null) {
@@ -546,7 +548,6 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
             return true;
         }
         if (KeyUtil.isDownKey(event) && isLastRow(mBinding.recordRecycler, item)) {
-            if (mBinding.moreRecords.getVisibility() == View.VISIBLE) return mBinding.moreRecords.requestFocus();
             return focusDiscovery();
         }
         if (KeyUtil.isUpKey(event) || KeyUtil.isDownKey(event)) {

@@ -1,16 +1,22 @@
 package com.fongmi.android.tv.ui.custom;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.ui.motion.TvMotion;
@@ -21,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Remote-hint footer: keycap chips light up in the skin accent for ~320ms when
- * the matching key is pressed (Stitch key-pressed-active feedback). The bar is
+ * Remote-hint footer: a brief neutral text/border highlight acknowledges a key
+ * without competing with the actual focus target. The bar is
  * never focusable and never consumes events; activities forward key downs via
  * {@code BaseActivity.dispatchKeyEvent}.
  */
@@ -47,6 +53,8 @@ public class TvKeycapsBar extends LinearLayoutCompat {
     private final List<TextView> keycaps = new ArrayList<>();
     private final List<Cap> caps = new ArrayList<>();
     private TextView flashing;
+    private ValueAnimator feedbackAnimator;
+    private final Runnable pendingRevert = this::clearFeedback;
 
     public TvKeycapsBar(Context context) {
         this(context, null);
@@ -56,8 +64,6 @@ public class TvKeycapsBar extends LinearLayoutCompat {
         super(context, attrs);
         setOrientation(HORIZONTAL);
         setGravity(Gravity.CENTER_VERTICAL);
-        // Press feedback scales keycaps outside their resting bounds. In particular,
-        // the first cap grows into the start padding and must not lose its left edge.
         setClipChildren(false);
         setClipToPadding(false);
         setFocusable(false);
@@ -66,6 +72,7 @@ public class TvKeycapsBar extends LinearLayoutCompat {
 
     /** Rebuild the bar from the given keycaps and their action hints. */
     public void setCaps(Cap[] caps, String[] hints) {
+        clearFeedback();
         this.caps.clear();
         keycaps.clear();
         removeAllViews();
@@ -78,7 +85,7 @@ public class TvKeycapsBar extends LinearLayoutCompat {
     }
 
     public void onKeyEvent(KeyEvent event) {
-        if (event.getAction() != KeyEvent.ACTION_DOWN) return;
+        if (event.getAction() != KeyEvent.ACTION_DOWN || event.getRepeatCount() != 0) return;
         for (int i = 0; i < caps.size(); i++) if (matches(caps.get(i), event.getKeyCode())) flash(keycaps.get(i));
     }
 
@@ -88,21 +95,59 @@ public class TvKeycapsBar extends LinearLayoutCompat {
     }
 
     private void flash(TextView keycap) {
-        if (flashing != null) flashing.removeCallbacks(pendingRevert);
+        // Repeated navigation within this pulse must not restart or extend it.
+        if (flashing == keycap) return;
+        clearFeedback();
         flashing = keycap;
-        keycap.setTextColor(TvTheme.color(getContext(), R.attr.tvColorOnAccent));
-        keycap.setBackgroundResource(R.drawable.tv_keycap_active);
-        keycap.animate().scaleX(1.15f).scaleY(1.15f).setDuration(TvMotion.PRESS).start();
-        keycap.postDelayed(pendingRevert, TvMotion.KEYCAP);
+        GradientDrawable background = (GradientDrawable) keycap.getBackground().mutate();
+        int text = ContextCompat.getColor(getContext(), R.color.tv_text_secondary);
+        int activeText = ContextCompat.getColor(getContext(), R.color.tv_keycap_text_pressed);
+        int border = TvTheme.color(getContext(), R.attr.tvColorGlassBorder);
+        int activeBorder = ContextCompat.getColor(getContext(), R.color.tv_keycap_border_pressed);
+        if (!TvMotion.motionEnabled(this)) {
+            keycap.setTextColor(activeText);
+            background.setStroke(ResUtil.dp2px(1), activeBorder);
+            postDelayed(pendingRevert, TvMotion.KEYCAP);
+            return;
+        }
+        // 60ms in, 80ms hold, 120ms out; the glass fill and geometry never change.
+        feedbackAnimator = ValueAnimator.ofFloat(0f, TvMotion.KEYCAP);
+        feedbackAnimator.setDuration(TvMotion.KEYCAP);
+        feedbackAnimator.setInterpolator(new LinearInterpolator());
+        feedbackAnimator.addUpdateListener(animation -> {
+            float time = (float) animation.getAnimatedValue();
+            float amount = Math.max(0f, Math.min(1f, Math.min(time / 60f, (TvMotion.KEYCAP - time) / 120f)));
+            keycap.setTextColor(ColorUtils.blendARGB(text, activeText, amount));
+            background.setStroke(ResUtil.dp2px(1), ColorUtils.blendARGB(border, activeBorder, amount));
+        });
+        feedbackAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                clearFeedback();
+            }
+        });
+        feedbackAnimator.start();
     }
 
-    private final Runnable pendingRevert = () -> {
+    private void clearFeedback() {
+        removeCallbacks(pendingRevert);
+        if (feedbackAnimator != null) {
+            feedbackAnimator.removeAllListeners();
+            feedbackAnimator.removeAllUpdateListeners();
+            feedbackAnimator.cancel();
+            feedbackAnimator = null;
+        }
         if (flashing == null) return;
         flashing.setBackgroundResource(R.drawable.tv_keycap);
         flashing.setTextColor(ContextCompat.getColor(getContext(), R.color.tv_text_secondary));
-        flashing.animate().scaleX(1f).scaleY(1f).setDuration(TvMotion.PRESS).start();
         flashing = null;
-    };
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        clearFeedback();
+        super.onDetachedFromWindow();
+    }
 
     private TextView addKeycap(String label) {
         TextView view = new TextView(getContext(), null, 0);

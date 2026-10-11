@@ -15,7 +15,7 @@ public final class TvMotion {
     public static final long DRAWER = 280;
     public static final long OSD_FADE = 500;
     public static final long OSD_TIMEOUT = 3000;
-    public static final long KEYCAP = 320;
+    public static final long KEYCAP = 260;
     public static final long SKIP = 1500;
     public static final long PRESS = 350;
     public static final long SHIMMER = 4500;

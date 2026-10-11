@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="resume_confirm_title">Confirm playback progress</string>
+    <string name="resume_confirm_message">Found a previous checkpoint: %1$s. The source does not provide enough information to confirm the same title/season. Resume only if this is the same version.</string>
+    <string name="resume_missing_message">Previous checkpoint: %1$s. This source has no unambiguous matching episode. Choose another source/episode, or explicitly start over. Your saved progress is retained.</string>
+    <string name="resume_confirm_action">Same version, resume</string>
+    <string name="resume_start_over">Start from beginning</string>
+    <string name="resume_episode_missing">No matching episode on this line. Please choose an episode or another source.</string>
+    <string name="resume_position_message">Previous checkpoint: %1$s. The new stream has a different duration or did not seek to that position. Your progress is retained. Choose another source, or restart this episode.</string>
+</resources>

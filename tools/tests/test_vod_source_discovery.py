@@ -301,7 +301,7 @@ class SourceDiscoveryTests(unittest.TestCase):
 
     def test_controller_and_ui_wiring(self):
         controller = (MAIN / PACKAGE / "playback/vod/VodPlaybackController.java").read_text()
-        detail = controller[controller.index("private void detailLoaded("):controller.index("private History applyDetail(")]
+        detail = controller[controller.index("private void detailLoaded("):controller.index("private VodHistoryPolicy.Resolution applyDetail(")]
         self.assertLess(detail.index("restoreDetail("), detail.index("ensureSourcesLoaded();"))
         reset = controller[controller.index("public void reset()"):controller.index("public void checkId()")]
         self.assertIn("cancelSourceSearch();", reset)

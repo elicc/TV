@@ -105,6 +105,10 @@ public interface VodPlaybackHost {
 
     void renderHistory(History history);
 
+    void confirmResume(History source, boolean episodeAvailable, Runnable resume, Runnable startOver);
+
+    void confirmResumePosition(History source, Runnable restartEpisode);
+
     void renderUseParse(boolean useParse);
 
     void renderArtwork(String url);

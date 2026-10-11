@@ -35,23 +35,23 @@ class SearchHistoryTests(unittest.TestCase):
     def test_real_adapter_routes_mode_clicks_and_persists_deletion(self):
         files = {
             "androidx/annotation/NonNull.java": "package androidx.annotation; public @interface NonNull {}",
-            "android/content/Context.java": 'package android.content; public class Context { public String getString(int id, Object... args) { return "Delete " + args[0]; } }',
+            "android/content/Context.java": 'package android.content; public class Context { public String getString(int id, Object... args) { return args.length > 0 ? "Delete " + args[0] : id == 2 ? "更多" : "收起"; } }',
             "android/view/View.java": """package android.view; import android.content.Context;
                 public class View {
                     public static final int VISIBLE=0, GONE=8; public int visibility;
-                    public String text, description; public OnClickListener click; public OnLongClickListener hold;
+                    public int background; public String text, description; public OnClickListener click; public OnLongClickListener hold;
                     public OnKeyListener key; public View label; private int measuredWidth; private boolean forced=true;
                     public interface OnKeyListener { boolean onKey(View v,int code,KeyEvent e); }
                     public interface OnFocusChangeListener { void onFocusChange(View v,boolean focused); }
                     public static class MeasureSpec { public static final int AT_MOST=1, UNSPECIFIED=0; public static int makeMeasureSpec(int n,int mode){return n;} }
-                    private ViewGroup.LayoutParams params=new ViewGroup.MarginLayoutParams();
+                    private ViewGroup.LayoutParams params=new com.google.android.flexbox.FlexboxLayoutManager.LayoutParams();
                     public void setOnKeyListener(OnKeyListener l){key=l;}
                     public void setOnFocusChangeListener(OnFocusChangeListener l){}
                     public void setPressed(boolean p){}
                     public boolean performClick(){click.onClick(this);return true;}
                     public ViewGroup.LayoutParams getLayoutParams(){return params;}
                     public void setLayoutParams(ViewGroup.LayoutParams p){params=p;}
-                    public int getWidth(){return 200;}
+                    public int width=200; public int getWidth(){return width;}
                     public int getPaddingLeft(){return 0;} public int getPaddingRight(){return 0;}
                     public int getPaddingTop(){return 0;} public int getPaddingBottom(){return 0;}
                     public void measure(int w,int h){if(!forced)return;forced=false;measuredWidth=Math.min(w,28+(label==null?0:label.text.length()*10));}
@@ -65,6 +65,7 @@ class SearchHistoryTests(unittest.TestCase):
                     public Context getContext() { return new Context(); }
                     public void setVisibility(int v) {visibility=v;}
                     public void setText(String s) {text=s;}
+                    public void setBackgroundResource(int r){background=r;} public void setTextColor(Object c){}
                     public void setContentDescription(String s) {description=s;}
                 }""",
             "android/view/ViewGroup.java": """package android.view; public class ViewGroup extends View {
@@ -88,6 +89,7 @@ class SearchHistoryTests(unittest.TestCase):
                         public int getBindingAdapterPosition(){return position;}
                     }
                     public abstract static class Adapter<T extends ViewHolder> {
+                        public int getItemViewType(int p){return 0;}
                         public abstract int getItemCount();
                         public abstract T onCreateViewHolder(ViewGroup p,int t);
                         public abstract void onBindViewHolder(T h,int p);
@@ -104,7 +106,9 @@ class SearchHistoryTests(unittest.TestCase):
                     public View getRoot(){return root;}
                     public static AdapterSearchRecordBinding inflate(LayoutInflater i,ViewGroup p,boolean a){return last=new AdapterSearchRecordBinding();}
                 }""",
-            "com/fongmi/android/tv/R.java": "package com.fongmi.android.tv; public class R {public static class string {public static final int tv_search_delete_term=1;}}",
+            "com/fongmi/android/tv/R.java": "package com.fongmi.android.tv; public class R {public static class string {public static final int tv_search_delete_term=1,tv_search_more=2,tv_search_less=3;} public static class drawable {public static final int tv_search_record_action=4;} public static class color {public static final int selector_search_record_action=5;}}",
+            "androidx/appcompat/content/res/AppCompatResources.java": "package androidx.appcompat.content.res; public class AppCompatResources {public static Object getColorStateList(Object c,int r){return null;}}",
+            "com/google/android/flexbox/FlexboxLayoutManager.java": "package com.google.android.flexbox; public class FlexboxLayoutManager {public static class LayoutParams extends android.view.ViewGroup.MarginLayoutParams {public int maxWidth=Integer.MAX_VALUE;public boolean wrapBefore;public void setMaxWidth(int v){maxWidth=v;}public void setWrapBefore(boolean v){wrapBefore=v;}}}",
             "com/fongmi/android/tv/setting/Setting.java": 'package com.fongmi.android.tv.setting; public class Setting {static String value=""; public static String getKeyword(){return value;} public static void putKeyword(String s){value=s;}}',
             "com/google/gson/reflect/TypeToken.java": "package com.google.gson.reflect; public class TypeToken {public static TypeToken getParameterized(Class<?> a,Class<?> b){return new TypeToken();} public Object getType(){return null;}}",
             "com/fongmi/android/tv/App.java": """package com.fongmi.android.tv; import java.util.*;
@@ -121,11 +125,12 @@ import android.view.*;
 public class HistoryHarness {
     static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
     static class Listener implements RecordAdapter.OnClickListener {
-        int count, clicks, holds, deletes; String word; RecordAdapter removeFrom;
+        int count, clicks, holds, deletes, toggles; String word; RecordAdapter removeFrom;
         public void onItemClick(String s){clicks++;word=s;}
         public void onItemLongClick(String s){holds++;word=s;}
         public void onItemDelete(String s){deletes++;word=s;if(removeFrom!=null)removeFrom.remove(s);}
         public void onDataChanged(int c){count=c;}
+        public void onToggleExpanded(){toggles++;}
     }
     public static void main(String[] args){
         Listener l=new Listener(); RecordAdapter a=new RecordAdapter(l);
@@ -161,12 +166,29 @@ public class HistoryHarness {
         a.clear();
         for(int i=0;i<12;i++)a.add(String.valueOf((char)('A'+i)));
         ViewGroup parent=new ViewGroup();a.updateCollapsedCount(parent);
-        check(a.getItemCount()==8 && a.hasOverflow() && l.count==12,"two measured rows, total callback unchanged");
-        check(parent.getLayoutParams().height==88,"two full rows measured");
+        check(a.getItemCount()==7 && a.getTogglePosition()==6 && a.hasOverflow() && l.count==12,"two measured rows, total callback unchanged");
+        check(parent.getLayoutParams().height==88,"two full rows measured including More");
+        int toggle=a.getTogglePosition();
+        check(a.getItemViewType(toggle)==1 && a.getItemViewType(toggle-1)==0,"action has separate recycling type");
+        RecordAdapter.ViewHolder action=a.onCreateViewHolder(parent,1);
+        AdapterSearchRecordBinding actionBinding=AdapterSearchRecordBinding.last;
+        action.position=toggle;a.onBindViewHolder(action,toggle);
+        check(actionBinding.text.text.equals("更多") && actionBinding.text.background==4 && actionBinding.delete.visibility==View.GONE,"More is styled text without delete badge");
+        int clicks=l.clicks,holds=l.holds,deletes=l.deletes;String saved=Setting.getKeyword();
+        action.onClick(action.itemView);action.onLongClick(action.itemView);
+        check(l.toggles==1 && l.clicks==clicks && l.holds==holds && l.deletes==deletes && saved.equals(Setting.getKeyword()),"action cannot search, delete or persist history");
+        parent.width=400;a.updateCollapsedCount(parent);
+        check(a.getItemCount()==12 && a.getTogglePosition()==-1 && parent.getLayoutParams().height==88,"resize removes unnecessary action");
+        parent.width=200;a.updateCollapsedCount(parent);
         a.setExpanded(true);a.updateCollapsedCount(parent);
-        check(a.getItemCount()==12 && parent.getLayoutParams().height==132,"expanded full height");
+        check(a.getItemCount()==13 && parent.getLayoutParams().height==176,"expanded full height includes trailing pair");
+        h.position=11;a.onBindViewHolder(h,11);
+        check(((com.google.android.flexbox.FlexboxLayoutManager.LayoutParams)h.itemView.getLayoutParams()).wrapBefore,"last term wraps with Less rather than leaving action alone");
+        action.position=a.getTogglePosition();a.onBindViewHolder(action,action.position);
+        check(actionBinding.text.text.equals("收起"),"expanded action label");
+        action.onClick(action.itemView);check(l.toggles==2 && saved.equals(Setting.getKeyword()),"Less also only toggles");
         a.setExpanded(false);a.setEditing(true);a.updateCollapsedCount(parent);
-        check(a.getItemCount()==12,"editing bypasses folding");
+        check(a.getItemCount()==12 && a.getTogglePosition()==-1,"editing bypasses folding without an action");
         l.removeFrom=a;h.position=4;a.onBindViewHolder(h,4);int before=l.deletes;
         h.itemView.key.onKey(h.itemView,23,new KeyEvent(0,0,false));
         for(int i=1;i<20;i++)h.itemView.key.onKey(h.itemView,23,new KeyEvent(0,i,false));
@@ -183,18 +205,22 @@ public class HistoryHarness {
         h.itemView.key.onKey(h.itemView,23,new KeyEvent(1,0,false));
         check(l.deletes==before+1,"rebinding disarms a stale key press");
         a.setEditing(false);a.updateCollapsedCount(parent);
-        check(a.getItemCount()==8 && a.hasOverflow(),"exit returns to two rows");
+        check(a.getItemCount()==7 && a.hasOverflow(),"exit returns to two rows");
         a.clear();a.add("A");a.add("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");a.add("B");
         a.updateCollapsedCount(parent);
-        check(a.getItemCount()==2 && a.hasOverflow(),"oversized chip fills one row without overflow");
+        check(a.getItemCount()==3 && a.hasOverflow(),"oversized chip fills one row without overflow");
         a.setEditing(true);a.remove("B");a.setEditing(false);a.updateCollapsedCount(parent);
         check(a.getItemCount()==2 && !a.hasOverflow(),"more disappears when remaining terms fit");
         a.clear();
         for(int i=0;i<50;i++)a.add("W".repeat(40)+i);
         a.updateCollapsedCount(parent);
-        check(a.getItemCount()==2,"50 full-width terms collapse to two rows");
+        check(a.getItemCount()==3 && parent.getLayoutParams().height==88,"50 full-width terms collapse to two rows including action");
+        h.position=1;a.onBindViewHolder(h,1);
+        check(((com.google.android.flexbox.FlexboxLayoutManager.LayoutParams)h.itemView.getLayoutParams()).maxWidth==128,"long final term reserves action width and margins");
+        h.position=0;a.onBindViewHolder(h,0);
+        check(((com.google.android.flexbox.FlexboxLayoutManager.LayoutParams)h.itemView.getLayoutParams()).maxWidth==Integer.MAX_VALUE,"recycled ordinary term resets action constraints");
         a.setExpanded(true);a.updateCollapsedCount(parent);
-        check(a.getItemCount()==50 && parent.getLayoutParams().height==2200,"all 50 rows contribute to parent scroll height");
+        check(a.getItemCount()==51 && parent.getLayoutParams().height==2200,"all 50 rows contribute to parent scroll height");
         a.clear();a.add("A");a.add("B");a.add("C");
         Setting.putKeyword("NEW|C|B|A");
         a.remove("B");
@@ -249,13 +275,30 @@ public class HistoryHarness {
         self.assertIn("items.subList(RecordAdapter.MAX_RECORDS, items.size()).clear()", source)
         self.assertNotIn("items.remove(9)", source)
 
-    def test_more_is_focusable_and_management_bypasses_folding(self):
+    def test_toggle_is_inline_text_and_not_a_standalone_row(self):
         layout = ET.parse(RES / "layout/activity_search.xml").getroot()
-        more = next(n for n in layout.iter() if n.get(A + "id") == "@+id/moreRecords")
-        self.assertEqual("true", more.get(A + "focusable"))
+        self.assertFalse(any(n.get(A + "id") == "@+id/moreRecords" for n in layout.iter()))
+        chip = ET.parse(RES / "layout/adapter_search_record.xml").getroot()
+        self.assertEqual("true", chip.get(A + "focusable"))
+        adapter = (JAVA / "ui/adapter/RecordAdapter.java").read_text()
+        self.assertIn("return !editing && overflow ? visibleRecords() : RecyclerView.NO_POSITION", adapter)
         activity = (JAVA / "ui/activity/SearchActivity.java").read_text()
-        self.assertIn("!mRecordAdapter.isEditing() && mRecordAdapter.hasOverflow()", activity)
-        self.assertIn("mBinding.moreRecords.requestFocus()", activity)
+        self.assertNotIn("mBinding.moreRecords", activity)
+        self.assertIn("public void onToggleExpanded()", activity)
+        self.assertIn("int target = expand ? Math.min(firstHidden, toggle - 1) : toggle", activity)
+        drawable = ET.parse(RES / "drawable/tv_search_record_action.xml").getroot()
+        normal = list(drawable)[-1]
+        self.assertEqual("@android:color/transparent", normal.find("shape/solid").get(A + "color"))
+        self.assertIsNone(normal.find("shape/stroke"))
+        self.assertTrue(any(n.get(A + "state_focused") == "true" for n in drawable))
+        focused = next(n for n in drawable if n.get(A + "state_focused") == "true")
+        layers = focused.find("layer-list")
+        self.assertEqual("stack", layers.get(A + "paddingMode"))
+        text_padding = layers.find("item/shape/padding")
+        underline = list(layers)[-1]
+        self.assertEqual("8dp", text_padding.get(A + "bottom"))
+        self.assertEqual("4dp", underline.get(A + "bottom"))
+        self.assertEqual("1dp", underline.get(A + "height"))
 
     def test_row_refresh_is_deferred_and_remote_navigation_cannot_skip_long_chips(self):
         source = (JAVA / "ui/activity/SearchActivity.java").read_text()

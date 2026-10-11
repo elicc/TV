@@ -456,7 +456,7 @@ class TvThemeTests(unittest.TestCase):
             "tv_overscan_v": "24dp",
             "tv_keycaps_bar_height": "24dp",
             "tv_keycaps_top_gap": "6dp",
-            "tv_keycaps_bottom_inset": "0dp",
+            "tv_keycaps_bottom_inset": "12dp",
             "tv_focus_stroke": "1.5dp",
             "tv_radius_card": "16dp",
             "tv_radius_chip": "20dp",
@@ -569,6 +569,10 @@ class TvThemeTests(unittest.TestCase):
         self.assertIn("alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()", home)
         self.assertIn("Config.find(item.getCid())", presenter)
         self.assertIn("item.getCid() == VodConfig.getCid()", presenter)
+        self.assertIn("String source = item.getSiteKey()", presenter)
+        self.assertIn("if (!name.isEmpty()) source = name", presenter)
+        self.assertIn('config.getDesc() + " · " + source', presenter)
+        self.assertNotIn('item.getCid() == VodConfig.getCid() || config == null ? ""', presenter)
         self.assertIn("item.getCid() == VodConfig.getCid()", home)
         self.assertIn("History.clearAll()", home)
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <!-- Keep text padding from insetting the underline layer a second time. -->
+        <layer-list android:paddingMode="stack">
+            <item>
+                <shape>
+                    <solid android:color="@android:color/transparent" />
+                    <padding android:left="14dp" android:right="14dp" android:top="8dp" android:bottom="8dp" />
+                </shape>
+            </item>
+            <item android:gravity="bottom" android:height="1dp" android:left="14dp" android:right="14dp" android:bottom="4dp">
+                <shape>
+                    <solid android:color="?attr/tvColorFocus" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@android:color/transparent" />
+            <padding android:left="14dp" android:right="14dp" android:top="8dp" android:bottom="8dp" />
+        </shape>
+    </item>
+</selector>

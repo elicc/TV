@@ -86,7 +86,12 @@ public class HistoryPresenter extends Presenter {
         setClickListener(holder.view, item);
         holder.binding.name.setText(item.getVodName());
         Config config = Config.find(item.getCid());
-        String source = item.getCid() == VodConfig.getCid() || config == null ? "" : holder.view.getContext().getString(R.string.tv_history_source_label, config.getDesc());
+        String source = item.getSiteKey();
+        if (item.getCid() == VodConfig.getCid()) {
+            String name = item.getSiteName();
+            if (!name.isEmpty()) source = name;
+        } else if (config != null) source = config.getDesc() + " · " + source;
+        source = holder.view.getContext().getString(R.string.tv_history_source_label, source);
         holder.binding.site.setText(source);
         long seconds = Math.max(0, item.getPosition()) / 1000;
         String time = String.format(Locale.getDefault(), "%d:%02d", seconds / 60, seconds % 60);

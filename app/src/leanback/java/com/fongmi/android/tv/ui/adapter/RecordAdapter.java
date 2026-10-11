@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.fongmi.android.tv.App;
@@ -14,6 +15,7 @@ import com.fongmi.android.tv.databinding.AdapterSearchRecordBinding;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.utils.KeyUtil;
 import com.google.gson.reflect.TypeToken;
+import com.google.android.flexbox.FlexboxLayoutManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,9 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
     private boolean editing;
     private boolean expanded;
     private int collapsedCount = MAX_RECORDS;
+    private boolean overflow;
+    private boolean wrapLast;
+    private int lastMaxWidth = Integer.MAX_VALUE;
 
     public RecordAdapter(OnClickListener listener) {
         this.listener = listener;
@@ -44,6 +49,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
         void onItemLongClick(String text);
 
         void onItemDelete(String text);
+
+        void onToggleExpanded();
     }
 
     private List<String> getItems() {
@@ -85,51 +92,115 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
     }
 
     public boolean hasOverflow() {
-        return mItems.size() > collapsedCount;
+        return overflow;
     }
 
-    // Measure the actual chip layout: character counts do not predict CJK/Latin widths.
+    private int visibleRecords() {
+        return editing || expanded ? mItems.size() : Math.min(collapsedCount, mItems.size());
+    }
+
+    public int getTogglePosition() {
+        return !editing && overflow ? visibleRecords() : RecyclerView.NO_POSITION;
+    }
+
+    // Measure both terms and the inline action with their real padding/margins.
     public void updateCollapsedCount(ViewGroup parent) {
         int width = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();
         if (width <= 0) return;
         AdapterSearchRecordBinding chip = AdapterSearchRecordBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) chip.getRoot().getLayoutParams();
         int margins = params.leftMargin + params.rightMargin;
-        int row = 1, used = 0, count = 0, rowHeight = 0, height = 0, collapsedHeight = 0;
-        for (String item : mItems) {
-            chip.text.setText(item);
-            // This detached measuring view is never laid out, so setText's
-            // requestLayout alone may leave the previous measurement cached.
-            chip.text.forceLayout();
-            chip.getRoot().forceLayout();
-            chip.getRoot().measure(View.MeasureSpec.makeMeasureSpec(Math.max(0, width - margins), View.MeasureSpec.AT_MOST),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int size = chip.getRoot().getMeasuredWidth() + margins;
-            if (used > 0 && used + size > width) {
-                height += rowHeight;
-                if (row <= 2) collapsedHeight = height;
-                row++;
-                used = 0;
-                rowHeight = 0;
+        int[] widths = new int[mItems.size()];
+        int[] heights = new int[mItems.size()];
+        for (int i = 0; i < mItems.size(); i++) {
+            measureChip(chip, mItems.get(i), width - margins);
+            widths[i] = chip.getRoot().getMeasuredWidth() + margins;
+            heights[i] = chip.getRoot().getMeasuredHeight() + params.topMargin + params.bottomMargin;
+        }
+        Flow full = measureFlow(width, widths, heights, mItems.size(), 0, 0);
+        boolean nextOverflow = full.rows > 2;
+        int count = mItems.size();
+        Flow visible = full;
+        if (nextOverflow) {
+            styleAction(chip);
+            measureChip(chip, parent.getContext().getString(R.string.tv_search_more), width - margins);
+            int moreWidth = chip.getRoot().getMeasuredWidth() + margins;
+            int actionHeight = chip.getRoot().getMeasuredHeight() + params.topMargin + params.bottomMargin;
+            do {
+                count--;
+                visible = measureFlow(width, widths, heights, count, moreWidth, actionHeight);
+            } while (count > 1 && visible.rows > 2);
+            if (expanded && !editing) {
+                measureChip(chip, parent.getContext().getString(R.string.tv_search_less), width - margins);
+                visible = measureFlow(width, widths, heights, mItems.size(),
+                        chip.getRoot().getMeasuredWidth() + margins, actionHeight);
             }
-            used += size;
-            rowHeight = Math.max(rowHeight, chip.getRoot().getMeasuredHeight() + params.topMargin + params.bottomMargin);
-            if (row <= 2) count++;
         }
-        height += rowHeight;
-        if (row <= 2) collapsedHeight = height;
-        if (collapsedCount != count) {
-            collapsedCount = count;
-            if (!editing && !expanded) notifyDataSetChanged();
-        }
-        // Give the inner list its full height; only the surrounding NestedScrollView
-        // should scroll. This also keeps all 50 chips reachable in expanded mode.
-        int desiredHeight = (editing || expanded ? height : collapsedHeight) + parent.getPaddingTop() + parent.getPaddingBottom();
+        if (editing) visible = full;
+        int maxWidth = nextOverflow && !editing ? Math.max(0, visible.lastWidth - margins) : Integer.MAX_VALUE;
+        boolean changed = collapsedCount != count || overflow != nextOverflow
+                || wrapLast != visible.wrapLast || lastMaxWidth != maxWidth;
+        collapsedCount = count;
+        overflow = nextOverflow;
+        wrapLast = visible.wrapLast;
+        lastMaxWidth = maxWidth;
+        if (changed) notifyDataSetChanged();
+        // Only the surrounding NestedScrollView scrolls, including all 50 terms.
+        int desiredHeight = visible.height + parent.getPaddingTop() + parent.getPaddingBottom();
         ViewGroup.LayoutParams layout = parent.getLayoutParams();
         if (layout.height != desiredHeight) {
             layout.height = desiredHeight;
             parent.setLayoutParams(layout);
         }
+    }
+
+    private void measureChip(AdapterSearchRecordBinding chip, String text, int width) {
+        chip.text.setText(text);
+        // Detached views need forced measurement after text/background changes.
+        chip.text.forceLayout();
+        chip.getRoot().forceLayout();
+        chip.getRoot().measure(View.MeasureSpec.makeMeasureSpec(Math.max(0, width), View.MeasureSpec.AT_MOST),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+    }
+
+    private static class Flow {
+        int rows, height, lastWidth;
+        boolean wrapLast;
+    }
+
+    private Flow measureFlow(int width, int[] widths, int[] heights, int count, int actionWidth, int actionHeight) {
+        Flow flow = new Flow();
+        int used = 0, rowHeight = 0;
+        for (int i = 0; i < count; i++) {
+            boolean last = i == count - 1 && actionWidth > 0;
+            // Keep the final term and action together. Extremely long terms ellipsize
+            // instead of stranding More/Less on a line of its own.
+            int termWidth = last ? Math.min(widths[i], Math.max(0, width - actionWidth)) : widths[i];
+            int size = termWidth + (last ? actionWidth : 0);
+            boolean wrap = used > 0 && used + size > width;
+            if (wrap) {
+                flow.height += rowHeight;
+                flow.rows++;
+                used = 0;
+                rowHeight = 0;
+            }
+            used += size;
+            rowHeight = Math.max(rowHeight, Math.max(heights[i], last ? actionHeight : 0));
+            if (last) {
+                flow.wrapLast = wrap;
+                flow.lastWidth = termWidth;
+            }
+        }
+        if (count > 0) {
+            flow.rows++;
+            flow.height += rowHeight;
+        }
+        return flow;
+    }
+
+    private void styleAction(AdapterSearchRecordBinding binding) {
+        binding.text.setBackgroundResource(R.drawable.tv_search_record_action);
+        binding.text.setTextColor(AppCompatResources.getColorStateList(binding.getRoot().getContext(), R.color.selector_search_record_action));
     }
 
     public boolean isEditing() {
@@ -166,22 +237,35 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
 
     @Override
     public int getItemCount() {
-        return editing || expanded ? mItems.size() : Math.min(collapsedCount, mItems.size());
+        return visibleRecords() + (getTogglePosition() == RecyclerView.NO_POSITION ? 0 : 1);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position == getTogglePosition() ? 1 : 0;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(AdapterSearchRecordBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        AdapterSearchRecordBinding binding = AdapterSearchRecordBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        if (viewType == 1) styleAction(binding);
+        return new ViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.deleteKeyDown = false;
         holder.itemView.setPressed(false);
-        String text = mItems.get(position);
+        boolean action = position == getTogglePosition();
+        FlexboxLayoutManager.LayoutParams params = (FlexboxLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
+        boolean last = getTogglePosition() != RecyclerView.NO_POSITION && position == visibleRecords() - 1;
+        params.setMaxWidth(last ? lastMaxWidth : Integer.MAX_VALUE);
+        params.setWrapBefore(last && wrapLast);
+        holder.itemView.setLayoutParams(params);
+        String text = action ? holder.itemView.getContext().getString(expanded ? R.string.tv_search_less : R.string.tv_search_more) : mItems.get(position);
         holder.binding.text.setText(text);
-        holder.binding.delete.setVisibility(editing ? View.VISIBLE : View.GONE);
+        holder.binding.delete.setVisibility(editing && !action ? View.VISIBLE : View.GONE);
         holder.itemView.setContentDescription(editing
                 ? holder.itemView.getContext().getString(R.string.tv_search_delete_term, text) : text);
     }
@@ -221,7 +305,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
         public void onClick(View v) {
             int position = getBindingAdapterPosition();
             if (position == RecyclerView.NO_POSITION) return;
-            if (editing) listener.onItemDelete(mItems.get(position));
+            if (position == getTogglePosition()) listener.onToggleExpanded();
+            else if (editing) listener.onItemDelete(mItems.get(position));
             else listener.onItemClick(mItems.get(position));
         }
 
@@ -229,7 +314,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.ViewHolder
         public boolean onLongClick(View v) {
             int position = getBindingAdapterPosition();
             if (position == RecyclerView.NO_POSITION) return false;
-            if (editing) return true;
+            if (editing || position == getTogglePosition()) return true;
             listener.onItemLongClick(mItems.get(position));
             return true;
         }

@@ -1380,7 +1380,6 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        notifyKeycaps(event);
         // KeyUtil reports Menu on ACTION_UP so one physical press opens exactly one dialog.
         // Combining it with ACTION_DOWN would be impossible and made the shortcut inert.
         if (KeyUtil.isMenuKey(event)) {
@@ -1388,6 +1387,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             return true;
         }
         if (KeyUtil.isActionDown(event) && KeyUtil.isDownKey(event) && mBinding.toolbar.hasFocus()) {
+            // Other key downs reach BaseActivity; only this consumed path needs forwarding.
+            notifyKeycaps(event);
             if (getResources().getConfiguration().fontScale > 1.15f && !mBinding.utilities.hasFocus()) {
                 mBinding.sourceRow.requestFocus();
                 return true;

@@ -139,9 +139,16 @@ public class Flag implements Parcelable, Diffable<Flag> {
         return getPosition() >= 0 && getPosition() < getEpisodes().size();
     }
 
+    /** Capture the provider order before the UI reverses this list. */
+    public void indexEpisodes() {
+        for (int i = 0; i < episodes.size(); i++)
+            if (episodes.get(i).getIndex() < 0) episodes.get(i).setIndex(i);
+    }
+
     public void mergeEpisodes(List<Episode> items, boolean rev) {
         for (Episode item : items) {
             if (getEpisodes().contains(item)) continue;
+            item.setIndex(getEpisodes().size());
             if (rev) getEpisodes().add(0, item);
             else getEpisodes().add(item);
         }

@@ -187,18 +187,6 @@
                     android:overScrollMode="never"
                     tools:itemCount="6"
                     tools:listitem="@layout/adapter_search_record" />
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/moreRecords"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/selector_item_round"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:text="@string/tv_search_more"
-                    android:textColor="?attr/tvColorTextPrimary"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/word"

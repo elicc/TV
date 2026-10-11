@@ -23,7 +23,7 @@ public final class MetadataMatcher {
     public static String queryTitle(String value) {
         if (TextUtils.isEmpty(value)) return "";
         String title = Normalizer.normalize(value, Normalizer.Form.NFKC).trim();
-        String cleaned = title.replaceFirst("(?iu)\\s*\\(\\s*(?:臻彩|4k|8k|高清|超清|蓝光|蓝光版|抢先版|tc|ts|cam)\\s*\\)\\s*$", "").trim();
+        String cleaned = title.replaceFirst("(?iu)\\s*[\\[(]\\s*(?:臻彩|4k|8k|1080p|高清|超清|蓝光|蓝光版|抢先版|tc|ts|cam)\\s*[\\])]\\s*$", "").trim();
         return cleaned.isEmpty() ? title : cleaned;
     }
 
@@ -60,6 +60,45 @@ public final class MetadataMatcher {
 
     public static boolean isCandidate(double score) {
         return score >= CANDIDATE_THRESHOLD;
+    }
+
+    /** Stricter than artwork matching: a title-only score of 1 is not resume evidence. */
+    public static boolean isResumeSafe(MovieIdentity source, MovieMetadata candidate, boolean userVerified) {
+        if (resumeConflict(source, candidate)) return false;
+        if (userVerified) return true;
+        boolean year = hasBothYears(source.year(), candidate.getYear());
+        boolean people = hasBoth(source.director(), candidate.getDirectors()) && hasBoth(source.actor(), candidate.getActors())
+                && overlap(source.director(), candidate.getDirectors()) >= 0.8d && overlap(source.actor(), candidate.getActors()) >= 0.8d;
+        return (year || people) && score(source, candidate) >= AUTO_THRESHOLD;
+    }
+
+    public static boolean resumeConflict(MovieIdentity source, MovieMetadata candidate) {
+        if (source == null || candidate == null) return true;
+        if (hasBothYears(source.year(), candidate.getYear()) && !firstYear(source.year()).equals(firstYear(candidate.getYear()))) return true;
+        int sourceKind = mediaKind(source.type());
+        int candidateKind = mediaKind(candidate.getExternalType().isEmpty() ? candidate.getType() : candidate.getExternalType());
+        return (sourceKind != 0 && candidateKind != 0 && sourceKind != candidateKind)
+                || !sameResumeEdition(source.title(), candidate.getTitle());
+    }
+
+    public static boolean sameResumeEdition(String left, String right) {
+        return edition(left).equals(edition(right));
+    }
+
+    private static String edition(String title) {
+        String value = normalize(title);
+        java.util.regex.Matcher season = java.util.regex.Pattern.compile("第([零一二三四五六七八九十百0-9]+)[季部]|season([0-9]+)|s([0-9]+)", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(value);
+        String identity = season.find() ? season.group() : "";
+        java.util.regex.Matcher cut = java.util.regex.Pattern.compile("未删减|删减|加长|导演剪辑|重剪|合辑|合集|特别版|特別版|director.?scut|extended").matcher(value);
+        while (cut.find()) identity += ":" + cut.group();
+        return identity;
+    }
+
+    public static int mediaKind(String value) {
+        if (value == null) return 0;
+        if (value.contains("电影") || value.equalsIgnoreCase("movie")) return 1;
+        if (value.contains("电视剧") || value.contains("连续剧") || value.matches(".*(?:国产|欧美|韩|日|港|台|美|英)剧.*") || value.equalsIgnoreCase("tv")) return 2;
+        return 0;
     }
 
     public static boolean hardConflict(MovieIdentity source, MovieMetadata candidate) {

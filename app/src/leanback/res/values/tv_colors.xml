@@ -26,6 +26,9 @@
     <color name="tv_glass">#D1202024</color>
     <color name="tv_glass_raised">#F22A2A30</color>
     <color name="tv_glass_border">#14FFFFFF</color>
+    <!-- Footer feedback stays neutral and quieter than the actual focus target. -->
+    <color name="tv_keycap_text_pressed">#B8B8BE</color>
+    <color name="tv_keycap_border_pressed">#33FFFFFF</color>
     <!-- Top navigation, translated directly from code.html:
          bg-white/5, border-white/10, selected bg-white/10 and border-white/15. -->
     <!-- Opaque rendered equivalents sampled from the checked-in Stitch screen.

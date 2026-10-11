@@ -50,6 +50,7 @@ import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
+import com.fongmi.android.tv.ui.dialog.VodResumeDialog;
 import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
 import com.fongmi.android.tv.bean.Result;
@@ -139,6 +140,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
     private Runnable mR3;
     private Runnable mR4;
     private History mHistory;
+    private AlertDialog resumeDialog;
     private boolean fullscreen;
     private boolean useParse;
     private boolean metadataPrompted;
@@ -540,7 +542,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public boolean canTrackPlaybackProgress() {
-        return service() != null && isOwner() && player().isVod();
+        return isActivePlaybackOwner() && player().isVod() && !isIdle() && !isBuffering();
     }
 
     @Override
@@ -1265,6 +1267,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     protected void onScrubbingChanged(boolean scrubbing) {
+        if (scrubbing && mVod != null) mVod.onUserSeek();
         if (scrubbing) App.removeCallbacks(mR1);
         else if (isVisible(mBinding.control.getRoot())) setR1Callback();
     }
@@ -1288,9 +1291,27 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         });
     }
 
+    @Override
+    public void confirmResume(History source, boolean episodeAvailable, Runnable resume, Runnable startOver) {
+        if (resumeDialog != null) resumeDialog.dismiss();
+        resumeDialog = VodResumeDialog.show(this, source, episodeAvailable, resume, startOver);
+    }
+
+    @Override
+    public void confirmResumePosition(History source, Runnable restartEpisode) {
+        if (resumeDialog != null) resumeDialog.dismiss();
+        resumeDialog = VodResumeDialog.show(this, source, R.string.resume_position_message, false, () -> {}, restartEpisode);
+    }
+
+    @Override
+    protected boolean seekTo(long deltaMs) {
+        if (mVod != null) mVod.onUserSeek();
+        return super.seekTo(deltaMs);
+    }
+
     private void saveHistory(boolean exit) {
         PlaybackService service = service();
-        boolean owner = service != null && getPlaybackKey().equals(service.player().getKey());
+        boolean owner = isActivePlaybackOwner();
         long position = owner ? service.player().getPosition() : C.TIME_UNSET;
         long duration = owner ? service.player().getDuration() : C.TIME_UNSET;
         if (mVod != null) mVod.saveHistory(exit, System.currentTimeMillis(), position, duration);
@@ -1437,7 +1458,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public void onTimeChanged(long time) {
-        if (!isOwner() || !player().isVod()) return;
+        if (!canTrackPlaybackProgress()) return;
         long position = player().getPosition();
         long duration = player().getDuration();
         if (position < 0 || duration <= 0) return;
@@ -1612,6 +1633,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public void onSeekEnd(long time) {
+        if (mVod != null) mVod.onUserSeek();
         seekTo(time);
     }
 
@@ -1723,6 +1745,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     protected void onDestroy() {
+        if (resumeDialog != null) resumeDialog.dismiss();
         mClock.release();
         saveHistory(true);
         Timer.get().reset();

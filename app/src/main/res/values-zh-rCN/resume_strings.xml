@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="resume_confirm_title">确认续播进度</string>
+    <string name="resume_confirm_message">找到之前的进度：%1$s。当前源的信息不足以确认是同一影片、同一季，请确认版本一致后再续播。</string>
+    <string name="resume_missing_message">之前的进度：%1$s。当前源未找到唯一对应的集数。请选择其他源或集数，或明确选择从头播放；原进度会保留。</string>
+    <string name="resume_confirm_action">同一版本，继续播放</string>
+    <string name="resume_start_over">从头播放</string>
+    <string name="resume_episode_missing">当前线路未找到对应集数，请选择集数或其他源。</string>
+    <string name="resume_position_message">之前的进度：%1$s。新源的视频时长不符，或未能跳转到原播放位置。原进度已保留，请换源或从本集开头播放。</string>
+</resources>

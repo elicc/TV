@@ -37,11 +37,11 @@
     <!-- Long detail choices stay within roughly three regular 64dp chips. -->
     <dimen name="tv_choice_max_width">220dp</dimen>
     <dimen name="tv_keycap_height">32dp</dimen>
-    <!-- Compact footer band: match the 24dp keycap height so its lower edge
-         sits directly on the screen edge. The top gap remains independent. -->
+    <!-- Keep the compact keycap band, with breathing room below the chips.
+         The card-to-footer gap remains independent of the screen-edge inset. -->
     <dimen name="tv_keycaps_bar_height">24dp</dimen>
     <dimen name="tv_keycaps_top_gap">6dp</dimen>
-    <dimen name="tv_keycaps_bottom_inset">0dp</dimen>
+    <dimen name="tv_keycaps_bottom_inset">12dp</dimen>
     <dimen name="tv_seek_bar_height">4dp</dimen>
     <dimen name="tv_seek_scrubber_size">14dp</dimen>
     <!-- 380px drawer on the 1920x1080 Stitch raster becomes ~200dp logical. -->

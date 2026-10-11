@@ -46,6 +46,33 @@ public class MetadataRepository {
         return INSTANCE;
     }
 
+    public record PlaybackIdentity(String id, String type, boolean userVerified) {
+        public boolean sameWork(PlaybackIdentity other) {
+            return other != null && id.equals(other.id) && type.equals(other.type);
+        }
+    }
+
+    /** Cache-only. Never use getSelected(), which may expose an unconfirmed preview candidate. */
+    public PlaybackIdentity getPlaybackIdentity(MovieIdentity identity) {
+        if (identity == null || !identity.isValid()) return null;
+        try {
+            CachedMetadata saved = App.gson().fromJson(Prefers.getString(identity.mappingKey(MetadataProvider.DOUBAN)), CachedMetadata.class);
+            if (saved == null || saved.metadata == null || saved.updatedAt <= 0
+                    || System.currentTimeMillis() - saved.updatedAt >= DISK_TTL
+                    || !identityFingerprint(identity).equals(saved.fingerprint)
+                    || MetadataMatcher.resumeConflict(identity, saved.metadata)) return null;
+            MovieMetadata metadata = saved.metadata;
+            if (!metadata.getExternalId().matches("[0-9]+") || !saved.externalId.equals(metadata.getExternalId())
+                    || !("movie".equals(metadata.getExternalType()) || "tv".equals(metadata.getExternalType()))) return null;
+            // New cache entries preserve the evidence decision made with the full source details.
+            // Legacy/sparse entries must pass the stronger rule now, not merely have a high title score.
+            if (!saved.resumeEligible && !MetadataMatcher.isResumeSafe(identity, metadata, saved.userVerified)) return null;
+            return new PlaybackIdentity(metadata.getExternalId(), metadata.getExternalType(), saved.userVerified);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
     public MetadataState initial(MovieIdentity identity, Vod vod) {
         MovieMetadata source = MovieMetadata.fromSource(vod);
         return MetadataState.loading(identity, source);
@@ -381,7 +408,10 @@ public class MetadataRepository {
         saved.updatedAt = System.currentTimeMillis();
         // Artwork enrichment rewrites the same cache record. Never let that
         // optional refresh downgrade an explicit viewer confirmation.
-        saved.userVerified = userVerified || isUserVerified(key);
+        saved.userVerified = userVerified || isUserVerified(key, externalId);
+        PlaybackIdentity previous = getPlaybackIdentity(identity);
+        saved.resumeEligible = MetadataMatcher.isResumeSafe(identity, metadata, saved.userVerified)
+                || (previous != null && previous.id().equals(externalId) && previous.type().equals(metadata.getExternalType()));
         saved.metadata = metadata;
         Prefers.put(key, App.gson().toJson(saved));
         putBounded(memory, key, new CacheEntry(metadata, saved.updatedAt));
@@ -464,12 +494,12 @@ public class MetadataRepository {
         return !sourceTitle.isEmpty() && sourceTitle.equals(savedTitle);
     }
 
-    private static boolean isUserVerified(String key) {
+    private static boolean isUserVerified(String key, String externalId) {
         try {
             String persisted = Prefers.getString(key, "");
             if (persisted.isEmpty()) return false;
             CachedMetadata saved = App.gson().fromJson(persisted, CachedMetadata.class);
-            return saved != null && saved.userVerified;
+            return saved != null && saved.userVerified && externalId.equals(saved.externalId);
         } catch (RuntimeException ignored) {
             return false;
         }
@@ -504,6 +534,7 @@ public class MetadataRepository {
     }
 
     private static class CachedMetadata {
+        private boolean resumeEligible;
         private String externalId = "";
         private String fingerprint = "";
         private long updatedAt;
