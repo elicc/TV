@@ -2,6 +2,7 @@ package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.view.View;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -19,6 +20,7 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
     private final OnClickListener mListener;
     private final List<Episode> mItems;
     private final int maxWidth;
+    private int numberOffset = -1;
     private int nextFocusDown;
     private int nextFocusUp;
 
@@ -26,6 +28,15 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
         mListener = listener;
         mItems = new ArrayList<>();
         maxWidth = ResUtil.dp2px(220);
+    }
+
+    public EpisodeAdapter numbersOnly(int offset) {
+        numberOffset = offset;
+        return this;
+    }
+
+    public List<Episode> getItems() {
+        return new ArrayList<>(mItems);
     }
 
     public void addAll(List<Episode> items) {
@@ -100,10 +111,17 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.ViewHold
                 holder.binding.text.setEllipsize(TextUtils.TruncateAt.END);
             }
         });
-        holder.binding.text.setNextFocusUpId(nextFocusUp);
-        holder.binding.text.setNextFocusDownId(nextFocusDown);
+        holder.binding.text.setNextFocusUpId(numberOffset >= 0 && nextFocusUp == 0 ? View.NO_ID : nextFocusUp);
+        holder.binding.text.setNextFocusDownId(numberOffset >= 0 ? View.NO_ID : nextFocusDown);
         holder.binding.text.setSelected(item.isSelected());
-        holder.binding.text.setText(item.getDesc().concat(item.getName()));
+        holder.binding.text.setText(numberOffset >= 0
+                ? String.valueOf((item.getIndex() >= 0 ? item.getIndex() : numberOffset + position) + 1)
+                : item.getDesc().concat(item.getName()));
+        if (numberOffset >= 0) {
+            holder.binding.text.getLayoutParams().width = ResUtil.dp2px(48);
+            holder.binding.text.setMinHeight(ResUtil.dp2px(40));
+            holder.binding.text.setTextSize(18);
+        }
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));
     }
 

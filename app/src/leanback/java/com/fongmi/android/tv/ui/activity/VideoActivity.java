@@ -52,6 +52,7 @@ import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
+import com.fongmi.android.tv.ui.dialog.EpisodePickerDialog;
 import com.fongmi.android.tv.ui.dialog.VodResumeDialog;
 import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Parse;
@@ -130,7 +131,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
+public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, EpisodePickerDialog.Host, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private static final String TRACE_TAG = "PlaybackTrace";
     // Only rows below the fixed player belong to this vertical navigation chain.
@@ -166,6 +167,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private Runnable mR4;
     private History mHistory;
     private AlertDialog resumeDialog;
+    private int episodePickerGeneration;
+    private boolean episodePickerVisible;
     private boolean fullscreen;
     private boolean useParse;
     private boolean detailReady;
@@ -412,6 +415,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.control.action.opening.setDownListener(this::onOpeningSub);
         mBinding.control.action.next.setOnClickListener(view -> checkNext());
         mBinding.control.action.prev.setOnClickListener(view -> checkPrev());
+        mBinding.control.action.episodes.setOnClickListener(view -> showEpisodePicker());
         mBinding.control.action.scale.setOnClickListener(view -> onScale());
         mBinding.control.action.speed.setOnClickListener(view -> onSpeed());
         mBinding.control.action.reset.setOnClickListener(view -> onReset());
@@ -804,6 +808,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void prepareSource(Vod item) {
+        invalidateEpisodePicker();
         getIntent().putExtra("key", item.getSiteKey());
         getIntent().putExtra("id", item.getId());
         putPic(getIntent(), item.getPic());
@@ -945,6 +950,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderEpisodeSelection(Episode item) {
+        var picker = getSupportFragmentManager().findFragmentByTag(EpisodePickerDialog.TAG);
+        if (picker instanceof EpisodePickerDialog dialog) dialog.refreshSelection();
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         mBinding.episode.setSelectedPosition(mEpisodeAdapter.getPosition());
     }
@@ -1474,8 +1481,60 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mVod.selectFlag(item);
     }
 
+    private void updateEpisodeButton() {
+        boolean available = isFullscreen() && mEpisodeAdapter != null && mEpisodeAdapter.getItemCount() > 1;
+        mBinding.control.action.episodes.setVisibility(available ? View.VISIBLE : View.GONE);
+    }
+
+    private void showEpisodePicker() {
+        if (!isFullscreen() || mEpisodeAdapter.getItemCount() <= 1 || mHistory == null
+                || episodePickerVisible || getSupportFragmentManager().isStateSaved()) return;
+        episodePickerVisible = true;
+        App.removeCallbacks(mR1);
+        EpisodePickerDialog.create(episodePickerGeneration).showNow(getSupportFragmentManager(), EpisodePickerDialog.TAG);
+    }
+
+    private void invalidateEpisodePicker() {
+        if (episodePickerVisible && isVisible(mBinding.control.getRoot())) App.post(mR1, TvMotion.OSD_TIMEOUT);
+        episodePickerGeneration++;
+        episodePickerVisible = false;
+        var picker = getSupportFragmentManager().findFragmentByTag(EpisodePickerDialog.TAG);
+        if (picker instanceof EpisodePickerDialog dialog) dialog.dismissAllowingStateLoss();
+    }
+
+    @Override
+    public int episodePickerBottomOffset() {
+        return mBinding.control.getRoot().getHeight();
+    }
+
+    @Override
+    public List<Episode> episodePickerItems(int generation) {
+        return generation == episodePickerGeneration && isFullscreen() && mEpisodeAdapter != null && !isFinishing()
+                ? mEpisodeAdapter.getItems() : List.of();
+    }
+
+    @Override
+    public void pickEpisode(int generation, Episode episode) {
+        if (!episodePickerItems(generation).contains(episode)) return;
+        // Picking the playing item is a dismissal, not a replay request.
+        if (!episode.isSelected()) mVod.selectEpisode(episode);
+    }
+
+    @Override
+    public void closeEpisodePicker(int generation, boolean picked) {
+        if (generation != episodePickerGeneration || isFinishing() || isDestroyed()) return;
+        episodePickerVisible = false;
+        if (!isFullscreen()) return;
+        if (picked) {
+            hideControl();
+            mBinding.video.requestFocus();
+        } else showControl(mBinding.control.action.episodes);
+    }
+
     private void setEpisodeAdapter(List<Episode> items) {
+        invalidateEpisodePicker();
         mEpisodeAdapter.addAll(items);
+        updateEpisodeButton();
         setArrayAdapter(items.size());
         setRowVisibility(mBinding.episodeRow, mBinding.episode, !items.isEmpty());
         setR2Callback();
@@ -1734,7 +1793,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mKeyDown.setFull(true);
         setFullscreen(true);
         mFocus2 = null;
-        updateFullscreenProgress(player().getPosition(), player().getDuration());
+        refreshFullscreenProgress();
     }
 
     private void exitFullscreen() {
@@ -2004,6 +2063,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showControl(View view) {
+        if (!canUsePlaybackControls()) return;
+        updateEpisodeButton();
         if (isAdvancedControl(view)) setAdvancedControls(true);
         View osd = mBinding.control.getRoot();
         mBinding.fullscreenProgressBar.setVisibility(View.GONE);
@@ -2034,13 +2095,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
                         osd.setVisibility(View.GONE);
                         osd.setAlpha(1f);
                         osd.setTranslationY(0f);
-                        updateFullscreenProgress(player().getPosition(), player().getDuration());
+                        refreshFullscreenProgress();
                     }).start();
         } else {
             osd.setVisibility(View.GONE);
             osd.setAlpha(1f);
             osd.setTranslationY(0f);
-            updateFullscreenProgress(player().getPosition(), player().getDuration());
+            refreshFullscreenProgress();
         }
         // The center pause badge and time info stay on screen while playback is paused.
         if (!isMediaPaused()) hideInfo();
@@ -2092,7 +2153,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setR1Callback() {
-        if (isScrubbing()) return;
+        if (isScrubbing() || episodePickerVisible) return;
         App.post(mR1, TvMotion.OSD_TIMEOUT);
     }
 
@@ -2296,7 +2357,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             case Player.STATE_READY:
                 hideProgress();
                 player().reset();
-                updateFullscreenProgress(player().getPosition(), player().getDuration());
+                refreshFullscreenProgress();
                 mClock.setCallback(this);
                 break;
             case Player.STATE_ENDED:
@@ -2331,6 +2392,18 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         if (position < 0 || duration <= 0) return;
         updateFullscreenProgress(position, duration);
         mVod.onTimeChanged(time, position, duration);
+    }
+
+    /** The layout can enter fullscreen before either asynchronous playback connection exists. */
+    private void refreshFullscreenProgress() {
+        boolean ready = service() != null && isActivePlaybackOwner();
+        long position = ready ? player().getPosition() : C.TIME_UNSET;
+        long duration = ready ? player().getDuration() : C.TIME_UNSET;
+        updateFullscreenProgress(position, duration);
+    }
+
+    private boolean canUsePlaybackControls() {
+        return service() != null && controller() != null && isBindingOwner() && mHistory != null;
     }
 
     /** Updates the thin fullscreen-only progress line without affecting the OSD controls. */
@@ -2415,11 +2488,13 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private boolean onSeekBack() {
+        if (!canUsePlaybackControls()) return true;
         controller().seekBack();
         return true;
     }
 
     private boolean onSeekForward() {
+        if (!canUsePlaybackControls()) return true;
         controller().seekForward();
         return true;
     }
@@ -2430,6 +2505,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setFullscreen(boolean fullscreen) {
         this.fullscreen = fullscreen;
+        if (!fullscreen) invalidateEpisodePicker();
+        updateEpisodeButton();
         // The inline affordance is a root sibling, not a child of the synopsis.
         // Hide it immediately; restore overflow only after the detail layout returns.
         mBinding.descriptionMore.setVisibility(View.GONE);
@@ -2460,29 +2537,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private boolean movePlaybackActionFocus(boolean right) {
         if (!isVisible(mBinding.control.getRoot())) return false;
         View focused = getCurrentFocus();
-        View[] actions = {
-                mBinding.control.action.next,
-                mBinding.control.action.prev,
-                mBinding.control.action.opening,
-                mBinding.control.action.ending,
-                mBinding.control.action.scale,
-                mBinding.control.action.text,
-                mBinding.control.action.audio,
-                mBinding.control.action.video,
-                mBinding.control.action.danmaku,
-                mBinding.control.action.more,
-                mBinding.control.action.speed,
-                mBinding.control.action.parse,
-                mBinding.control.action.player,
-                mBinding.control.action.decode,
-                mBinding.control.action.reset,
-                mBinding.control.action.replay,
-                mBinding.control.action.repeat,
-                mBinding.control.action.edition,
-                mBinding.control.action.chapter,
-        };
         ArrayList<View> visible = new ArrayList<>();
-        for (View action : actions) if (isPlaybackActionVisible(action) && action.isFocusable()) visible.add(action);
+        collectPlaybackActions(mBinding.control.action.getRoot(), visible);
         int index = visible.indexOf(focused);
         if (index < 0 || visible.isEmpty()) return false;
         int targetIndex = (index + (right ? 1 : -1) + visible.size()) % visible.size();
@@ -2493,13 +2549,17 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         return target == focused || target.requestFocus();
     }
 
-    private boolean isPlaybackActionVisible(View view) {
-        View current = view;
-        while (current != null && current != mBinding.control.action.getRoot()) {
-            if (!isVisible(current)) return false;
-            current = current.getParent() instanceof View ? (View) current.getParent() : null;
+    /** Include runtime-injected actions (for example cloud danmaku) in visual order. */
+    private void collectPlaybackActions(View view, List<View> actions) {
+        if (view.getVisibility() != View.VISIBLE || !view.isEnabled()) return;
+        if (view.hasOnClickListeners() || (!(view instanceof ViewGroup) && view.isFocusable())) {
+            if (!view.isFocusable()) view.setFocusable(true);
+            if (view.getId() == View.NO_ID) view.setId(View.generateViewId());
+            view.setNextFocusDownId(view.getId());
+            actions.add(view);
+        } else if (view instanceof ViewGroup group) {
+            for (int i = 0; i < group.getChildCount(); i++) collectPlaybackActions(group.getChildAt(i), actions);
         }
-        return current == mBinding.control.action.getRoot() && isVisible(current);
     }
 
     @Override
@@ -2521,7 +2581,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         }
         if (isVisible(mBinding.control.getRoot())) setR1Callback();
         if (isVisible(mBinding.control.getRoot())) mFocus2 = getCurrentFocus();
-        if (isFullscreen() && isGone(mBinding.control.getRoot()) && mKeyDown.hasEvent(event) && service() != null) return mKeyDown.onKeyDown(event);
+        if (isFullscreen() && isGone(mBinding.control.getRoot()) && mKeyDown.hasEvent(event) && canUsePlaybackControls()) return mKeyDown.onKeyDown(event);
         if (KeyUtil.isMediaFastForward(event)) return onSeekForward();
         if (KeyUtil.isMediaRewind(event)) return onSeekBack();
         if (KeyUtil.isActionDown(event)) {
@@ -2537,6 +2597,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onSeeking(long time) {
+        if (!canUsePlaybackControls()) return;
         // CustomKeyDownVod reports a seek delta, while the progress line needs
         // the previewed absolute position.
         long duration = player().getDuration();
@@ -2553,6 +2614,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onSeekEnd(long time) {
+        if (!canUsePlaybackControls()) {
+            mKeyDown.reset();
+            return;
+        }
         if (mVod != null) mVod.onUserSeek();
         if (seekTo(time)) hideCenter();
         App.removeCallbacks(mR5);
@@ -2563,18 +2628,21 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onSpeedUp() {
+        if (!canUsePlaybackControls()) return;
         if (!player().isPlaying()) return;
         PlaybackAction.startSpeedPress(player(), mBinding.widget.message);
     }
 
     @Override
     public void onSpeedEnd() {
+        if (!canUsePlaybackControls()) return;
         PlaybackAction.hideSpeedHint(mBinding.widget.message);
         player().setSpeed(SpeedSetting.getPlayback());
     }
 
     @Override
     public void onKeyUp() {
+        if (!canUsePlaybackControls()) return;
         long position = player().getPosition();
         long duration = player().getDuration();
         if (player().canSetOpening(position, duration)) {
@@ -2593,6 +2661,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void onKeyCenter() {
+        if (!canUsePlaybackControls()) return;
         if (player().isPlaying()) onPaused();
         else if (player().isEmpty()) onRefresh();
         else onPlay();
@@ -2682,6 +2751,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     protected void onDestroy() {
+        invalidateEpisodePicker();
         if (resumeDialog != null) resumeDialog.dismiss();
         trace("VIDEO_ON_DESTROY_BEGIN");
         mBinding.atmosphere.clear();

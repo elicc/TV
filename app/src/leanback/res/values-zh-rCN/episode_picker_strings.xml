@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_playback_episodes">选集</string>
+    <string name="tv_episode_picker_title">选集 · 共 %1$d 集</string>
+    <string name="tv_episode_picker_current">正在播放：%1$d</string>
+    <string name="tv_episode_picker_range">%1$d–%2$d</string>
+</resources>

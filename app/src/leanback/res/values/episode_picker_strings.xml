@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_playback_episodes">Episodes</string>
+    <string name="tv_episode_picker_title">Select episode · Total: %1$d</string>
+    <string name="tv_episode_picker_current">Now playing: %1$d</string>
+    <string name="tv_episode_picker_range">%1$d–%2$d</string>
+</resources>

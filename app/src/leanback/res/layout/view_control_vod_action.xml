@@ -35,10 +35,20 @@
             android:minHeight="40dp" />
         <com.fongmi.android.tv.ui.custom.CustomUpDownView
             android:id="@+id/ending"
-            android:nextFocusRight="@id/scale"
+            android:nextFocusRight="@id/episodes"
             style="@style/PlaybackControl"
             android:layout_marginEnd="8dp"
             android:text="@string/play_ed"
+            android:textSize="18sp"
+            android:minHeight="40dp" />
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/episodes"
+            style="@style/PlaybackControl"
+            android:layout_marginEnd="8dp"
+            android:nextFocusLeft="@id/ending"
+            android:nextFocusRight="@id/scale"
+            android:text="@string/tv_playback_episodes"
+            android:visibility="gone"
             android:textSize="18sp"
             android:minHeight="40dp" />
         <com.google.android.material.textview.MaterialTextView
