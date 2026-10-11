@@ -17,6 +17,15 @@ import java.util.List;
 /** Compact, focusable cast cards used by the TV detail page. */
 public class CastAdapter extends RecyclerView.Adapter<CastAdapter.ViewHolder> {
     private final List<MovieCast> items = new ArrayList<>();
+    private final OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(String name);
+    }
+
+    public CastAdapter(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public void addAll(List<MovieCast> cast) {
         items.clear();
@@ -53,6 +62,12 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.ViewHolder> {
         Glide.with(holder.binding.avatar).clear(holder.binding.avatar);
         ImgUtil.load(name, avatar, holder.binding.avatar, true);
         holder.binding.getRoot().setContentDescription(character.isEmpty() ? name : name + " · " + character);
+        holder.binding.getRoot().setOnClickListener(view -> {
+            int current = holder.getBindingAdapterPosition();
+            if (current == RecyclerView.NO_POSITION || current >= items.size()) return;
+            MovieCast person = items.get(current);
+            if (person != null && !person.getName().isEmpty()) listener.onItemClick(person.getName());
+        });
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_douban_charts">豆瓣榜單</string>
+    <string name="tv_douban_hot_movies">熱門電影</string>
+    <string name="tv_douban_hot_tv">熱門電視劇</string>
+    <string name="tv_douban_showing">影院熱映</string>
+    <string name="tv_douban_recommendations">豆瓣相關推薦</string>
+    <string name="tv_douban_search_source">搜尋片源</string>
+    <string name="tv_douban_empty">暫無影片</string>
+    <string name="tv_douban_error">載入失敗，按確認重試</string>
+    <string name="tv_douban_no_recommendations">暫無推薦</string>
+    <string name="tv_douban_loading_recommendations">正在載入推薦…</string>
+</resources>

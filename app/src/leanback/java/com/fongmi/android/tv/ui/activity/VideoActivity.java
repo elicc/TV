@@ -35,6 +35,7 @@ import androidx.media3.ui.CaptionStyleCompat;
 import androidx.media3.ui.PlayerSeekView;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.SubtitleView;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
@@ -66,6 +67,8 @@ import com.fongmi.android.tv.metadata.MetadataState;
 import com.fongmi.android.tv.metadata.MetadataCandidate;
 import com.fongmi.android.tv.metadata.MovieArtwork;
 import com.fongmi.android.tv.metadata.MovieCast;
+import com.fongmi.android.tv.metadata.RecommendationState;
+import com.fongmi.android.tv.ui.adapter.DoubanMovieAdapter;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.ui.adapter.ArtworkAdapter;
 import com.fongmi.android.tv.ui.adapter.CastAdapter;
@@ -77,6 +80,7 @@ import com.fongmi.android.tv.playback.vod.VodDetailResult;
 import com.fongmi.android.tv.playback.vod.VodPlayRequest;
 import com.fongmi.android.tv.playback.vod.VodPlaybackController;
 import com.fongmi.android.tv.playback.vod.VodPlaybackHost;
+import com.fongmi.android.tv.playback.vod.VodSourceResult;
 import com.fongmi.android.tv.playback.vod.VodPlaybackMedia;
 import com.fongmi.android.tv.player.media.PlaySpec;
 import com.fongmi.android.tv.service.PlaybackService;
@@ -90,6 +94,7 @@ import com.fongmi.android.tv.ui.adapter.FlagAdapter;
 import com.fongmi.android.tv.ui.adapter.PartAdapter;
 import com.fongmi.android.tv.ui.adapter.QualityAdapter;
 import com.fongmi.android.tv.ui.adapter.QuickAdapter;
+import com.fongmi.android.tv.ui.adapter.QuickStatusAdapter;
 import com.fongmi.android.tv.ui.custom.CustomKeyDownVod;
 import com.fongmi.android.tv.ui.custom.CustomMovement;
 import com.fongmi.android.tv.ui.motion.TvMotion;
@@ -126,11 +131,14 @@ import java.util.Objects;
 public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private static final String TRACE_TAG = "PlaybackTrace";
-    private static final int[] DETAIL_ROW_IDS = {R.id.artworks, R.id.casts, R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick};
+    // Only rows below the fixed player belong to this vertical navigation chain.
+    // Header artwork/cast rails are reached independently through their media tabs.
+    private static final int[] DETAIL_ROW_IDS = {R.id.flag, R.id.quality, R.id.episode, R.id.array, R.id.part, R.id.quick, R.id.recommendations, R.id.recommendationStatus};
     private static final int[] DETAIL_ACTION_IDS = {R.id.content, R.id.change, R.id.keep};
 
     private ActivityVideoBinding mBinding;
     private VideoViewModel mViewModel;
+    private DoubanMovieAdapter mRecommendationAdapter;
     private VodPlaybackController mVod;
     private FlagAdapter mFlagAdapter;
     private EpisodeAdapter mEpisodeAdapter;
@@ -138,6 +146,11 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private ArrayAdapter mArrayAdapter;
     private PartAdapter mPartAdapter;
     private QuickAdapter mQuickAdapter;
+    private QuickStatusAdapter mQuickStatusAdapter;
+    private boolean mSourceHasMore;
+    private boolean mSourceLoading;
+    private long mSourceGeneration;
+    private int mSourcePageRequestedAtCount = -1;
     private ArtworkAdapter mArtworkAdapter;
     private CastAdapter mCastAdapter;
     private ViewGroup.LayoutParams mFrameParams;
@@ -438,7 +451,16 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.artworks.setAdapter(mArtworkAdapter = new ArtworkAdapter(this::onArtworkFocus));
         mBinding.casts.setHorizontalSpacing(ResUtil.dp2px(2));
         mBinding.casts.setRowHeight(ResUtil.dp2px(54));
-        mBinding.casts.setAdapter(mCastAdapter = new CastAdapter());
+        mBinding.casts.setAdapter(mCastAdapter = new CastAdapter(name -> CollectActivity.start(this, name)));
+        // A vertical NestedScrollView supplies an UNSPECIFIED height. Leanback's
+        // default rowHeight=0 derives its row from that zero viewport; explicitly
+        // measure card contents instead (including text at the user's font scale).
+        mBinding.recommendations.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        mBinding.recommendationStatus.setOnClickListener(view -> mViewModel.retryRecommendations());
+        mBinding.recommendations.setHorizontalSpacing(ResUtil.dp2px(12));
+        mBinding.recommendations.setItemAnimator(null);
+        mBinding.recommendations.setAdapter(mRecommendationAdapter = new DoubanMovieAdapter(
+                item -> CollectActivity.start(this, item.getTitle()), true));
         mBinding.flag.setHorizontalSpacing(ResUtil.dp2px(8));
         mBinding.flag.setRowHeight(ResUtil.dp2px(36));
         mBinding.flag.setAdapter(mFlagAdapter = new FlagAdapter(this));
@@ -455,8 +477,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.part.setRowHeight(ResUtil.dp2px(36));
         mBinding.part.setAdapter(mPartAdapter = new PartAdapter(item -> mVod.search(item)));
         mBinding.quick.setHorizontalSpacing(ResUtil.dp2px(8));
-        mBinding.quick.setRowHeight(ResUtil.dp2px(62));
-        mBinding.quick.setAdapter(mQuickAdapter = new QuickAdapter(this));
+        // Three text lines plus drawable padding exceed 62dp on some TV fonts.
+        // Measure their natural height, including the user's font scale.
+        mBinding.quick.setRowHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        mQuickAdapter = new QuickAdapter(this);
+        mQuickStatusAdapter = new QuickStatusAdapter(this::onSourceStatusClick);
+        mBinding.quick.setAdapter(new ConcatAdapter(mQuickAdapter, mQuickStatusAdapter));
+        mBinding.quick.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
+            @Override
+            public void onChildViewHolderSelected(RecyclerView parent, RecyclerView.ViewHolder child, int position, int subposition) {
+                if (child != null && child.itemView.hasFocus()) {
+                    mBinding.quick.post(() -> loadMoreSourcesNearEnd(position));
+                }
+            }
+        });
     }
 
     private void setVideoView() {
@@ -479,7 +513,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         observeWhenServiceReady(mViewModel.getDetail(), this::onDetailObserved);
         observeWhenServiceReady(mViewModel.getMetadata(), this::onMetadataObserved);
         observeWhenServiceReady(mViewModel.getCast(), this::onCastObserved);
-        observeWhenServiceReady(mViewModel.getSearch(), this::onSearchObserved);
+        observeWhenServiceReady(mViewModel.getRecommendations(), this::onRecommendationsObserved);
+        observeWhenServiceReady(mViewModel.getSources(), this::onSearchObserved);
         observeWhenServiceReady(mViewModel.getPreload(), this::onPreloadObserved);
         observeWhenServiceReady(mViewModel.getPlayback(), this::onPlaybackObserved);
     }
@@ -491,6 +526,35 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private void onMetadataObserved(MetadataState state) {
         if (state == null) return;
         commitDetailLayout(() -> applyMetadataState(state));
+    }
+
+    private void onRecommendationsObserved(RecommendationState state) {
+        if (state == null) return;
+        commitDetailLayout(() -> {
+            boolean hadFocus = mBinding.recommendations.hasFocus() || mBinding.recommendationStatus.hasFocus();
+            RecommendationState.Status status = state.getStatus();
+            boolean visible = detailReady && status != RecommendationState.Status.IDLE;
+            boolean hasItems = visible && status == RecommendationState.Status.READY;
+            if (hasItems) mRecommendationAdapter.setItems(state.getItems());
+            else mRecommendationAdapter.clear();
+            mBinding.recommendations.setVisibility(hasItems ? View.VISIBLE : View.GONE);
+            mBinding.recommendationStatus.setVisibility(visible && !hasItems ? View.VISIBLE : View.GONE);
+            mBinding.recommendationStatus.setText(status == RecommendationState.Status.EMPTY
+                    ? R.string.tv_douban_no_recommendations : status == RecommendationState.Status.ERROR
+                    ? R.string.tv_douban_error : R.string.tv_douban_loading_recommendations);
+            mBinding.recommendationStatus.setClickable(status == RecommendationState.Status.ERROR);
+            mBinding.recommendationsRow.setVisibility(visible ? View.VISIBLE : View.GONE);
+            setR2Callback();
+            if (hadFocus) {
+                if (hasItems) mBinding.recommendations.requestFocus();
+                else if (visible) mBinding.recommendationStatus.requestFocus();
+                else {
+                    int target = adjacentFocusRow(R.id.recommendations, false);
+                    View previous = findViewById(target);
+                    if (previous != null) previous.requestFocus();
+                }
+            }
+        });
     }
 
     private void onCastObserved(List<MovieCast> cast) {
@@ -638,8 +702,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mVod.onPreloadResult(result);
     }
 
-    private void onSearchObserved(Result result) {
-        mVod.onSearchResult(result);
+    private void onSearchObserved(VodSourceResult result) {
+        commitDetailLayout(() -> mVod.onSearchResult(result));
     }
 
     @Override
@@ -901,8 +965,63 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderSources(List<Vod> items) {
-        mQuickAdapter.addAll(items);
+        mQuickStatusAdapter.setStatus(0, false);
+        mQuickAdapter.setItems(items);
         setRowVisibility(mBinding.quickRow, mBinding.quick, !mQuickAdapter.isEmpty());
+    }
+
+    @Override
+    public boolean discoverSourcesOnDetail() {
+        return !SiteApi.PUSH.equals(getKey());
+    }
+
+    @Override
+    public void renderSourceSearch(VodSourceResult result) {
+        View focused = mBinding.quick.findFocus();
+        boolean statusFocused = focused != null && focused.getId() == R.id.quickStatus;
+        boolean firstItems = mQuickAdapter.isEmpty() && !result.items().isEmpty();
+        if (mSourceGeneration != result.generation()) mSourcePageRequestedAtCount = -1;
+        mSourceGeneration = result.generation();
+        mSourceHasMore = result.hasMore();
+        mSourceLoading = result.isLoading();
+        mQuickAdapter.setItems(result.items());
+        boolean hasItems = !mQuickAdapter.isEmpty();
+        VodSourceResult.Status status = result.status();
+        boolean showStatus = status != VodSourceResult.Status.IDLE
+                && (!hasItems || result.isLoading() || result.hasMore() || result.failed() > 0);
+        int message = result.isLoading() ? R.string.detail_sources_loading
+                : result.hasMore() ? R.string.detail_sources_more
+                : status == VodSourceResult.Status.DISABLED ? R.string.detail_sources_disabled
+                : status == VodSourceResult.Status.ERROR ? R.string.detail_sources_error
+                : hasItems ? R.string.detail_sources_partial : R.string.detail_sources_empty;
+        mQuickStatusAdapter.setStatus(showStatus ? message : 0,
+                showStatus && !result.isLoading() && status != VodSourceResult.Status.DISABLED);
+        setRowVisibility(mBinding.quickRow, mBinding.quick, hasItems || showStatus);
+        // Reset after Leanback consumes insertion offsets, not before layout.
+        if (firstItems) mBinding.quick.resetToStartAfterLayout();
+        // Removing the focused footer should land on the last playable source,
+        // not jump to another detail row. Other updates retain normal grid focus.
+        if (statusFocused && !showStatus && hasItems) {
+            mBinding.quick.setSelectedPosition(mQuickAdapter.getItemCount() - 1);
+            mBinding.quick.requestFocus();
+        }
+    }
+
+    private void onSourceStatusClick() {
+        if (mSourceHasMore) mVod.loadMoreSources();
+        else mVod.retrySources();
+    }
+
+    private void loadMoreSourcesNearEnd(int position) {
+        int count = mQuickAdapter.getItemCount();
+        if (isFinishing() || isDestroyed() || !mBinding.quick.hasFocus()
+                || mBinding.quick.getSelectedPosition() != position || mSourceLoading || !mSourceHasMore) return;
+        // Last visible page of source cards (the footer itself is an explicit
+        // button). One request per result count prevents empty batches from
+        // draining every remaining site through selection/layout callbacks.
+        if (position < Math.max(0, count - 4) || position >= count || mSourcePageRequestedAtCount == count) return;
+        mSourcePageRequestedAtCount = count;
+        mVod.loadMoreSources();
     }
 
     @Override
@@ -951,7 +1070,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     @Override
     public void onSearchStarted(String keyword) {
         mBinding.part.setTag(keyword);
-        mQuickAdapter.clear();
     }
 
     @Override
@@ -1014,6 +1132,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void showSkeleton(boolean show) {
+        if (show && mRecommendationAdapter != null) {
+            mRecommendationAdapter.clear();
+            mBinding.recommendations.setVisibility(View.GONE);
+            mBinding.recommendationsRow.setVisibility(View.GONE);
+            mBinding.recommendationStatus.setVisibility(View.GONE);
+        }
         if (show) setMetadataTabsVisible(false);
         mBinding.skeletonMeta.setVisibility(show ? View.VISIBLE : View.GONE);
         mBinding.skeletonEpisode.setVisibility(show ? View.VISIBLE : View.GONE);
@@ -1188,9 +1312,9 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
         mBinding.name.setText(item.getTitle());
         setText(mBinding.site, 0, getSite().getName());
-        setText(mBinding.year, R.string.detail_year, item.getYear());
-        setText(mBinding.area, R.string.detail_area, item.getArea());
-        setText(mBinding.type, R.string.detail_type, item.getType());
+        setText(mBinding.year, 0, item.getYear());
+        setText(mBinding.area, 0, item.getArea());
+        setText(mBinding.type, 0, item.getType());
         setText(mBinding.director, R.string.detail_director, item.getDirectors());
         setText(mBinding.actor, R.string.detail_actor, item.getActors());
         setDescription(item.getSummary());
@@ -1282,10 +1406,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.actor.setMaxLines(1);
         mBinding.actor.setEllipsize(TextUtils.TruncateAt.END);
         setDescription(item.getContent());
-        setText(mBinding.year, R.string.detail_year, item.getYear());
-        setText(mBinding.area, R.string.detail_area, item.getArea());
-        setText(mBinding.type, R.string.detail_type, item.getTypeName());
-        setText(mBinding.site, R.string.detail_site, getSite().getName());
+        setText(mBinding.year, 0, item.getYear());
+        setText(mBinding.area, 0, item.getArea());
+        setText(mBinding.type, 0, item.getTypeName());
+        setText(mBinding.site, 0, getSite().getName());
         setText(mBinding.director, R.string.detail_director, item.getDirector());
         setText(mBinding.actor, R.string.detail_actor, item.getActor());
         setText(mBinding.remark, 0, item.getRemarks());
@@ -1312,7 +1436,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void updateDescriptionOverflow() {
         Layout layout = mBinding.description.getLayout();
-        boolean expandable = isVisible(mBinding.description) && layout != null && layout.getLineCount() > 0
+        boolean expandable = !isFullscreen() && isVisible(mBinding.description) && layout != null && layout.getLineCount() > 0
                 && layout.getEllipsisCount(layout.getLineCount() - 1) > 0;
         mBinding.descriptionMore.setVisibility(expandable ? View.VISIBLE : View.GONE);
         mBinding.description.setContentDescription(expandable ? getString(R.string.tv_expand) : null);
@@ -1380,16 +1504,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         setRowVisibility(mBinding.arrayRow, mBinding.array, size > 1);
     }
 
-    private int findFocusDown(int index) {
-        for (int i = index + 1; i < DETAIL_ROW_IDS.length; i++) if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
-        return 0;
-    }
-
-    private int findFocusUp(int index) {
-        for (int i = index - 1; i >= 0; i--) if (isVisible(findViewById(DETAIL_ROW_IDS[i]))) return DETAIL_ROW_IDS[i];
-        return 0;
-    }
-
     private void updateFocus() {
         int firstRow = firstFocusRow();
         int descriptionDown = firstDetailActionId() != 0 ? firstDetailActionId() : firstRow;
@@ -1402,14 +1516,12 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mBinding.keep.setNextFocusUpId(detailUp);
         mBinding.change.setNextFocusUpId(detailUp);
         mBinding.content.setNextFocusUpId(detailUp);
-        mBinding.artworks.setNextFocusUpId(findFocusUp(0));
-        mBinding.artworks.setNextFocusDownId(findFocusDown(0));
-        mBinding.casts.setNextFocusUpId(findFocusUp(1));
-        mBinding.casts.setNextFocusDownId(findFocusDown(1));
-        mPartAdapter.setNextFocusUp(findFocusUp(6));
-        mEpisodeAdapter.setNextFocusUp(findFocusUp(4));
-        mFlagAdapter.setNextFocusDown(findFocusDown(2));
-        mEpisodeAdapter.setNextFocusDown(findFocusDown(4));
+        mBinding.artworks.setNextFocusDownId(R.id.change);
+        mBinding.casts.setNextFocusDownId(R.id.change);
+        mPartAdapter.setNextFocusUp(adjacentFocusRow(R.id.part, false));
+        mEpisodeAdapter.setNextFocusUp(adjacentFocusRow(R.id.episode, false));
+        mFlagAdapter.setNextFocusDown(adjacentFocusRow(R.id.flag, true));
+        mEpisodeAdapter.setNextFocusDown(adjacentFocusRow(R.id.episode, true));
         notifyItemChanged(mBinding.episode, mEpisodeAdapter);
         notifyItemChanged(mBinding.part, mPartAdapter);
         notifyItemChanged(mBinding.flag, mFlagAdapter);
@@ -1466,6 +1578,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             target = adjacentFocusRow(row, down);
         } else if (isDescendantOrSelf(focused, mBinding.video)) {
             target = down ? firstFocusRow() : R.id.video;
+        } else if (isDescendantOrSelf(focused, mBinding.mediaRail)) {
+            target = down ? R.id.change : selectedMediaTabId();
         } else if (focused == mBinding.actor) {
             target = down
                     ? (isVisible(mBinding.description) ? R.id.description
@@ -1571,11 +1685,16 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
      * requiring a second remote press.
      */
     private void focusPlayerFromDetail() {
-        if (mBinding.video.hasFocus()) return;
-        if (mBinding.video.requestFocus(View.FOCUS_UP) || mBinding.video.requestFocus()) return;
+        if (mBinding.video.hasFocus() || mBinding.video.requestFocus(View.FOCUS_UP) || mBinding.video.requestFocus()) {
+            // Move focus out first, so the row-aware scroll container cannot reveal
+            // the old bottom row again during the next layout pass.
+            mBinding.scroll.scrollTo(0, 0);
+            return;
+        }
         mBinding.video.post(() -> {
-            if (isFinishing() || isDestroyed() || isFullscreen() || mBinding.video.hasFocus()) return;
-            if (!mBinding.video.requestFocus(View.FOCUS_UP)) mBinding.video.requestFocusFromTouch();
+            if (isFinishing() || isDestroyed() || isFullscreen()) return;
+            if (!mBinding.video.hasFocus() && !mBinding.video.requestFocus(View.FOCUS_UP)) mBinding.video.requestFocusFromTouch();
+            if (mBinding.video.hasFocus()) mBinding.scroll.scrollTo(0, 0);
         });
     }
 
@@ -2289,6 +2408,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void setFullscreen(boolean fullscreen) {
         this.fullscreen = fullscreen;
+        // The inline affordance is a root sibling, not a child of the synopsis.
+        // Hide it immediately; restore overflow only after the detail layout returns.
+        mBinding.descriptionMore.setVisibility(View.GONE);
+        if (!fullscreen) mBinding.description.post(this::updateDescriptionOverflow);
     }
 
     public boolean isUseParse() {

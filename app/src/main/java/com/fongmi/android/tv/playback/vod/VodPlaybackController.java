@@ -45,8 +45,10 @@ public class VodPlaybackController {
     }
 
     public void reset() {
+        dataSource.cancelSourceSearch();
         preloader.clear();
         state.reset();
+        host.renderSourceSearch(VodSourceResult.idle());
     }
 
     public void checkId() {
@@ -168,8 +170,16 @@ public class VodPlaybackController {
         host.startPlayback(result, state.isUseParse(), startPositionMs, metadata);
     }
 
-    public void onSearchResult(Result result) {
+    public void onSearchResult(VodSourceResult result) {
         fallbackPolicy.onSearchResult(result);
+    }
+
+    public void retrySources() {
+        fallbackPolicy.retrySources();
+    }
+
+    public void loadMoreSources() {
+        fallbackPolicy.loadMoreSources();
     }
 
     public void selectFlag(Flag item) {
@@ -233,7 +243,9 @@ public class VodPlaybackController {
     }
 
     public void selectSource(Vod item) {
+        state.setSelectFirstSource(false);
         switchSource(item, false);
+        fallbackPolicy.renderSources();
     }
 
     void fallbackSource(Vod item) {
@@ -404,8 +416,10 @@ public class VodPlaybackController {
     private void detailLoaded(Vod item) {
         VodPlayRequest activeRequest = state.getActiveRequest();
         History history = applyDetail(item);
-        if (state.hasFlags()) restoreDetail(activeRequest, history);
-        else fallbackPolicy.emptyFlag();
+        if (state.hasFlags()) {
+            restoreDetail(activeRequest, history);
+            fallbackPolicy.ensureSourcesLoaded();
+        } else fallbackPolicy.emptyFlag();
     }
 
     private History applyDetail(Vod item) {

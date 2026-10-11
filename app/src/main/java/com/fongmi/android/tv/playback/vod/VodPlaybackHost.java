@@ -97,6 +97,12 @@ public interface VodPlaybackHost {
 
     void renderSources(List<Vod> items);
 
+    default boolean discoverSourcesOnDetail() { return false; }
+
+    default void renderSourceSearch(VodSourceResult result) {
+        renderSources(result.items());
+    }
+
     void renderHistory(History history);
 
     void renderUseParse(boolean useParse);

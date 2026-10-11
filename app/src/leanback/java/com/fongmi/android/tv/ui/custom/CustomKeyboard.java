@@ -46,7 +46,7 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
     @Override
     public void onGroupClick(int position) {
         adapter.expand(position);
-        focusPosition(7);
+        focusPosition(1);
     }
 
     @Override
@@ -55,16 +55,17 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
         int cursor = binding.keyword.getSelectionStart();
         if (resId == R.drawable.ic_keyboard_remote) callback.onRemote();
         else if (resId == R.drawable.ic_keyboard_search) callback.onSearch();
-        else if (resId == R.drawable.ic_keyboard_left) onMoveLeft(cursor);
-        else if (resId == R.drawable.ic_keyboard_right) onMoveRight(cursor);
         else if (resId == R.drawable.ic_keyboard_back) onBackspace(sb, cursor);
-        else if (resId == R.drawable.ic_keyboard) adapter.toggle();
     }
 
     public boolean onBack() {
         if (!adapter.isExpanded()) return false;
         focusGroup(adapter.collapse());
         return true;
+    }
+
+    public void focusDefault() {
+        focusPosition(adapter.isExpanded() ? 1 : 4);
     }
 
     private void focusGroup(int position) {
@@ -85,14 +86,6 @@ public class CustomKeyboard implements KeyboardAdapter.OnClickListener {
                 });
             }
         });
-    }
-
-    private void onMoveLeft(int cursor) {
-        binding.keyword.setSelection(--cursor < 0 ? 0 : cursor);
-    }
-
-    private void onMoveRight(int cursor) {
-        binding.keyword.setSelection(++cursor > binding.keyword.length() ? binding.keyword.length() : cursor);
     }
 
     private void onBackspace(StringBuilder sb, int cursor) {

@@ -1,0 +1,82 @@
+[
+  {
+    "card_subtitle": "2025 / 澳大利亚 美国 / 爱情 恐怖 / 迈克尔·尚克斯 / 戴夫·弗兰科 爱丽森·布里",
+    "id": "36772728",
+    "pic": {
+      "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2925052115.jpg",
+      "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2925052115.jpg"
+    },
+    "rating": {
+      "count": 43950,
+      "max": 10,
+      "star_count": 3.5,
+      "value": 6.8
+    },
+    "title": "同甘共苦",
+    "type": "movie"
+  },
+  {
+    "card_subtitle": "2025 / 美国 / 恐怖 奇幻 / 库里·巴克 / 迈克尔·约翰斯顿 印达·纳瓦雷特",
+    "id": "37450627",
+    "pic": {
+      "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2934049524.jpg",
+      "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2934049524.jpg"
+    },
+    "rating": {
+      "count": 289633,
+      "max": 10,
+      "star_count": 4.0,
+      "value": 7.6
+    },
+    "title": "痴迷",
+    "type": "movie"
+  },
+  {
+    "card_subtitle": "2023 / 美国 英国 芬兰 加拿大 / 剧情 喜剧 恐怖 / 阿里·艾斯特 / 华金·菲尼克斯 帕蒂·卢波恩",
+    "id": "35381711",
+    "pic": {
+      "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2886073087.jpg",
+      "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2886073087.jpg"
+    },
+    "rating": {
+      "count": 31516,
+      "max": 10,
+      "star_count": 3.5,
+      "value": 7.2
+    },
+    "title": "博很恐惧",
+    "type": "movie"
+  },
+  {
+    "card_subtitle": "2022 / 新西兰 美国 / 恐怖 / 缇·威斯特 / 米娅·高斯 大卫·科伦斯韦",
+    "id": "35801819",
+    "pic": {
+      "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2877516889.jpg",
+      "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2877516889.jpg"
+    },
+    "rating": {
+      "count": 139143,
+      "max": 10,
+      "star_count": 4.0,
+      "value": 7.7
+    },
+    "title": "珀尔",
+    "type": "movie"
+  },
+  {
+    "card_subtitle": "2024 / 美国 加拿大 / 惊悚 恐怖 / 斯科特·贝克 布莱恩·伍兹 / 休·格兰特 索菲·撒切尔",
+    "id": "36439490",
+    "pic": {
+      "large": "https://img2.doubanio.com/view/photo/m_ratio_poster/public/p2913298291.jpg",
+      "normal": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2913298291.jpg"
+    },
+    "rating": {
+      "count": 37079,
+      "max": 10,
+      "star_count": 3.5,
+      "value": 7.0
+    },
+    "title": "异教徒",
+    "type": "movie"
+  }
+]

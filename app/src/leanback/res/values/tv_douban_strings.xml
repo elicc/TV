@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tv_douban_charts">Douban charts</string>
+    <string name="tv_douban_hot_movies">Popular movies</string>
+    <string name="tv_douban_hot_tv">Popular TV</string>
+    <string name="tv_douban_showing">In theaters</string>
+    <string name="tv_douban_recommendations">Douban related titles</string>
+    <string name="tv_douban_search_source">Search sources</string>
+    <string name="tv_douban_empty">No titles available</string>
+    <string name="tv_douban_error">Unable to load. Select to retry</string>
+    <string name="tv_douban_no_recommendations">No recommendations available</string>
+    <string name="tv_douban_loading_recommendations">Loading recommendations…</string>
+</resources>

@@ -27,8 +27,10 @@ public class MetadataRepository {
     private static final long MEMORY_TTL = 10 * 60 * 1000L;
     private static final long DISK_TTL = 30L * 24 * 60 * 60 * 1000L;
     private static final long CANDIDATE_TTL = 24L * 60 * 60 * 1000L;
-    private static final long HOT_TTL = 12L * 60 * 60 * 1000L;
-    private static final String HOT_CACHE_KEY = "metadata_douban_hot_movies";
+    private static final long LIST_TTL = 12L * 60 * 60 * 1000L;
+    // New namespace: old snapshots were irreversibly score-sorted.
+    private static final String LIST_CACHE_KEY = "metadata_douban_lists_v2";
+    private static final int MAX_LIST_CACHE_ENTRIES = 32;
     private static final int MAX_CACHE_ENTRIES = 500;
     private static final MetadataRepository INSTANCE = new MetadataRepository();
 
@@ -36,9 +38,9 @@ public class MetadataRepository {
     private final MetadataAgentClient agent = new MetadataAgentClient();
     private final ConcurrentMap<String, CacheEntry> memory = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CandidateEntry> candidates = new ConcurrentHashMap<>();
-    private final Object hotLock = new Object();
-    private final List<HotCallback> hotWaiters = new ArrayList<>();
-    private boolean hotLoading;
+    private final Object listLock = new Object();
+    private final Map<String, List<ListCallback>> listWaiters = new java.util.HashMap<>();
+    private java.util.LinkedHashMap<String, ListSnapshot> lists;
 
     public static MetadataRepository get() {
         return INSTANCE;
@@ -56,82 +58,106 @@ public class MetadataRepository {
         return state(identity, source, providers, List.of(), MetadataState.Status.FALLBACK, "source only");
     }
 
-    /** Loads the shared Douban hot collection for the TV search screen. */
-    public void loadHotMovies(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
-        HotSnapshot cached = readHotSnapshot();
-        if (cached != null && !cached.expired()) {
-            App.post(() -> success.accept(cached.items));
+    public void loadCollection(DoubanCollection collection, Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+        loadList("collection:" + collection.getId(), () -> douban.collection(collection, 40), success, failure);
+    }
+
+    public void loadRecommendations(MovieMetadata confirmed, Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+        if (confirmed == null || confirmed.getProvider() != MetadataProvider.DOUBAN
+                || !("movie".equals(confirmed.getExternalType()) || "tv".equals(confirmed.getExternalType()))
+                || !confirmed.getExternalId().matches("[0-9]+")) {
+            App.post(() -> failure.accept(new IllegalArgumentException("Missing confirmed Douban identity")));
             return;
         }
-        synchronized (hotLock) {
-            hotWaiters.add(new HotCallback(success, failure));
-            if (hotLoading) return;
-            hotLoading = true;
+        String type = confirmed.getExternalType(), id = confirmed.getExternalId();
+        loadList("related:" + type + ":" + id, () -> douban.recommendations(type, id, 20), success, failure);
+    }
+
+    private void loadList(String key, ListLoader loader, Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+        synchronized (listLock) {
+            readLists();
+            ListSnapshot cached = lists.get(key);
+            if (cached != null && !cached.expired()) {
+                List<MovieMetadata> result = List.copyOf(cached.items);
+                App.post(() -> success.accept(result));
+                return;
+            }
+            List<ListCallback> waiters = listWaiters.get(key);
+            if (waiters != null) {
+                waiters.add(new ListCallback(success, failure));
+                return;
+            }
+            waiters = new ArrayList<>();
+            waiters.add(new ListCallback(success, failure));
+            listWaiters.put(key, waiters);
         }
         Task.execute(() -> {
+            List<MovieMetadata> result = null;
+            Throwable failureReason = null;
             try {
-                List<MovieMetadata> result = douban.hotMovies(40);
-                saveHotSnapshot(result);
-                finishHotLoad(result, null);
-            } catch (Throwable error) {
-                HotSnapshot fallback = readHotSnapshot();
-                finishHotLoad(fallback == null ? null : fallback.items, error);
+                result = List.copyOf(loader.load());
+                synchronized (listLock) {
+                    ListSnapshot snapshot = new ListSnapshot();
+                    snapshot.updatedAt = System.currentTimeMillis();
+                    snapshot.items = result;
+                    lists.remove(key);
+                    lists.put(key, snapshot);
+                    while (lists.size() > MAX_LIST_CACHE_ENTRIES) lists.remove(lists.keySet().iterator().next());
+                    Prefers.put(LIST_CACHE_KEY, App.gson().toJson(lists));
+                }
+            } catch (Exception error) {
+                failureReason = error;
+                Log.w(TAG, "Douban list unavailable: " + key, error);
+                synchronized (listLock) {
+                    // Never substitute another category or another movie's recommendations.
+                    ListSnapshot stale = lists.get(key);
+                    if (stale != null) result = List.copyOf(stale.items);
+                }
             }
+            List<ListCallback> callbacks;
+            synchronized (listLock) { callbacks = listWaiters.remove(key); }
+            List<MovieMetadata> delivered = result;
+            Throwable deliveredError = failureReason;
+            App.post(() -> {
+                for (ListCallback callback : callbacks) {
+                    if (delivered != null) callback.success.accept(delivered);
+                    else callback.failure.accept(deliveredError);
+                }
+            });
         });
     }
 
-    private void finishHotLoad(List<MovieMetadata> result, Throwable error) {
-        List<HotCallback> callbacks;
-        synchronized (hotLock) {
-            hotLoading = false;
-            callbacks = new ArrayList<>(hotWaiters);
-            hotWaiters.clear();
-        }
-        App.post(() -> {
-            for (HotCallback callback : callbacks) {
-                if (result != null && !result.isEmpty()) callback.success.accept(result);
-                else callback.failure.accept(error == null ? new IOException("Douban hot list is empty") : error);
-            }
-        });
-    }
-
-    private HotSnapshot readHotSnapshot() {
-        String json = Prefers.getString(HOT_CACHE_KEY, "");
-        if (json.isEmpty()) return null;
+    private void readLists() {
+        if (lists != null) return;
         try {
-            HotSnapshot snapshot = App.gson().fromJson(json, HotSnapshot.class);
-            return snapshot == null || snapshot.items == null || snapshot.items.isEmpty() ? null : snapshot;
-        } catch (RuntimeException ignored) {
-            Prefers.remove(HOT_CACHE_KEY);
-            return null;
+            java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<java.util.LinkedHashMap<String, ListSnapshot>>() {}.getType();
+            lists = App.gson().fromJson(Prefers.getString(LIST_CACHE_KEY, ""), type);
+            if (lists != null) lists.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().items == null
+                    || entry.getValue().items.stream().anyMatch(java.util.Objects::isNull));
+        } catch (RuntimeException error) {
+            Log.w(TAG, "Discarding invalid Douban list cache", error);
+            lists = null;
+            Prefers.remove(LIST_CACHE_KEY);
         }
+        if (lists == null) lists = new java.util.LinkedHashMap<>();
+        while (lists.size() > MAX_LIST_CACHE_ENTRIES) lists.remove(lists.keySet().iterator().next());
     }
 
-    private void saveHotSnapshot(List<MovieMetadata> items) {
-        if (items == null || items.isEmpty()) return;
-        HotSnapshot snapshot = new HotSnapshot();
-        snapshot.updatedAt = System.currentTimeMillis();
-        snapshot.items = new ArrayList<>(items);
-        Prefers.put(HOT_CACHE_KEY, App.gson().toJson(snapshot));
-    }
+    private interface ListLoader { List<MovieMetadata> load() throws IOException; }
 
-    private static final class HotCallback {
-        private final Consumer<List<MovieMetadata>> success;
-        private final Consumer<Throwable> failure;
-
-        private HotCallback(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
+    private static final class ListCallback {
+        final Consumer<List<MovieMetadata>> success;
+        final Consumer<Throwable> failure;
+        ListCallback(Consumer<List<MovieMetadata>> success, Consumer<Throwable> failure) {
             this.success = success;
             this.failure = failure;
         }
     }
 
-    private static final class HotSnapshot {
-        private long updatedAt;
-        private List<MovieMetadata> items = new ArrayList<>();
-
-        private boolean expired() {
-            return updatedAt <= 0 || System.currentTimeMillis() - updatedAt >= HOT_TTL;
-        }
+    private static final class ListSnapshot {
+        long updatedAt;
+        List<MovieMetadata> items;
+        boolean expired() { return updatedAt <= 0 || System.currentTimeMillis() - updatedAt >= LIST_TTL; }
     }
 
     public void confirm(MovieIdentity identity, Vod vod, MetadataCandidate candidate, Consumer<MetadataState> callback) {

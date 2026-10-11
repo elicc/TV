@@ -11,6 +11,7 @@ import com.fongmi.android.tv.BuildConfig;
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.api.SiteApi;
 import com.fongmi.android.tv.bean.Result;
+import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.exception.ExtractException;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.playback.PlaybackResult;
@@ -20,10 +21,12 @@ import com.fongmi.android.tv.playback.vod.VodPlayRequest;
 import com.fongmi.android.tv.playback.vod.VodPlaybackController;
 import com.fongmi.android.tv.playback.vod.VodPlaybackHost;
 import com.fongmi.android.tv.playback.vod.VodPlaybackState;
+import com.fongmi.android.tv.playback.vod.VodSourceResult;
 import com.fongmi.android.tv.metadata.MetadataProvider;
 import com.fongmi.android.tv.metadata.MetadataRepository;
 import com.fongmi.android.tv.metadata.MetadataState;
 import com.fongmi.android.tv.metadata.MovieCast;
+import com.fongmi.android.tv.metadata.RecommendationState;
 import com.fongmi.android.tv.metadata.MovieIdentity;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.bean.Vod;
@@ -45,12 +48,50 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
     private final MutableLiveData<PlaybackResult<VodPlayRequest>> playback;
     private final ViewModelTaskRunner<TaskType> requestTasks;
     private final VodPlaybackState playbackState;
+    private final VodSourceSearchRunner sourceSearches = new VodSourceSearchRunner();
+    private final MutableLiveData<VodSourceResult> sources = new MutableLiveData<>();
     private final MutableLiveData<MetadataState> metadata;
     private final MutableLiveData<List<MovieCast>> cast;
     private final AtomicLong metadataGeneration;
     private final AtomicLong castGeneration;
     private final MetadataRepository metadataRepository;
     private Vod metadataVod;
+    private final MutableLiveData<RecommendationState> recommendations = new MutableLiveData<>(RecommendationState.idle());
+    private String recommendationKey = "";
+
+    public LiveData<RecommendationState> getRecommendations() { return recommendations; }
+
+    public void retryRecommendations() {
+        RecommendationState current = recommendations.getValue();
+        if (current == null || current.getStatus() != RecommendationState.Status.ERROR) return;
+        recommendationKey = "";
+        loadRecommendations(metadataGeneration.get(), metadata.getValue());
+    }
+
+    private void clearRecommendations() {
+        recommendationKey = "";
+        recommendations.setValue(RecommendationState.idle());
+    }
+
+    private void loadRecommendations(long generation, MetadataState state) {
+        if (generation != metadataGeneration.get()) return;
+        MovieMetadata resolved = RecommendationState.resolvedMovie(state);
+        if (resolved == null) return;
+        String key = resolved.getExternalType() + ":" + resolved.getExternalId();
+        if (key.equals(recommendationKey)) return;
+        recommendationKey = key;
+        recommendations.setValue(RecommendationState.loading());
+        metadataRepository.loadRecommendations(resolved, items -> {
+            if (generation == metadataGeneration.get() && key.equals(recommendationKey)) {
+                recommendations.setValue(RecommendationState.success(items));
+            }
+        }, error -> {
+            if (generation == metadataGeneration.get() && key.equals(recommendationKey)) {
+                recommendations.setValue(RecommendationState.error());
+            }
+        });
+    }
+
 
     public VideoViewModel() {
         detail = new MutableLiveData<>();
@@ -91,12 +132,14 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
         metadataVod = null;
         metadata.setValue(null);
         cast.setValue(List.of());
+        clearRecommendations();
     }
 
     public void loadMetadata(String sourceKey, String sourceId, Vod vod) {
         long generation = metadataGeneration.incrementAndGet();
         castGeneration.incrementAndGet();
         cast.setValue(List.of());
+        clearRecommendations();
         metadataVod = vod;
         MovieIdentity identity = MovieIdentity.from(sourceKey, sourceId, vod);
         if (SiteApi.PUSH.equals(sourceKey)) {
@@ -107,6 +150,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
             if (generation != metadataGeneration.get()) return;
             metadata.setValue(state);
             loadCast(generation, state);
+            loadRecommendations(generation, state);
         });
     }
 
@@ -125,6 +169,7 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
         long generation = metadataGeneration.incrementAndGet();
         castGeneration.incrementAndGet();
         cast.setValue(List.of());
+        clearRecommendations();
         metadata.setValue(MetadataState.loading(current.getIdentity(), current.getSource()));
         metadataRepository.confirm(current.getIdentity(), metadataVod, candidate, state -> {
             if (state.getStatus() == MetadataState.Status.SUCCESS
@@ -132,7 +177,10 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
                 RefreshEvent.metadata();
             }
             if (generation == metadataGeneration.get()) metadata.setValue(state);
-            if (generation == metadataGeneration.get()) loadCast(generation, state);
+            if (generation == metadataGeneration.get()) {
+                loadCast(generation, state);
+                loadRecommendations(generation, state);
+            }
         });
     }
 
@@ -161,6 +209,31 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
 
     public VodPlaybackController createPlaybackController(VodPlaybackHost host) {
         return new VodPlaybackController(host, this, playbackState);
+    }
+
+    public LiveData<VodSourceResult> getSources() {
+        return sources;
+    }
+
+    @Override
+    public void searchSources(long generation, List<Site> sites, String keyword) {
+        sourceSearches.start(generation, sites, keyword, sources::setValue);
+    }
+
+    @Override
+    public void searchSources(long generation, List<Site> sites, String keyword, boolean incremental) {
+        sourceSearches.start(generation, sites, keyword, incremental, sources::setValue);
+    }
+
+    @Override
+    public void loadMoreSources(long generation) {
+        sourceSearches.loadMore(generation);
+    }
+
+    @Override
+    public void cancelSourceSearch() {
+        sourceSearches.stop();
+        sources.setValue(null);
     }
 
     @Override
@@ -263,9 +336,11 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
 
     @Override
     protected void onCleared() {
+        sourceSearches.stop();
         requestTasks.cancelAll();
         metadataGeneration.incrementAndGet();
         castGeneration.incrementAndGet();
+        recommendationKey = "";
         playbackState.reset();
         super.onCleared();
     }

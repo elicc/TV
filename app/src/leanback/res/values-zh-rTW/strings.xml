@@ -10,6 +10,9 @@
     <string name="home_history">最近觀看</string>
     <string name="home_recommend">更新推薦</string>
 
+    <!-- Search -->
+    <string name="search_keyword">輸入關鍵詞搜尋</string>
+
     <!-- Collect -->
     <string name="collect_result">「<xliff:g name="name">%s</xliff:g>」的搜尋結果</string>
 
@@ -34,4 +37,10 @@
     <string name="metadata_cast">演職人員</string>
     <string name="metadata_artworks_count">影片海報 %1$d</string>
     <string name="metadata_cast_count">演職人員 %1$d</string>
+    <string name="detail_sources_loading">正在尋找其他來源…</string>
+    <string name="detail_sources_empty">未找到符合來源，按確認重試</string>
+    <string name="detail_sources_error">來源搜尋失敗，按確認重試</string>
+    <string name="detail_sources_partial">部分來源搜尋失敗，按確認重試</string>
+    <string name="detail_sources_more">還有其他來源，向右瀏覽或按確認載入</string>
+    <string name="detail_sources_disabled">沒有啟用可快速搜尋的來源</string>
 </resources>

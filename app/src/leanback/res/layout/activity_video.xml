@@ -22,14 +22,16 @@
         android:focusable="false"
         android:importantForAccessibility="no" />
 
+    <!-- Reclaim half the column gap for a larger 16:9 player while preserving
+         the detail column's left edge and width (432 + 12 = 420 + 24). -->
     <FrameLayout
         android:id="@+id/video"
         android:translationZ="8dp"
-        android:layout_width="420dp"
-        android:layout_height="236dp"
+        android:layout_width="432dp"
+        android:layout_height="243dp"
         android:layout_marginTop="@dimen/tv_safe_vertical"
         android:layout_marginStart="@dimen/tv_safe_horizontal"
-        android:layout_marginEnd="24dp"
+        android:layout_marginEnd="12dp"
         android:layout_marginBottom="0dp"
         android:background="@drawable/shape_video_surface"
         android:defaultFocusHighlightEnabled="false"
@@ -120,6 +122,9 @@
         android:layout_marginEnd="8dp"
         android:layout_toEndOf="@+id/video"
         android:maxWidth="240dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:gravity="center_vertical"
         android:ellipsize="end"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextPrimary"
@@ -357,8 +362,8 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- This viewport inherits only the title height. Wrapped badges are clipped
-         here, including remarks, and can never paint over the separate rating. -->
+    <!-- This viewport inherits the padded title height, using 6dp of the player's
+         added 7dp for badge spacing. Extra rows stay clipped before the rating. -->
     <FrameLayout
         android:id="@+id/row1"
         android:translationZ="8dp"
@@ -383,7 +388,7 @@
             app:alignItems="center"
             app:alignContent="flex_start">
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.fongmi.android.tv.ui.custom.DetailBadgeTextView
                 android:id="@+id/site"
                 style="@style/DetailBadgeCompact"
                 android:layout_width="wrap_content"
@@ -394,9 +399,9 @@
                 android:singleLine="true"
                 app:layout_flexShrink="0"
                 android:textColor="?attr/tvColorOnAccent"
-                tools:text="站源：泥巴" />
+                tools:text="泥巴" />
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.fongmi.android.tv.ui.custom.DetailBadgeTextView
                 android:id="@+id/year"
                 style="@style/DetailBadgeCompact"
                 android:layout_width="wrap_content"
@@ -407,9 +412,9 @@
                 android:singleLine="true"
                 app:layout_flexShrink="0"
                 android:textColor="?attr/tvColorTextSecondary"
-                tools:text="年份：2022" />
+                tools:text="2022" />
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.fongmi.android.tv.ui.custom.DetailBadgeTextView
                 android:id="@+id/area"
                 style="@style/DetailBadgeCompact"
                 android:layout_width="wrap_content"
@@ -420,9 +425,9 @@
                 android:singleLine="true"
                 app:layout_flexShrink="0"
                 android:textColor="?attr/tvColorTextSecondary"
-                tools:text="地區：台灣" />
+                tools:text="台灣" />
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.fongmi.android.tv.ui.custom.DetailBadgeTextView
                 android:id="@+id/type"
                 style="@style/DetailBadgeCompact"
                 android:layout_marginEnd="4dp"
@@ -433,9 +438,9 @@
                 android:singleLine="true"
                 app:layout_flexShrink="0"
                 android:textColor="?attr/tvColorTextSecondary"
-                tools:text="類型：科幻" />
+                tools:text="科幻" />
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.fongmi.android.tv.ui.custom.DetailBadgeTextView
                 android:id="@+id/remark"
                 style="@style/DetailBadgeCompact"
                 android:layout_width="wrap_content"
@@ -655,7 +660,7 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <androidx.core.widget.NestedScrollView
+    <com.fongmi.android.tv.ui.custom.DetailScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -669,7 +674,7 @@
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:orientation="vertical"
@@ -995,7 +1000,7 @@
                     android:text="@string/detail_sources"
                     android:textColor="?attr/tvColorTextSecondary"
                     android:textSize="@dimen/tv_text_meta" />
-                <androidx.leanback.widget.HorizontalGridView
+                <com.fongmi.android.tv.ui.custom.SourceGridView
                     android:id="@+id/quick"
                     android:layout_width="0dp"
                     android:layout_weight="1"
@@ -1008,6 +1013,49 @@
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
+            <LinearLayout
+                android:id="@+id/recommendationsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:orientation="vertical"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:visibility="gone">
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/tv_safe_horizontal"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/tv_douban_recommendations"
+                    android:textColor="?attr/tvColorTextPrimary"
+                    android:textSize="20sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/recommendationStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="44dp"
+                    android:layout_marginStart="@dimen/tv_safe_horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:gravity="center_vertical"
+                    android:focusable="true"
+                    android:background="@drawable/selector_item_round"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+                <androidx.leanback.widget.HorizontalGridView
+                    android:id="@+id/recommendations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/tv_safe_horizontal"
+                    android:paddingEnd="@dimen/tv_safe_horizontal"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="12dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:visibility="gone" />
+            </LinearLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
-    </androidx.core.widget.NestedScrollView>
+    </com.fongmi.android.tv.ui.custom.DetailScrollView>
 </com.fongmi.android.tv.ui.custom.ProgressLayout>

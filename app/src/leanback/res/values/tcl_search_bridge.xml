@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tcl_bridge_title">TCL search bridge</string>
+    <string name="tcl_bridge_description">Forward queries from the TCL search-result title to this app, without a category or movie-name allowlist. TCL processes requests first. Manual searches may also forward. Repeated old results are suppressed, so repeating the same query may stay in TCL. Does not record audio. Requires this switch and accessibility access. Actor/topic search quality depends on your content sources.</string>
+    <string name="tcl_bridge_off">Off</string>
+    <string name="tcl_bridge_ready">Connected · result-field mode</string>
+    <string name="tcl_bridge_unbound">Accessibility not connected</string>
+    <string name="tcl_bridge_enable">Enable</string>
+    <string name="tcl_bridge_disable">Disable</string>
+    <string name="tcl_bridge_authorize">Grant access</string>
+    <string name="tcl_bridge_adb_hint">This TV may require the documented ADB authorization tool.</string>
+    <string name="tcl_bridge_diagnostics">Diagnostics</string>
+    <string name="tcl_bridge_no_diagnostics">No events in this process.</string>
+    <string name="tcl_bridge_clear">Clear</string>
+    <string name="tcl_bridge_hint">Long press for redacted diagnostics. Experimental: TCL T7H.</string>
+</resources>

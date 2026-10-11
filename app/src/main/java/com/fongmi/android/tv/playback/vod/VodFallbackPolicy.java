@@ -2,12 +2,13 @@ package com.fongmi.android.tv.playback.vod;
 
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.bean.Flag;
-import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Site;
 import com.fongmi.android.tv.bean.Vod;
+import com.github.catvod.utils.Trans;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 class VodFallbackPolicy {
 
@@ -43,21 +44,56 @@ class VodFallbackPolicy {
     }
 
     void search(String keyword, boolean autoFallback) {
-        state.setSearchKeyword(keyword);
         state.setAutoFallback(autoFallback);
         state.setSelectFirstSource(autoFallback);
-        host.onSearchStarted(keyword);
-        dataSource.searchContent(getSearchableSites(), keyword, true);
+        startSearch(keyword);
     }
 
-    void onSearchResult(Result result) {
-        List<Vod> items = new ArrayList<>(result.getList());
-        items.removeIf(this::mismatch);
-        state.setSources(items);
-        if (state.isSelectFirstSource() && state.hasSources()) nextSource();
-        else host.renderSources(state.getSources());
-        if (items.isEmpty()) return;
-        host.onSearchResult();
+    void ensureSourcesLoaded() {
+        if (!host.discoverSourcesOnDetail() || host.getVodName().trim().isEmpty()) return;
+        if (state.getSourceResult().status() == VodSourceResult.Status.IDLE) startSearch(host.getVodName());
+        else renderSources();
+    }
+
+    void retrySources() {
+        if (state.getSourceResult().isLoading()) return;
+        // A retry discovers alternatives; it must not silently switch playback.
+        search(state.getSearchKeyword().isEmpty() ? host.getVodName() : state.getSearchKeyword(), false);
+    }
+
+    void loadMoreSources() {
+        VodSourceResult result = state.getSourceResult();
+        if (!result.isLoading() && result.hasMore()) dataSource.loadMoreSources(result.generation());
+    }
+
+    private void startSearch(String keyword) {
+        keyword = keyword.trim();
+        if (keyword.isEmpty()) return;
+        List<Site> sites = getSearchableSites();
+        long generation = state.beginSourceSearch(keyword, sites.size());
+        host.onSearchStarted(keyword);
+        renderSources();
+        dataSource.searchSources(generation, sites, keyword, host.discoverSourcesOnDetail());
+    }
+
+    void onSearchResult(VodSourceResult result) {
+        if (!state.accepts(result) || host.isHostFinishing()) return;
+        List<Vod> items = new ArrayList<>(result.items());
+        String keyword = normalize(result.keyword());
+        items.removeIf(item -> item.getId().isEmpty() || !normalize(item.getName()).contains(keyword));
+        state.setSourceResult(result.withItems(items));
+        boolean hasAlternatives = items.stream().anyMatch(item -> !isCurrent(item));
+        if (!state.isSelectFirstSource() || !nextSource()) renderSources();
+        if (hasAlternatives) host.onSearchResult();
+        // A pending manual/error switch must not stall at a lazy batch boundary.
+        // Plain detail discovery stops here until the viewer requests more.
+        if (state.isSelectFirstSource()) loadMoreSources();
+    }
+
+    void renderSources() {
+        List<Vod> items = new ArrayList<>(state.getSources());
+        items.removeIf(this::isCurrent);
+        host.renderSourceSearch(state.getSourceResult().withItems(items));
     }
 
     private void fallbackToNextLineOrSource(boolean allowSourceFallback) {
@@ -83,35 +119,50 @@ class VodFallbackPolicy {
     }
 
     private void fallbackToNextSource(boolean force) {
-        if (!state.hasSources()) search(host.getVodName(), true);
-        else if (state.isAutoFallback() || force) nextSource();
+        if (state.hasSources() && !state.isAutoFallback() && !force) return;
+        state.setAutoFallback(true);
+        state.setSelectFirstSource(true);
+        if (nextSource()) return;
+        // Upgrade an in-flight discovery to a pending switch without cancelling
+        // its requests or discarding results that have already arrived.
+        if (state.getSourceResult().isLoading()) return;
+        if (state.getSourceResult().hasMore()) {
+            loadMoreSources();
+            return;
+        }
+        startSearch(host.getVodName());
     }
 
-    private void nextSource() {
-        if (!state.hasSources()) return;
-        Vod item = state.removeFirstSource();
-        host.renderSources(state.getSources());
-        host.showSwitchSource(item);
-        state.addFailedId(host.getVodId());
-        state.setSelectFirstSource(false);
-        controller.fallbackSource(item);
+    private boolean nextSource() {
+        for (Vod item : state.getSources()) {
+            if (isCurrent(item) || state.hasFailedId(item)) continue;
+            if (!VodConfig.get().getSite(item.getSiteKey()).isChangeable()) continue;
+            // Display can include related matches, but automatic playback must
+            // not jump to a different season/remake sharing a title substring.
+            if (!normalize(item.getName()).equals(normalize(host.getVodName()))) continue;
+            host.showSwitchSource(item);
+            state.addFailedId(host.getVodKey(), host.getVodId());
+            state.setSelectFirstSource(false);
+            controller.fallbackSource(item);
+            renderSources();
+            return true;
+        }
+        return false;
     }
 
     private List<Site> getSearchableSites() {
         List<Site> sites = new ArrayList<>();
-        for (Site site : VodConfig.get().getSites()) if (isPass(site)) sites.add(site);
+        for (Site site : VodConfig.get().getSites()) {
+            if (site.isSearchable() && site.isQuickSearch()) sites.add(site);
+        }
         return sites;
     }
 
-    private boolean isPass(Site item) {
-        if (state.isAutoFallback() && !item.isChangeable()) return false;
-        return item.isSearchable();
+    private boolean isCurrent(Vod item) {
+        return host.getVodKey().equals(item.getSiteKey()) && host.getVodId().equals(item.getId());
     }
 
-    private boolean mismatch(Vod item) {
-        if (host.getVodId().equals(item.getId())) return true;
-        if (state.hasFailedId(item.getId())) return true;
-        if (state.isAutoFallback()) return !item.getName().equals(state.getSearchKeyword());
-        return !item.getName().contains(state.getSearchKeyword());
+    private static String normalize(String name) {
+        return Trans.t2s(name).trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 }

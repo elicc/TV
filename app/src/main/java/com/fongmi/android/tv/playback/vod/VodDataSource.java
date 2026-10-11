@@ -12,5 +12,11 @@ public interface VodDataSource {
 
     void preloadContent(VodPlayRequest request);
 
-    void searchContent(List<Site> sites, String keyword, boolean quick);
+    void searchSources(long generation, List<Site> sites, String keyword);
+
+    void searchSources(long generation, List<Site> sites, String keyword, boolean incremental);
+
+    void loadMoreSources(long generation);
+
+    void cancelSourceSearch();
 }

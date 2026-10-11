@@ -2,9 +2,12 @@ package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.text.TextUtils;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.DiffUtil;
 
 import com.fongmi.android.tv.bean.Vod;
 import com.fongmi.android.tv.databinding.AdapterQuickBinding;
@@ -28,10 +31,29 @@ public class QuickAdapter extends RecyclerView.Adapter<QuickAdapter.ViewHolder> 
         width = (ResUtil.getScreenWidth() - space) / 5;
     }
 
-    public void addAll(List<Vod> items) {
-        int start = mItems.size();
-        mItems.addAll(items);
-        notifyItemRangeInserted(start, items.size());
+    public void setItems(List<Vod> items) {
+        List<Vod> next = new ArrayList<>(items);
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() { return mItems.size(); }
+
+            @Override
+            public int getNewListSize() { return next.size(); }
+
+            @Override
+            public boolean areItemsTheSame(int oldPosition, int newPosition) {
+                Vod old = mItems.get(oldPosition), item = next.get(newPosition);
+                return old.getSiteKey().equals(item.getSiteKey()) && old.getId().equals(item.getId());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldPosition, int newPosition) {
+                return mItems.get(oldPosition).isSameContent(next.get(newPosition));
+            }
+        });
+        mItems.clear();
+        mItems.addAll(next);
+        diff.dispatchUpdatesTo(this);
     }
 
     public void remove(int position) {
@@ -71,7 +93,26 @@ public class QuickAdapter extends RecyclerView.Adapter<QuickAdapter.ViewHolder> 
         holder.binding.name.setText(item.getName());
         holder.binding.site.setText(item.getSiteName());
         holder.binding.remark.setText(item.getRemarks());
+        holder.setMarquee(holder.itemView.hasFocus());
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));
+    }
+
+    @Override
+    public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        holder.setMarquee(holder.itemView.hasFocus());
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull ViewHolder holder) {
+        holder.setMarquee(false);
+        super.onViewDetachedFromWindow(holder);
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        holder.setMarquee(false);
+        super.onViewRecycled(holder);
     }
 
     public interface OnClickListener {
@@ -86,6 +127,18 @@ public class QuickAdapter extends RecyclerView.Adapter<QuickAdapter.ViewHolder> 
         ViewHolder(@NonNull AdapterQuickBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+            itemView.setOnFocusChangeListener((view, focused) -> setMarquee(focused));
+        }
+
+        private void setMarquee(boolean focused) {
+            for (TextView text : new TextView[]{binding.name, binding.site, binding.remark}) {
+                text.setSelected(false);
+                text.setSingleLine(true);
+                text.setHorizontallyScrolling(focused);
+                text.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
+                text.setMarqueeRepeatLimit(-1);
+                text.setSelected(focused);
+            }
         }
     }
 }

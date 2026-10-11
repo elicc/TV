@@ -17,9 +17,9 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="wrap_content"
+        android:layout_width="232dp"
         android:layout_height="match_parent"
-        android:layout_marginEnd="24dp"
+        android:layout_marginEnd="16dp"
         android:orientation="vertical">
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
@@ -36,12 +36,13 @@
                 android:nextFocusDown="@id/keyboard"
                 android:src="@drawable/ic_search_mic"
                 android:contentDescription="@string/tv_search_voice" />
-            <com.fongmi.android.tv.ui.custom.CustomSearchView
+            <com.fongmi.android.tv.ui.custom.CustomEditText
                 android:id="@+id/keyword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:background="@null"
+                android:background="@drawable/tv_search_underline"
+                android:cursorVisible="false"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
                 android:hint="@string/search_keyword"
@@ -51,15 +52,16 @@
                 android:maxLength="255"
                 android:nextFocusDown="@id/keyboard"
                 android:nextFocusUp="@id/sourceRow"
+                android:paddingBottom="8dp"
                 android:singleLine="true"
                 android:textColor="?attr/tvColorTextPrimary"
-                android:textColorHint="?attr/tvColorTextSecondary"
-                android:textCursorDrawable="@drawable/shape_cursor"
-                android:textSize="24sp" />
+                android:textColorHint="@color/tv_text_muted"
+                android:textSize="24sp"
+                app:backgroundTint="@null" />
         </androidx.appcompat.widget.LinearLayoutCompat>
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/keyboard"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
             android:clipToPadding="false"
@@ -67,7 +69,7 @@
             android:overScrollMode="never"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="3"
-            tools:itemCount="15"
+            tools:itemCount="12"
             tools:listitem="@layout/adapter_keyboard_text" />
     </androidx.appcompat.widget.LinearLayoutCompat>
     <androidx.core.widget.NestedScrollView
@@ -79,19 +81,19 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingTop="40dp"
             android:orientation="vertical">
             <androidx.appcompat.widget.LinearLayoutCompat
-                android:id="@+id/recordLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:layout_marginBottom="8dp"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal">
                 <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="match_parent"
+                    android:id="@+id/recordHeader"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:visibility="gone"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
                     <com.google.android.material.textview.MaterialTextView
@@ -120,7 +122,54 @@
                         android:src="@drawable/ic_setting_delete"
                         app:tint="?attr/tvColorTextPrimary" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/sourceRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/tv_source_pill"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:nextFocusDown="@id/keyword"
+                    android:nextFocusLeft="@id/keyword"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp">
+                    <View
+                        android:id="@+id/sourceStatus"
+                        android:layout_width="4dp"
+                        android:layout_height="4dp"
+                        android:layout_marginEnd="5dp"
+                        android:background="@drawable/tv_source_status"
+                        android:importantForAccessibility="no" />
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/sourceTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:duplicateParentState="true"
+                        android:maxWidth="120dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:focusable="false"
+                        android:textAppearance="@style/TextAppearance.Tv.Meta"
+                        android:textColor="?attr/tvColorTextSecondary"
+                        android:textSize="8sp"
+                        tools:text="饭太硬" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
+            </androidx.appcompat.widget.LinearLayoutCompat>
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/recordLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:orientation="vertical"
+                android:visibility="gone">
                 <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/recordHint"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/tv_search_manage_hint"
@@ -134,18 +183,86 @@
                     android:layout_marginStart="-6dp"
                     android:clipChildren="false"
                     android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
                     android:overScrollMode="never"
                     tools:itemCount="6"
                     tools:listitem="@layout/adapter_search_record" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/moreRecords"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/selector_item_round"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:text="@string/tv_search_more"
+                    android:textColor="?attr/tvColorTextPrimary"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
             </androidx.appcompat.widget.LinearLayoutCompat>
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/word"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
+                android:includeFontPadding="false"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp"
                 android:text="@string/search_hot"
                 android:textColor="?attr/tvColorTextPrimary"
                 android:textSize="24sp" />
+            <LinearLayout
+                android:id="@+id/doubanTabs"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginBottom="6dp"
+                android:orientation="horizontal">
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tabHotMovies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/selector_metadata_tab"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/tv_douban_hot_movies"
+                    android:textColor="@color/selector_metadata_tab_text"
+                    android:textSize="16sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tabHotTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/selector_metadata_tab"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/tv_douban_hot_tv"
+                    android:textColor="@color/selector_metadata_tab_text"
+                    android:textSize="16sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tabShowing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/selector_metadata_tab"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/tv_douban_showing"
+                    android:textColor="@color/selector_metadata_tab_text"
+                    android:textSize="16sp" />
+            </LinearLayout>
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/doubanStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:paddingHorizontal="12dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/selector_metadata_tab"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="16sp"
+                android:visibility="gone" />
             <include
                 android:id="@+id/hotSkeleton"
                 layout="@layout/view_hot_movie_skeletons" />
@@ -172,40 +289,5 @@
                 tools:listitem="@layout/adapter_search_word" />
         </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.core.widget.NestedScrollView>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/sourceRow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:background="@drawable/tv_source_pill"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:nextFocusDown="@id/keyword"
-        android:nextFocusLeft="@id/keyword"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp">
-        <View
-            android:id="@+id/sourceStatus"
-            android:layout_width="4dp"
-            android:layout_height="4dp"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/tv_source_status"
-            android:importantForAccessibility="no" />
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/sourceTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:duplicateParentState="true"
-            android:focusable="false"
-            android:textAppearance="@style/TextAppearance.Tv.Meta"
-            android:textColor="?attr/tvColorTextSecondary"
-            android:textSize="8sp"
-            tools:text="饭太硬" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 </FrameLayout>

@@ -40,4 +40,9 @@
     <string name="tv_search_clear_message">清空全部搜索历史？此操作无法撤销，不会删除观看历史或收藏。</string>
     <string name="tv_search_manage_hint">选择「管理」删除单条记录，也可长按搜索词。</string>
     <string name="tv_search_voice">语音搜索</string>
+    <string name="tv_search_edit_hint">按 OK 删除当前关键词，按返回退出管理。</string>
+    <string name="tv_search_done">完成管理</string>
+    <string name="tv_search_delete_term">删除 %1$s</string>
+    <string name="tv_search_more">更多</string>
+    <string name="tv_search_less">收起</string>
 </resources>

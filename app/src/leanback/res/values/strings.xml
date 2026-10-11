@@ -10,6 +10,9 @@
     <string name="home_history">History</string>
     <string name="home_recommend">Recommend</string>
 
+    <!-- Search -->
+    <string name="search_keyword">Enter keywords to search</string>
+
     <!-- Collect -->
     <string name="collect_result">Search results for <xliff:g name="name">%s</xliff:g></string>
 
@@ -21,4 +24,10 @@
     <string name="metadata_cast">Cast</string>
     <string name="metadata_artworks_count">Posters %1$d</string>
     <string name="metadata_cast_count">Cast %1$d</string>
+    <string name="detail_sources_loading">Finding other sources…</string>
+    <string name="detail_sources_empty">No matching sources. Select to retry.</string>
+    <string name="detail_sources_error">Source search failed. Select to retry.</string>
+    <string name="detail_sources_partial">Some sources failed. Select to retry.</string>
+    <string name="detail_sources_more">More sources. Browse right or select to load.</string>
+    <string name="detail_sources_disabled">No sources enabled for quick search.</string>
 </resources>

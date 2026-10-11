@@ -40,4 +40,9 @@
     <string name="tv_search_clear_message">Clear all search history? This cannot be undone. Watch history and favorites are not affected.</string>
     <string name="tv_search_manage_hint">Use Manage to delete a term, or hold OK on a term.</string>
     <string name="tv_search_voice">Voice search</string>
+    <string name="tv_search_edit_hint">Press OK on a term to delete it. Press Back to finish.</string>
+    <string name="tv_search_done">Done managing</string>
+    <string name="tv_search_delete_term">Delete %1$s</string>
+    <string name="tv_search_more">Show more</string>
+    <string name="tv_search_less">Show less</string>
 </resources>

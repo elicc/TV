@@ -27,6 +27,7 @@ import com.fongmi.android.tv.databinding.ActivityCollectBinding;
 import com.fongmi.android.tv.model.SiteViewModel;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.adapter.CollectAdapter;
+import com.fongmi.android.tv.ui.adapter.RecordAdapter;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.fragment.CollectFragment;
 import com.fongmi.android.tv.utils.ResUtil;
@@ -118,7 +119,7 @@ public class CollectActivity extends BaseActivity {
         List<String> items = Setting.getKeyword().isEmpty() ? new ArrayList<>() : App.gson().fromJson(Setting.getKeyword(), TypeToken.getParameterized(List.class, String.class).getType());
         items.remove(getKeyword());
         items.add(0, getKeyword());
-        if (items.size() > 9) items.remove(9);
+        if (items.size() > RecordAdapter.MAX_RECORDS) items.subList(RecordAdapter.MAX_RECORDS, items.size()).clear();
         Setting.putKeyword(App.gson().toJson(items));
     }
 

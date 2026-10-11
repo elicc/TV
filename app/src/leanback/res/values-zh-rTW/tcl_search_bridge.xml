@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tcl_bridge_title">小T搜尋橋接</string>
+    <string name="tcl_bridge_description">讀取原廠搜尋結果標題中的查詢詞，轉到本應用；不枚舉片名或搜尋類別。原廠先處理，手動搜尋也可能轉發。為防舊頁循環跳轉，無法確認新請求的同詞重複搜尋可能不轉發。不錄音，僅需此開關與無障礙授權。演員或題材搜尋效果取決於內容來源。</string>
+    <string name="tcl_bridge_off">已關閉</string>
+    <string name="tcl_bridge_ready">已連線 · 通用結果欄位模式</string>
+    <string name="tcl_bridge_unbound">無障礙未連線</string>
+    <string name="tcl_bridge_enable">開啟</string>
+    <string name="tcl_bridge_disable">關閉</string>
+    <string name="tcl_bridge_authorize">去授權</string>
+    <string name="tcl_bridge_adb_hint">此電視可能需要使用文件中的 ADB 授權工具。</string>
+    <string name="tcl_bridge_diagnostics">橋接診斷</string>
+    <string name="tcl_bridge_no_diagnostics">目前程序暫無事件。</string>
+    <string name="tcl_bridge_clear">清除</string>
+    <string name="tcl_bridge_hint">長按查看去識別化診斷。實驗性功能：TCL T7H。</string>
+</resources>

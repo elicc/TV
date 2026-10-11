@@ -1,0 +1,89 @@
+{
+  "subject_collection_items": [
+    {
+      "card_subtitle": "2026 / 中国大陆 / 剧情 悬疑 犯罪 / 刘海波 / 任嘉伦 秦俊杰",
+      "id": "36576514",
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2931762705.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2931762705.jpg"
+      },
+      "rating": {
+        "count": 53166,
+        "max": 10,
+        "star_count": 3.5,
+        "value": 7.2
+      },
+      "title": "深渊无间",
+      "type": "tv",
+      "year": "2026"
+    },
+    {
+      "card_subtitle": "2026 / 中国大陆 / 剧情 爱情 古装 / 黄颖湘 陈丹 / 谭松韵 刘学义",
+      "id": "36449295",
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2933527614.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2933527614.jpg"
+      },
+      "rating": {
+        "count": 98250,
+        "max": 10,
+        "star_count": 4.0,
+        "value": 7.5
+      },
+      "title": "兰香如故",
+      "type": "tv",
+      "year": "2026"
+    },
+    {
+      "card_subtitle": "2026 / 中国大陆 / 剧情 爱情 / 蒋继正 / 井柏然 孙千",
+      "id": "36660844",
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2932319485.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2932319485.jpg"
+      },
+      "rating": {
+        "count": 87028,
+        "max": 10,
+        "star_count": 3.5,
+        "value": 6.6
+      },
+      "title": "早春晴朗",
+      "type": "tv",
+      "year": "2026"
+    },
+    {
+      "card_subtitle": "2026 / 韩国 / 剧情 喜剧 惊悚 犯罪 / 李昌熙 / 金惠秀 金志勋",
+      "id": "37501131",
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2934748119.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2934748119.jpg"
+      },
+      "rating": {
+        "count": 100295,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.7
+      },
+      "title": "现在不是出轨的问题",
+      "type": "tv",
+      "year": "2026"
+    },
+    {
+      "card_subtitle": "2026 / 中国大陆 / 剧情 / 姚晓峰 / 王凯 周依然",
+      "id": "36314809",
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2931558074.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2931558074.jpg"
+      },
+      "rating": {
+        "count": 34038,
+        "max": 10,
+        "star_count": 3.5,
+        "value": 7.3
+      },
+      "title": "交锋",
+      "type": "tv",
+      "year": "2026"
+    }
+  ]
+}

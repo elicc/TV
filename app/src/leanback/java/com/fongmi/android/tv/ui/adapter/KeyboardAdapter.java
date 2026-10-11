@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.databinding.AdapterKeyboardIconBinding;
 import com.fongmi.android.tv.databinding.AdapterKeyboardTextBinding;
-import com.fongmi.android.tv.setting.Setting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private final List<Integer> icons = Arrays.asList(R.drawable.ic_keyboard_remote, R.drawable.ic_keyboard_left, R.drawable.ic_keyboard_right, R.drawable.ic_keyboard_back, R.drawable.ic_keyboard_search, R.drawable.ic_keyboard);
+    private final List<Integer> icons = Arrays.asList(R.drawable.ic_keyboard_back, R.drawable.ic_keyboard_remote, R.drawable.ic_keyboard_search);
     private final List<Group> enGroups = Arrays.asList(
             new Group("1\n0", new String[]{"1", "0"}),
             new Group("2\nABC", new String[]{"A", "B", "C", "2"}),
@@ -30,7 +29,6 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             new Group("7\nPQRS", new String[]{"P", "Q", "R", "S", "7"}),
             new Group("8\nTUV", new String[]{"T", "U", "V", "8"}),
             new Group("9\nWXYZ", new String[]{"W", "X", "Y", "Z", "9"}));
-    private final List<String> twList = Arrays.asList("ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ", "ㄋ", "ㄌ", "ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ", "ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ", "ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ", "ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
     private final OnClickListener listener;
     private final List<Object> mItems;
     private int expandedGroup = -1;
@@ -52,18 +50,9 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         boolean onLongClick(int resId);
     }
 
-    public void toggle() {
-        expandedGroup = -1;
-        Setting.putZhuyin(!Setting.isZhuyin());
-        rebuildItems();
-        notifyDataSetChanged();
-    }
-
     public void expand(int position) {
-        if (Setting.isZhuyin() || position < icons.size()) return;
-        int group = position - icons.size();
-        if (group >= enGroups.size()) return;
-        expandedGroup = group;
+        if (isExpanded() || position < 0 || position >= enGroups.size()) return;
+        expandedGroup = position;
         rebuildItems();
         notifyDataSetChanged();
     }
@@ -74,7 +63,7 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public int collapse() {
         if (!isExpanded()) return -1;
-        int position = icons.size() + expandedGroup;
+        int position = expandedGroup;
         expandedGroup = -1;
         rebuildItems();
         notifyDataSetChanged();
@@ -83,13 +72,15 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private void rebuildItems() {
         mItems.clear();
-        mItems.addAll(icons);
-        if (Setting.isZhuyin()) {
-            mItems.addAll(twList);
-        } else if (isExpanded()) {
+        if (isExpanded()) {
             mItems.addAll(Arrays.asList(enGroups.get(expandedGroup).letters));
+            // Keep delete at row 2, column 1; blanks preserve the three-column grid.
+            while (mItems.size() < 3) mItems.add("");
+            mItems.add(3, R.drawable.ic_keyboard_back);
+            while (mItems.size() < 6) mItems.add("");
         } else {
             mItems.addAll(enGroups);
+            mItems.addAll(icons);
         }
     }
 
@@ -115,7 +106,12 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         switch (getItemViewType(position)) {
             case 0:
                 TextHolder text = (TextHolder) holder;
-                text.binding.text.setText(mItems.get(position).toString());
+                String label = mItems.get(position).toString();
+                text.binding.text.setText(label);
+                text.binding.text.setTextSize(isExpanded() ? 24 : 16);
+                text.itemView.setVisibility(label.isEmpty() ? View.INVISIBLE : View.VISIBLE);
+                text.itemView.setFocusable(!label.isEmpty());
+                text.itemView.setFocusableInTouchMode(!label.isEmpty());
                 break;
             case 1:
                 IconHolder icon = (IconHolder) holder;
@@ -140,7 +136,7 @@ public class KeyboardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             if (position == RecyclerView.NO_POSITION) return;
             Object item = mItems.get(position);
             if (item instanceof Group) listener.onGroupClick(position);
-            else listener.onTextClick(item.toString());
+            else if (!item.toString().isEmpty()) listener.onTextClick(item.toString());
         }
     }
 

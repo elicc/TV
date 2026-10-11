@@ -327,7 +327,7 @@
                         android:nextFocusLeft="@id/navContent"
                         android:nextFocusUp="@id/doh"
                         android:nextFocusRight="@id/incognito"
-                        android:nextFocusDown="@id/skin">
+                        android:nextFocusDown="@id/tclBridge">
                         <com.google.android.material.textview.MaterialTextView
                             style="@style/Tv.Setting.RowTitle"
                             android:layout_width="wrap_content"
@@ -339,6 +339,24 @@
                             android:singleLine="true"
                             tools:text="http://192.168.1.2:8000" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/tclBridge"
+                        style="@style/Tv.Setting.Row"
+                        android:layout_marginTop="5dp"
+                        android:nextFocusLeft="@id/navContent"
+                        android:nextFocusUp="@id/metadataAgent"
+                        android:nextFocusRight="@id/incognito"
+                        android:nextFocusDown="@id/skin">
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/Tv.Setting.RowTitle"
+                            android:text="@string/tcl_bridge_title" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/tclBridgeText"
+                            style="@style/Tv.Setting.RowValue" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/Tv.Setting.Hint"
+                        android:text="@string/tcl_bridge_hint" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
 
                 <androidx.appcompat.widget.LinearLayoutCompat
@@ -355,7 +373,7 @@
                         android:id="@+id/skin"
                         style="@style/Tv.Setting.Row"
                         android:nextFocusLeft="@id/navAppearance"
-                        android:nextFocusUp="@id/metadataAgent"
+                        android:nextFocusUp="@id/tclBridge"
                         android:nextFocusRight="@id/incognito"
                         android:nextFocusDown="@id/atmosphere">
                         <com.google.android.material.textview.MaterialTextView

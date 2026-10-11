@@ -2,6 +2,8 @@ package com.fongmi.android.tv.ui.activity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ActivityNotFoundException;
+import android.provider.Settings;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -34,6 +36,7 @@ import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.setting.MetadataAgentSetting;
 import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.Setting;
+import com.fongmi.android.tv.voice.TclSearchBridgeSettings;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.custom.TvKeycapsBar;
 import com.fongmi.android.tv.ui.dialog.ConfigDialog;
@@ -116,6 +119,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         setCacheText();
         setOtherText();
         setMetadataAgentText();
+        setBridgeText();
         setVaultText();
     }
 
@@ -164,6 +168,36 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         // Coming back from the file-access settings screen is the only completion signal a
         // refusal produces, so the pending action is settled here as well as in its callback.
         finishVaultRequest();
+        setBridgeText();
+    }
+
+    private void setBridgeText() {
+        mBinding.tclBridgeText.setText(!TclSearchBridgeSettings.isEnabled() ? R.string.tcl_bridge_off
+                : TclSearchBridgeSettings.isConnected() ? R.string.tcl_bridge_ready : R.string.tcl_bridge_unbound);
+    }
+
+    private void showBridge() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.tcl_bridge_title)
+                .setMessage(getString(R.string.tcl_bridge_description) + "\n\n" + mBinding.tclBridgeText.getText())
+                .setPositiveButton(TclSearchBridgeSettings.isEnabled() ? R.string.tcl_bridge_disable : R.string.tcl_bridge_enable, (dialog, which) -> {
+                    TclSearchBridgeSettings.setEnabled(!TclSearchBridgeSettings.isEnabled());
+                    setBridgeText();
+                })
+                .setNeutralButton(R.string.tcl_bridge_authorize, (dialog, which) -> {
+                    try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
+                    catch (ActivityNotFoundException exception) { Notify.show(R.string.tcl_bridge_adb_hint); }
+                })
+                .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private boolean showBridgeDiagnostics(View view) {
+        String diagnostics = TclSearchBridgeSettings.diagnostics();
+        new MaterialAlertDialogBuilder(this).setTitle(R.string.tcl_bridge_diagnostics)
+                .setMessage(diagnostics.isEmpty() ? getString(R.string.tcl_bridge_no_diagnostics) : diagnostics)
+                .setPositiveButton(R.string.tcl_bridge_clear, (dialog, which) -> TclSearchBridgeSettings.clearDiagnostics())
+                .setNegativeButton(android.R.string.cancel, null).show();
+        return true;
     }
 
     private void requestVault(Runnable onGranted) {
@@ -251,7 +285,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         bindSectionNavigation(mBinding.navPlayback, mBinding.settingsScroll, mBinding.sectionPlayback, mBinding.player);
         bindSectionNavigation(mBinding.navData, mBinding.utilityScroll, mBinding.sectionData, mBinding.incognito);
         bindSectionNavigation(mBinding.navAbout, mBinding.utilityScroll, mBinding.sectionAbout, mBinding.version);
-        bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh, mBinding.metadataAgent);
+        bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh, mBinding.metadataAgent, mBinding.tclBridge);
         bindSectionFocus(mBinding.navAppearance, mBinding.skin, mBinding.atmosphere, mBinding.wall, mBinding.wallDefault, mBinding.wallRefresh, mBinding.size);
         bindSectionFocus(mBinding.navPlayback, mBinding.player, mBinding.danmaku);
         bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.vault, mBinding.backup, mBinding.restore, mBinding.cache);
@@ -261,6 +295,8 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.vod.setOnClickListener(this::onVod);
         mBinding.doh.setOnClickListener(this::setDoh);
         mBinding.metadataAgent.setOnClickListener(view -> MetadataAgentDialog.show(this));
+        mBinding.tclBridge.setOnClickListener(view -> showBridge());
+        mBinding.tclBridge.setOnLongClickListener(this::showBridgeDiagnostics);
         mBinding.live.setOnClickListener(this::onLive);
         mBinding.wall.setOnClickListener(this::onWall);
         mBinding.size.setOnClickListener(this::setSize);

@@ -74,6 +74,7 @@ import com.fongmi.android.tv.playback.vod.VodDetailResult;
 import com.fongmi.android.tv.playback.vod.VodPlayRequest;
 import com.fongmi.android.tv.playback.vod.VodPlaybackController;
 import com.fongmi.android.tv.playback.vod.VodPlaybackHost;
+import com.fongmi.android.tv.playback.vod.VodSourceResult;
 import com.fongmi.android.tv.playback.vod.VodPlaybackMedia;
 import com.fongmi.android.tv.player.media.PlaySpec;
 import com.fongmi.android.tv.service.PlaybackService;
@@ -428,7 +429,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mVod = mViewModel.createPlaybackController(this);
         observeWhenServiceReady(mViewModel.getDetail(), this::onDetailObserved);
         observeWhenServiceReady(mViewModel.getMetadata(), this::onMetadataObserved);
-        observeWhenServiceReady(mViewModel.getSearch(), this::onSearchObserved);
+        observeWhenServiceReady(mViewModel.getSources(), this::onSearchObserved);
         observeWhenServiceReady(mViewModel.getPreload(), this::onPreloadObserved);
         observeWhenServiceReady(mViewModel.getPlayback(), this::onPlaybackObserved);
     }
@@ -472,7 +473,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         mVod.onPreloadResult(result);
     }
 
-    private void onSearchObserved(Result result) {
+    private void onSearchObserved(VodSourceResult result) {
         mVod.onSearchResult(result);
     }
 
@@ -711,7 +712,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public void renderSources(List<Vod> items) {
-        mQuickAdapter.addAll(items);
+        mQuickAdapter.setItems(items);
         mBinding.quick.setVisibility(mQuickAdapter.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
@@ -759,7 +760,6 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
 
     @Override
     public void onSearchStarted(String keyword) {
-        mQuickAdapter.clear();
     }
 
     @Override

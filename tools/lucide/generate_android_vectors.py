@@ -36,6 +36,7 @@ ICONS = {
     "ic_setting_nav_about.xml": ("info.svg", 24),
     "ic_setting_back.xml": ("chevron-left.svg", 16),
     "ic_playback_more.xml": ("chevron-right.svg", 20),
+    "ic_search_record_delete.xml": ("x.svg", 12),
 }
 
 

@@ -12,7 +12,6 @@ import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,43 +72,24 @@ public class DoubanProvider implements MetadataProviderClient {
         return result;
     }
 
-    /**
-     * Loads the first page of Douban's current hot-movie collection.  The
-     * collection API has a different payload shape from keyword search, so it
-     * intentionally lives here rather than leaking another HTTP call into a
-     * screen or adapter.
-     */
-    public List<MovieMetadata> hotMovies(int count) throws IOException {
+    public List<MovieMetadata> collection(DoubanCollection collection, int count) throws IOException {
+        return DoubanListParser.parse(requestJson("/api/v2/subject_collection/" + collection.getId() + "/items", listParams(count)), false);
+    }
+
+    public List<MovieMetadata> recommendations(String type, String id, int count) throws IOException {
+        if (!("movie".equals(type) || "tv".equals(type)) || !id.matches("[0-9]+")) {
+            throw new IllegalArgumentException("Invalid Douban recommendation identity");
+        }
+        List<MovieMetadata> items = DoubanListParser.parse(requestJson("/api/v2/" + type + "/" + id + "/recommendations", listParams(count)), true);
+        items.removeIf(item -> type.equals(item.getExternalType()) && id.equals(item.getExternalId()));
+        return items;
+    }
+
+    private ArrayMap<String, String> listParams(int count) {
         ArrayMap<String, String> params = new ArrayMap<>();
         params.put("start", "0");
         params.put("count", Integer.toString(Math.max(1, Math.min(count, 40))));
-        JsonObject root = request("/api/v2/subject_collection/movie_hot_gaia/items", params);
-        List<MovieMetadata> result = new ArrayList<>();
-        for (JsonElement element : array(root, "subject_collection_items")) {
-            if (!element.isJsonObject()) continue;
-            JsonObject item = element.getAsJsonObject();
-            String externalId = string(item, "id");
-            String title = string(item, "title");
-            if (externalId.isEmpty() || title.isEmpty()) continue;
-            MovieMetadata metadata = new MovieMetadata();
-            metadata.setProvider(MetadataProvider.DOUBAN);
-            metadata.setExternalId(externalId);
-            metadata.setExternalType("tv".equals(string(item, "type")) ? "tv" : "movie");
-            metadata.setTitle(title);
-            metadata.setOriginalTitle(string(item, "original_title"));
-            metadata.setYear(string(item, "year"));
-            String poster = nestedString(item, "cover", "url");
-            metadata.setPoster(poster.isEmpty() ? "" : artworkUrl(poster));
-            JsonObject rating = object(item, "rating");
-            metadata.setRating(number(rating, "value"));
-            metadata.setRatingCount((int) number(rating, "count"));
-            setHotInfo(metadata, string(item, "info"));
-            result.add(metadata);
-        }
-        result.sort(Comparator.comparingDouble(MovieMetadata::getRating).reversed()
-                .thenComparing(Comparator.comparingInt(MovieMetadata::getRatingCount).reversed())
-                .thenComparing(MovieMetadata::getTitle));
-        return result;
+        return params;
     }
 
     @Override
@@ -201,12 +181,18 @@ public class DoubanProvider implements MetadataProviderClient {
     }
 
     private JsonObject request(String path, ArrayMap<String, String> params) throws IOException {
+        JsonElement root = requestJson(path, params);
+        if (!root.isJsonObject()) throw new IOException("Invalid Douban object response");
+        return root.getAsJsonObject();
+    }
+
+    private JsonElement requestJson(String path, ArrayMap<String, String> params) throws IOException {
         params.put("apiKey", API_KEY);
         try (Response response = OkHttp.newCall(BASE_URL + path, HEADERS, params).execute()) {
             if (response.body() == null || !response.isSuccessful()) throw new IOException("Douban HTTP " + response.code());
             String body = response.body().string();
             if (TextUtils.isEmpty(body)) throw new IOException("Douban empty response");
-            return JsonParser.parseString(body).getAsJsonObject();
+            return JsonParser.parseString(body);
         }
     }
 
@@ -247,14 +233,6 @@ public class DoubanProvider implements MetadataProviderClient {
         List<String> values = new ArrayList<>();
         for (JsonElement element : array) if (element.isJsonPrimitive()) values.add(element.getAsString());
         return String.join(" / ", values);
-    }
-
-    private static void setHotInfo(MovieMetadata metadata, String info) {
-        if (TextUtils.isEmpty(info)) return;
-        String[] parts = info.split("\\s*/\\s*", -1);
-        if (parts.length > 0) metadata.setArea(parts[0]);
-        if (parts.length > 1) metadata.setType(parts[1]);
-        if (parts.length > 2) metadata.setActors(parts[2]);
     }
 
     private static String names(JsonArray array) {

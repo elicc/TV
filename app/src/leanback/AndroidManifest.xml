@@ -21,6 +21,18 @@
          to a padded square app icon. -->
     <application android:banner="@drawable/ic_banner">
 
+        <service
+            android:name=".service.TclSearchBridgeService"
+            android:exported="true"
+            android:label="@string/tcl_bridge_title"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice"
+                android:resource="@xml/tcl_search_bridge" />
+        </service>
+
         <meta-data
             android:name="design_width_in_dp"
             android:value="960" />

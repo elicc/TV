@@ -40,4 +40,9 @@
     <string name="tv_search_clear_message">清空全部搜尋歷史？此操作無法復原，不會刪除觀看歷史或收藏。</string>
     <string name="tv_search_manage_hint">選擇「管理」刪除單筆記錄，也可長按搜尋詞。</string>
     <string name="tv_search_voice">語音搜尋</string>
+    <string name="tv_search_edit_hint">按 OK 刪除目前關鍵詞，按返回結束管理。</string>
+    <string name="tv_search_done">完成管理</string>
+    <string name="tv_search_delete_term">刪除 %1$s</string>
+    <string name="tv_search_more">更多</string>
+    <string name="tv_search_less">收起</string>
 </resources>

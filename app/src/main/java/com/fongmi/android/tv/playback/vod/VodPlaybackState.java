@@ -30,6 +30,8 @@ public class VodPlaybackState {
     private String detailKey;
     private String detailId;
     private String searchKeyword;
+    private long sourceGeneration;
+    private VodSourceResult sourceResult = VodSourceResult.idle();
     private int qualityPosition;
     private boolean selectFirstSource;
     private boolean autoFallback;
@@ -46,6 +48,8 @@ public class VodPlaybackState {
     }
 
     public void reset() {
+        sourceGeneration++;
+        sourceResult = VodSourceResult.idle();
         failedIds.clear();
         sources.clear();
         flags.clear();
@@ -63,12 +67,30 @@ public class VodPlaybackState {
         useParse = false;
     }
 
-    void addFailedId(String id) {
-        if (id != null && !id.isEmpty()) failedIds.add(id);
+    void addFailedId(String key, String id) {
+        if (id != null && !id.isEmpty()) failedIds.add(VodSourceResult.identity(key, id));
     }
 
-    boolean hasFailedId(String id) {
-        return id != null && failedIds.contains(id);
+    boolean hasFailedId(Vod item) {
+        return failedIds.contains(VodSourceResult.identity(item));
+    }
+
+    long beginSourceSearch(String keyword, int total) {
+        searchKeyword = keyword;
+        sources.clear();
+        sourceResult = new VodSourceResult(++sourceGeneration, keyword, List.of(), total, 0, 0);
+        return sourceGeneration;
+    }
+
+    VodSourceResult getSourceResult() { return sourceResult; }
+
+    boolean accepts(VodSourceResult result) {
+        return result != null && result.generation() == sourceGeneration && result.keyword().equals(searchKeyword);
+    }
+
+    void setSourceResult(VodSourceResult result) {
+        sourceResult = result;
+        setSources(result.items());
     }
 
     List<Vod> getSources() {
@@ -78,10 +100,6 @@ public class VodPlaybackState {
     void setSources(List<Vod> items) {
         sources.clear();
         sources.addAll(items);
-    }
-
-    Vod removeFirstSource() {
-        return sources.remove(0);
     }
 
     boolean hasSources() {

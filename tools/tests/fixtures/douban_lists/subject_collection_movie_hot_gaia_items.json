@@ -1,0 +1,144 @@
+{
+  "subject_collection_items": [
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2931576822.jpg",
+        "width": 900,
+        "height": 1350,
+        "shape": "rectangle"
+      },
+      "title": "潜伏6",
+      "type": "movie",
+      "info": "美国 / 悬疑 惊悚 恐怖 / 雅各布·蔡斯 / 阿梅利亚·伊芙 林·沙烨",
+      "id": "37525017",
+      "year": "2026",
+      "rating": {
+        "value": 6.6,
+        "count": 6061,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "雅各布·蔡斯"
+      ],
+      "actors": [
+        "阿梅利亚·伊芙",
+        "林·沙烨",
+        "萨姆·斯普卢尔 "
+      ],
+      "card_subtitle": "2026 / 美国 / 悬疑 惊悚 恐怖 / 雅各布·蔡斯 / 阿梅利亚·伊芙 林·沙烨",
+      "original_title": "Insidious: Out of the Further"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2933860063.jpg",
+        "width": 1800,
+        "height": 2875,
+        "shape": "rectangle"
+      },
+      "title": "功夫女足",
+      "type": "movie",
+      "info": "中国大陆 中国香港 / 剧情 喜剧 运动 / 周星驰 / 张小斐 迪丽热巴",
+      "id": "36452545",
+      "year": "2026",
+      "rating": {
+        "value": 6.2,
+        "count": 353881,
+        "max": 10,
+        "star_count": 3.0
+      },
+      "directors": [
+        "周星驰"
+      ],
+      "actors": [
+        "张小斐",
+        "迪丽热巴",
+        "张艺兴"
+      ],
+      "card_subtitle": "2026 / 中国大陆 中国香港 / 剧情 喜剧 运动 / 周星驰 / 张小斐 迪丽热巴"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2936190797.jpg",
+        "width": 600,
+        "height": 849,
+        "shape": "rectangle"
+      },
+      "title": "林中密语",
+      "type": "movie",
+      "info": "比利时 法国 / 剧情 / 玛侬·库比亚 / 安妮·考森斯 萨洛梅·理查德",
+      "id": "37165178",
+      "year": "2026",
+      "rating": {
+        "value": 6.6,
+        "count": 291,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "玛侬·库比亚"
+      ],
+      "actors": [
+        "安妮·考森斯",
+        "萨洛梅·理查德",
+        "奥拉利亚·佩蒂特"
+      ],
+      "card_subtitle": "2026 / 比利时 法国 / 剧情 / 玛侬·库比亚 / 安妮·考森斯 萨洛梅·理查德"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2927265039.jpg",
+        "width": 2898,
+        "height": 4096,
+        "shape": "rectangle"
+      },
+      "title": "你最后留下的歌",
+      "type": "movie",
+      "info": "日本 / 爱情 / 三木孝浩 / 道枝骏佑 生见爱瑠",
+      "id": "37518575",
+      "year": "2026",
+      "rating": {
+        "value": 6.1,
+        "count": 297,
+        "max": 10,
+        "star_count": 3.0
+      },
+      "directors": [
+        "三木孝浩"
+      ],
+      "actors": [
+        "道枝骏佑",
+        "生见爱瑠"
+      ],
+      "card_subtitle": "2026 / 日本 / 爱情 / 三木孝浩 / 道枝骏佑 生见爱瑠"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2934096838.jpg",
+        "width": 1500,
+        "height": 2143,
+        "shape": "rectangle"
+      },
+      "title": "庆州纪行",
+      "type": "movie",
+      "info": "韩国 / 剧情 悬疑 / 金美助 / 李姃垠 孔晓振",
+      "id": "36748050",
+      "year": "2025",
+      "rating": {
+        "value": 6.3,
+        "count": 1506,
+        "max": 10,
+        "star_count": 3.0
+      },
+      "directors": [
+        "金美助"
+      ],
+      "actors": [
+        "李姃垠",
+        "孔晓振",
+        "朴素丹"
+      ],
+      "card_subtitle": "2025 / 韩国 / 剧情 悬疑 / 金美助 / 李姃垠 孔晓振"
+    }
+  ]
+}

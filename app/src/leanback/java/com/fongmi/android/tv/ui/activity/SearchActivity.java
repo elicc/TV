@@ -26,9 +26,10 @@ import com.fongmi.android.tv.databinding.ActivitySearchBinding;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.SiteListener;
 import com.fongmi.android.tv.metadata.MetadataRepository;
+import com.fongmi.android.tv.metadata.DoubanCollection;
 import com.fongmi.android.tv.metadata.MovieMetadata;
 import com.fongmi.android.tv.setting.Setting;
-import com.fongmi.android.tv.ui.adapter.HotMovieAdapter;
+import com.fongmi.android.tv.ui.adapter.DoubanMovieAdapter;
 import com.fongmi.android.tv.ui.adapter.RecordAdapter;
 import com.fongmi.android.tv.ui.adapter.WordAdapter;
 import com.fongmi.android.tv.ui.base.BaseActivity;
@@ -50,16 +51,17 @@ import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Response;
 
-public class SearchActivity extends BaseActivity implements WordAdapter.OnClickListener, HotMovieAdapter.OnClickListener, RecordAdapter.OnClickListener, CustomKeyboard.Callback, SiteListener {
+public class SearchActivity extends BaseActivity implements WordAdapter.OnClickListener, DoubanMovieAdapter.OnClickListener, RecordAdapter.OnClickListener, CustomKeyboard.Callback, SiteListener {
 
     private ActivitySearchBinding mBinding;
     private RecordAdapter mRecordAdapter;
     private WordAdapter mWordAdapter;
-    private HotMovieAdapter mHotMovieAdapter;
+    private DoubanMovieAdapter mDoubanMovieAdapter;
     private CustomKeyboard mKeyboard;
     private ObjectAnimator mSourcePulse;
     private AlertDialog historyDialog;
     private int hotRequestToken;
+    private DoubanCollection collection = DoubanCollection.HOT_MOVIES;
 
     public static void start(Activity activity) {
         activity.startActivity(new Intent(activity, SearchActivity.class));
@@ -96,6 +98,10 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
         startSourcePulse();
         setRecyclerView();
+        bindCollectionTab(mBinding.tabHotMovies, DoubanCollection.HOT_MOVIES);
+        bindCollectionTab(mBinding.tabHotTv, DoubanCollection.HOT_TV);
+        bindCollectionTab(mBinding.tabShowing, DoubanCollection.SHOWING);
+        mBinding.doubanStatus.setOnClickListener(view -> getHot());
         checkKeyword();
         onSearch();
     }
@@ -105,6 +111,15 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         mBinding.sourceRow.setOnClickListener(v -> showSourceDialog());
         mBinding.manageRecords.setOnClickListener(this::manageRecords);
         mBinding.clearRecords.setOnClickListener(this::clearRecords);
+        mBinding.moreRecords.setOnClickListener(v -> {
+            boolean expand = !mRecordAdapter.isExpanded();
+            mRecordAdapter.setExpanded(expand);
+            updateRecordLayout();
+            if (!expand) mBinding.manageRecords.requestFocus();
+        });
+        mBinding.recordRecycler.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft) mBinding.recordRecycler.post(this::updateRecordLayout);
+        });
         mBinding.keyword.setOnEditorActionListener((textView, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) onSearch();
             return true;
@@ -132,10 +147,12 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         mBinding.wordRecycler.setAdapter(mWordAdapter = new WordAdapter(this));
         mBinding.hotRecycler.setHasFixedSize(false);
         mBinding.hotRecycler.setLayoutManager(new GridLayoutManager(this, 5));
-        mBinding.hotRecycler.setAdapter(mHotMovieAdapter = new HotMovieAdapter(this));
+        mBinding.hotRecycler.setAdapter(mDoubanMovieAdapter = new DoubanMovieAdapter(this, false));
+        mBinding.recordRecycler.setItemAnimator(null);
         mBinding.recordRecycler.setHasFixedSize(false);
         mBinding.recordRecycler.setLayoutManager(new FlexboxLayoutManager(this, FlexDirection.ROW));
         mBinding.recordRecycler.setAdapter(mRecordAdapter = new RecordAdapter(this));
+        mBinding.recordRecycler.post(this::updateRecordLayout);
     }
 
     private void checkKeyword() {
@@ -153,33 +170,73 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         else getSuggest(text);
     }
 
+    private void bindCollectionTab(View tab, DoubanCollection category) {
+        tab.setOnClickListener(view -> selectCollection(category));
+        tab.setOnFocusChangeListener((view, focused) -> {
+            if (focused) selectCollection(category);
+        });
+    }
+
+    private void selectCollection(DoubanCollection category) {
+        if (category == collection || !empty()) return;
+        collection = category;
+        getHot();
+    }
+
+    private View selectedCollectionTab() {
+        return collection == DoubanCollection.HOT_TV ? mBinding.tabHotTv
+                : collection == DoubanCollection.SHOWING ? mBinding.tabShowing : mBinding.tabHotMovies;
+    }
+
+    private boolean currentCollectionRequest(int token) {
+        return token == hotRequestToken && empty() && !isFinishing() && !isDestroyed();
+    }
+
     private void getHot() {
-        mBinding.word.setText(R.string.search_douban_hot);
+        mBinding.word.setText(R.string.tv_douban_charts);
+        mBinding.doubanTabs.setVisibility(View.VISIBLE);
+        mBinding.tabHotMovies.setSelected(collection == DoubanCollection.HOT_MOVIES);
+        mBinding.tabHotTv.setSelected(collection == DoubanCollection.HOT_TV);
+        mBinding.tabShowing.setSelected(collection == DoubanCollection.SHOWING);
+        if (mBinding.doubanStatus.hasFocus()) selectedCollectionTab().requestFocus();
+        mBinding.doubanStatus.setVisibility(View.GONE);
         mBinding.hotSkeleton.getRoot().setVisibility(View.VISIBLE);
         mBinding.hotRecycler.setVisibility(View.GONE);
         mBinding.wordRecycler.setVisibility(View.GONE);
+        mDoubanMovieAdapter.clear();
         int token = ++hotRequestToken;
-        MetadataRepository.get().loadHotMovies(items -> {
-            if (token != hotRequestToken || !empty()) return;
+        MetadataRepository.get().loadCollection(collection, items -> {
+            if (!currentCollectionRequest(token)) return;
             mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
-            mBinding.hotRecycler.setVisibility(View.VISIBLE);
-            mHotMovieAdapter.setItems(items);
+            mDoubanMovieAdapter.setItems(items);
+            mBinding.hotRecycler.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+            if (items.isEmpty()) showCollectionStatus(false);
         }, error -> {
-            if (token != hotRequestToken || !empty()) return;
-            showHotFallback();
+            if (currentCollectionRequest(token)) showCollectionStatus(true);
         });
+    }
+
+    private void showCollectionStatus(boolean failed) {
+        mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
+        mBinding.hotRecycler.setVisibility(View.GONE);
+        mBinding.doubanStatus.setText(failed ? R.string.tv_douban_error : R.string.tv_douban_empty);
+        mBinding.doubanStatus.setFocusable(failed);
+        mBinding.doubanStatus.setClickable(failed);
+        mBinding.doubanStatus.setVisibility(View.VISIBLE);
     }
 
     private void getSuggest(String text) {
         ++hotRequestToken;
+        mBinding.doubanTabs.setVisibility(View.GONE);
+        mBinding.doubanStatus.setVisibility(View.GONE);
         mBinding.word.setText(R.string.search_suggest);
         mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
         mBinding.hotRecycler.setVisibility(View.GONE);
         mBinding.wordRecycler.setVisibility(View.VISIBLE);
-        OkHttp.newCall("https://suggest.video.iqiyi.com/?if=mobile&key=" + Uri.encode(ZhuToPin.get(text))).enqueue(getCallback(false));
+        OkHttp.newCall("https://suggest.video.iqiyi.com/?if=mobile&key=" + Uri.encode(ZhuToPin.get(text))).enqueue(getCallback());
     }
 
-    private Callback getCallback(boolean hot) {
+    private Callback getCallback() {
         return new Callback() {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -193,14 +250,6 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private void setAdapter(String result) {
         if (empty()) return;
         mWordAdapter.setItems(Word.objectFrom(result).getData());
-    }
-
-    private void showHotFallback() {
-        mBinding.word.setText(R.string.search_hot);
-        mBinding.hotSkeleton.getRoot().setVisibility(View.GONE);
-        mBinding.hotRecycler.setVisibility(View.GONE);
-        mBinding.wordRecycler.setVisibility(View.VISIBLE);
-        mWordAdapter.setItems(Word.objectFrom(Setting.getHot()).getData());
     }
 
     @Override
@@ -217,20 +266,63 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     public void onDataChanged(int size) {
-        boolean restoreFocus = size == 0 && mBinding.recordLayout.hasFocus();
+        boolean restoreFocus = size == 0 && (mBinding.recordLayout.hasFocus() || mBinding.recordHeader.hasFocus()
+                || mRecordAdapter != null && mRecordAdapter.isEditing());
+        if (size == 0 && mRecordAdapter != null) setRecordEditing(false);
+        mBinding.recordHeader.setVisibility(size == 0 ? View.GONE : View.VISIBLE);
         mBinding.recordLayout.setVisibility(size == 0 ? View.GONE : View.VISIBLE);
-        if (restoreFocus) mBinding.keyword.post(() -> mBinding.keyword.requestFocus());
+        if (mRecordAdapter != null) updateRecordLayout();
+        if (restoreFocus) mKeyboard.focusDefault();
+    }
+
+    private void updateRecordLayout() {
+        mRecordAdapter.updateCollapsedCount(mBinding.recordRecycler);
+        mBinding.moreRecords.setVisibility(!mRecordAdapter.isEditing() && mRecordAdapter.hasOverflow() ? View.VISIBLE : View.GONE);
+        mBinding.moreRecords.setText(mRecordAdapter.isExpanded() ? R.string.tv_search_less : R.string.tv_search_more);
     }
 
     private void manageRecords(View view) {
-        String[] records = mRecordAdapter.getRecords();
-        if (records.length == 0) return;
-        historyDialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.tv_search_manage)
-                .setItems(records, (dialog, which) -> confirmRemoveRecord(records[which], view))
-                .setNegativeButton(R.string.dialog_negative, null)
-                .setOnDismissListener(dialog -> restoreHistoryFocus(view))
-                .show();
+        if (mRecordAdapter.getItemCount() == 0) return;
+        if (exitRecordManagement()) return;
+        setRecordEditing(true);
+        focusRecord(0);
+    }
+
+    private void setRecordEditing(boolean editing) {
+        mRecordAdapter.setEditing(editing);
+        mRecordAdapter.setExpanded(false);
+        updateRecordLayout();
+        mBinding.recordHint.setText(editing ? R.string.tv_search_edit_hint : R.string.tv_search_manage_hint);
+        mBinding.manageRecords.setContentDescription(getString(editing ? R.string.tv_search_done : R.string.tv_search_manage));
+    }
+
+    private boolean exitRecordManagement() {
+        if (mRecordAdapter == null || !mRecordAdapter.isEditing()) return false;
+        setRecordEditing(false);
+        mBinding.manageRecords.requestFocus();
+        return true;
+    }
+
+    @Override
+    public void onItemDelete(String text) {
+        if (!mRecordAdapter.isEditing()) return;
+        int position = mRecordAdapter.remove(text);
+        if (position >= 0 && mRecordAdapter.getItemCount() > 0) focusRecord(position);
+    }
+
+    private void focusRecord(int position) {
+        mBinding.recordRecycler.post(() -> {
+            if (isFinishing() || isDestroyed() || !mRecordAdapter.isEditing()) return;
+            int target = Math.min(position, mRecordAdapter.getItemCount() - 1);
+            if (target < 0) return;
+            // Do not scroll the inner wrap-content list: doing so hides earlier
+            // rows after deleting an item. Parent scrolling follows requestFocus.
+            mBinding.recordRecycler.post(() -> {
+                if (!mRecordAdapter.isEditing()) return;
+                RecyclerView.ViewHolder holder = mBinding.recordRecycler.findViewHolderForAdapterPosition(target);
+                if (holder != null) holder.itemView.requestFocus();
+            });
+        });
     }
 
     @Override
@@ -313,6 +405,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (KeyUtil.isMenuKey(event)) showSourceDialog();
+        if (KeyUtil.isActionDown(event) && KeyUtil.isBackKey(event) && exitRecordManagement()) return true;
         if (KeyUtil.isActionDown(event) && KeyUtil.isBackKey(event) && mKeyboard != null && mKeyboard.onBack()) return true;
         if (KeyUtil.isActionDown(event) && findFocus(event)) return true;
         return super.dispatchKeyEvent(event);
@@ -320,13 +413,31 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
 
     @Override
     protected void onBackInvoked() {
+        if (exitRecordManagement()) return;
         if (mKeyboard != null && mKeyboard.onBack()) return;
         super.onBackInvoked();
     }
 
     private boolean findFocus(KeyEvent event) {
         View current = getCurrentFocus();
+        if (current == null) return false;
+        if (current == mBinding.tabHotMovies || current == mBinding.tabHotTv || current == mBinding.tabShowing) {
+            if (KeyUtil.isDownKey(event)) {
+                if (mBinding.hotRecycler.getVisibility() == View.VISIBLE) focusFirst(mBinding.hotRecycler);
+                else if (mBinding.doubanStatus.isFocusable()) mBinding.doubanStatus.requestFocus();
+                return true;
+            }
+            if (KeyUtil.isRightKey(event) && current == mBinding.tabShowing) return true;
+        }
+        if (current == mBinding.doubanStatus && KeyUtil.isUpKey(event)) return selectedCollectionTab().requestFocus();
         if (current == mBinding.keyword) return handleKeywordKey(event);
+        if (current == mBinding.moreRecords) {
+            if (KeyUtil.isUpKey(event)) {
+                View last = findNearestInLastRow(mBinding.recordRecycler, 0);
+                return last != null && last.requestFocus();
+            }
+            if (KeyUtil.isDownKey(event)) return focusDiscovery();
+        }
         if (current == mBinding.manageRecords || current == mBinding.clearRecords) {
             if (KeyUtil.isDownKey(event)) return focusFirst(mBinding.recordRecycler);
             if (KeyUtil.isUpKey(event)) return true;
@@ -393,6 +504,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private boolean handleKeywordKey(KeyEvent event) {
         if (!KeyUtil.isRightKey(event)) return false;
         if (mBinding.keyword.getSelectionEnd() < mBinding.keyword.getText().length()) return false;
+        if (empty() && mBinding.recordLayout.getVisibility() != View.VISIBLE) return selectedCollectionTab().requestFocus();
         boolean hasSuggestion = mBinding.wordRecycler.getVisibility() == View.VISIBLE && mWordAdapter.getItemCount() > 0;
         boolean hasRecord = mBinding.recordLayout.getVisibility() == View.VISIBLE;
         RecyclerView target = hasSuggestion ? mBinding.wordRecycler : hasRecord ? mBinding.recordRecycler
@@ -413,6 +525,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         if (KeyUtil.isRightKey(event)) return isLastInRow(mBinding.wordRecycler, item);
         if (KeyUtil.isDownKey(event)) return isLastRow(mBinding.wordRecycler, item);
         if (KeyUtil.isUpKey(event) && isFirstRow(mBinding.wordRecycler, item)) {
+            if (mBinding.moreRecords.getVisibility() == View.VISIBLE) return mBinding.moreRecords.requestFocus();
             if (mBinding.recordLayout.getVisibility() == View.VISIBLE) {
                 View child = findNearestInLastRow(mBinding.recordRecycler, item.getLeft());
                 if (child != null) {
@@ -433,8 +546,22 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
             return true;
         }
         if (KeyUtil.isDownKey(event) && isLastRow(mBinding.recordRecycler, item)) {
-            RecyclerView target = mBinding.hotRecycler.getVisibility() == View.VISIBLE ? mBinding.hotRecycler : mBinding.wordRecycler;
-            return focusFirst(target);
+            if (mBinding.moreRecords.getVisibility() == View.VISIBLE) return mBinding.moreRecords.requestFocus();
+            return focusDiscovery();
+        }
+        if (KeyUtil.isUpKey(event) || KeyUtil.isDownKey(event)) {
+            boolean down = KeyUtil.isDownKey(event);
+            View nearest = null;
+            for (int i = 0; i < mBinding.recordRecycler.getChildCount(); i++) {
+                View child = mBinding.recordRecycler.getChildAt(i);
+                if (down ? child.getTop() <= item.getTop() : child.getTop() >= item.getTop()) continue;
+                int rowDistance = Math.abs(child.getTop() - item.getTop());
+                int leftDistance = Math.abs(child.getLeft() - item.getLeft());
+                if (nearest == null || rowDistance < Math.abs(nearest.getTop() - item.getTop())
+                        || rowDistance == Math.abs(nearest.getTop() - item.getTop())
+                        && leftDistance < Math.abs(nearest.getLeft() - item.getLeft())) nearest = child;
+            }
+            return nearest != null && nearest.requestFocus();
         }
         return false;
     }
@@ -442,18 +569,12 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private boolean handleHotKey(KeyEvent event, View item) {
         if (KeyUtil.isRightKey(event)) return isLastInRow(mBinding.hotRecycler, item);
         if (KeyUtil.isDownKey(event)) return isLastRow(mBinding.hotRecycler, item);
-        if (KeyUtil.isUpKey(event) && isFirstRow(mBinding.hotRecycler, item)) {
-            if (mBinding.recordLayout.getVisibility() == View.VISIBLE) {
-                View child = findNearestInLastRow(mBinding.recordRecycler, item.getLeft());
-                if (child != null) {
-                    mBinding.scroll.smoothScrollTo(0, 0);
-                    child.requestFocus();
-                    return true;
-                }
-            }
-            return true;
-        }
+        if (KeyUtil.isUpKey(event) && isFirstRow(mBinding.hotRecycler, item)) return selectedCollectionTab().requestFocus();
         return false;
+    }
+
+    private boolean focusDiscovery() {
+        return empty() ? selectedCollectionTab().requestFocus() : focusFirst(mBinding.wordRecycler);
     }
 
     private boolean focusFirst(RecyclerView rv) {
@@ -472,13 +593,15 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     @Override
     protected void onResume() {
         super.onResume();
+        mRecordAdapter.refresh();
         mBinding.mic.setFocusable(true);
         setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
-        mBinding.keyword.requestFocus();
+        mKeyboard.focusDefault();
     }
 
     @Override
     protected void onDestroy() {
+        ++hotRequestToken;
         if (historyDialog != null) historyDialog.dismiss();
         if (mSourcePulse != null) mSourcePulse.cancel();
         super.onDestroy();

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tcl_bridge_title">小T搜索桥接</string>
+    <string name="tcl_bridge_description">读取原厂搜索结果标题中的查询词，转到本应用；不枚举片名或搜索类别。原厂先处理，手动搜索也可能转发。为防旧页循环跳转，无法确认新请求的同词重复搜索可能不转发。不录音，仅需此开关与无障碍授权。演员或题材搜索效果取决于内容源。</string>
+    <string name="tcl_bridge_off">已关闭</string>
+    <string name="tcl_bridge_ready">已连接 · 通用结果字段模式</string>
+    <string name="tcl_bridge_unbound">无障碍未连接</string>
+    <string name="tcl_bridge_enable">开启</string>
+    <string name="tcl_bridge_disable">关闭</string>
+    <string name="tcl_bridge_authorize">去授权</string>
+    <string name="tcl_bridge_adb_hint">此电视可能需要使用文档中的 ADB 授权工具。</string>
+    <string name="tcl_bridge_diagnostics">桥接诊断</string>
+    <string name="tcl_bridge_no_diagnostics">当前进程暂无事件。</string>
+    <string name="tcl_bridge_clear">清除</string>
+    <string name="tcl_bridge_hint">长按查看脱敏诊断。实验性功能：TCL T7H。</string>
+</resources>

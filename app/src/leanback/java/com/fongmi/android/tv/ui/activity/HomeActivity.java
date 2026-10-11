@@ -94,6 +94,7 @@ import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
+import com.fongmi.android.tv.voice.TclSearchBridgeSettings;
 import com.github.catvod.net.OkHttp;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.collect.Lists;
@@ -191,6 +192,10 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         mActionHandled = false;
+        if (intent.hasExtra(TclSearchBridgeSettings.EXTRA_REQUEST)) {
+            setIntent(intent);
+            if (!mContentReady) return;
+        }
         checkAction(intent);
         mActionHandled = true;
     }
@@ -334,7 +339,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             PermissionUtil.requestFile(this, allGranted -> checkType(intent));
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String keyword = intent.getStringExtra(SearchManager.QUERY);
-            if (!TextUtils.isEmpty(keyword)) SearchActivity.start(this, keyword);
+            boolean bridge = intent.hasExtra(TclSearchBridgeSettings.EXTRA_REQUEST);
+            if (bridge && !TclSearchBridgeSettings.consume(intent)) return;
+            if (!TextUtils.isEmpty(keyword)) {
+                SearchActivity.start(this, keyword);
+                if (bridge) TclSearchBridgeSettings.record("search_dispatched");
+            }
         }
     }
 

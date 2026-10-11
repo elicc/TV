@@ -1,0 +1,145 @@
+{
+  "subject_collection_items": [
+    {
+      "cover": {
+        "url": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2936442666.jpg",
+        "width": 4400,
+        "height": 5500,
+        "shape": "rectangle"
+      },
+      "title": "生化危机：爆发夜",
+      "type": "movie",
+      "info": "德国 法国 美国 / 科幻 惊悚 恐怖 / 扎克·克雷格 / 奥斯汀·艾布拉姆斯 扎克·切利",
+      "id": "37068446",
+      "year": "2026",
+      "rating": {
+        "value": 7.3,
+        "count": 130303,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "扎克·克雷格"
+      ],
+      "actors": [
+        "奥斯汀·艾布拉姆斯",
+        "扎克·切利",
+        "卡莉·瑞斯"
+      ],
+      "card_subtitle": "2026 / 德国 法国 美国 / 科幻 惊悚 恐怖 / 扎克·克雷格 / 奥斯汀·艾布拉姆斯 扎克·切利",
+      "original_title": "Resident Evil"
+    },
+    {
+      "cover": {
+        "url": "https://img2.doubanio.com/view/photo/m_ratio_poster/public/p2935867001.jpg",
+        "width": 3572,
+        "height": 5000,
+        "shape": "rectangle"
+      },
+      "title": "神探之痕迹‎",
+      "type": "movie",
+      "info": "中国大陆 / 犯罪 / 陈思诚 / 张译 马丽",
+      "id": "37247814",
+      "year": "2026",
+      "rating": {
+        "value": 6.8,
+        "count": 64500,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "陈思诚"
+      ],
+      "actors": [
+        "张译",
+        "马丽",
+        "陈明昊"
+      ],
+      "card_subtitle": "2026 / 中国大陆 / 犯罪 / 陈思诚 / 张译 马丽"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2935643598.jpg",
+        "width": 2666,
+        "height": 4000,
+        "shape": "rectangle"
+      },
+      "title": "活色生香",
+      "type": "movie",
+      "info": "中国大陆 / 剧情 / 罗冬 / 闫妮 叶童",
+      "id": "37899051",
+      "year": "2026",
+      "rating": {
+        "value": 7.0,
+        "count": 12413,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "罗冬"
+      ],
+      "actors": [
+        "闫妮",
+        "叶童",
+        "倪虹洁"
+      ],
+      "card_subtitle": "2026 / 中国大陆 / 剧情 / 罗冬 / 闫妮 叶童"
+    },
+    {
+      "cover": {
+        "url": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2933185536.jpg",
+        "width": 2025,
+        "height": 3000,
+        "shape": "rectangle"
+      },
+      "title": "野兽之心",
+      "type": "movie",
+      "info": "美国 / 剧情 动作 冒险 / 大卫·阿耶 / 布拉德·皮特 Uber",
+      "id": "36828393",
+      "year": "2026",
+      "rating": {
+        "value": 7.3,
+        "count": 17489,
+        "max": 10,
+        "star_count": 3.5
+      },
+      "directors": [
+        "大卫·阿耶"
+      ],
+      "actors": [
+        "布拉德·皮特",
+        "Uber",
+        "J·K·西蒙斯"
+      ],
+      "card_subtitle": "2026 / 美国 / 剧情 动作 冒险 / 大卫·阿耶 / 布拉德·皮特 Uber"
+    },
+    {
+      "cover": {
+        "url": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2936493940.jpg",
+        "width": 1080,
+        "height": 1453,
+        "shape": "rectangle"
+      },
+      "title": "什么意思夫妇",
+      "type": "movie",
+      "info": "中国大陆 / 喜剧 家庭 / 沈春阳 / 小沈阳 沈春阳",
+      "id": "37667015",
+      "year": "2026",
+      "rating": {
+        "value": 6.4,
+        "count": 18961,
+        "max": 10,
+        "star_count": 3.0
+      },
+      "directors": [
+        "沈春阳"
+      ],
+      "actors": [
+        "小沈阳",
+        "沈春阳",
+        "贾冰"
+      ],
+      "card_subtitle": "2026 / 中国大陆 / 喜剧 家庭 / 沈春阳 / 小沈阳 沈春阳"
+    }
+  ]
+}
