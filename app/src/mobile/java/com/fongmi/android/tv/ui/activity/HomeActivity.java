@@ -5,6 +5,7 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
@@ -67,6 +68,7 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        setIntent(intent);
         checkAction(intent);
     }
 
@@ -96,7 +98,8 @@ public class HomeActivity extends BaseActivity implements NavigationBarView.OnIt
             VideoActivity.push(this, intent.getStringExtra(Intent.EXTRA_TEXT));
         } else if (Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) {
             PermissionUtil.requestFile(this, allGranted -> checkType(intent));
-        } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+        } else if (Intent.ACTION_SEARCH.equals(intent.getAction()) || MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH.equals(intent.getAction())) {
+            // Use the existing result picker; do not auto-play an ambiguous voice match.
             String keyword = intent.getStringExtra(SearchManager.QUERY);
             if (!TextUtils.isEmpty(keyword)) SearchActivity.start(this, keyword);
         }

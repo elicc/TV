@@ -1,0 +1,9 @@
+<resources>
+    <string name="danmaku_api_help">FongMi search API, not a site JSON.\nGET: use {name} / {episode}; otherwise POST.\nScan QR to enter the URL.</string>
+    <string name="danmaku_api_invalid_url">Enter a valid HTTP or HTTPS search API URL.</string>
+    <string name="danmaku_api_site_config">This is a site configuration, not a danmaku search API. Enter a FongMi search endpoint.</string>
+    <string name="danmaku_api_invalid_response">Danmaku search returned an unsupported format. Expected an array of name/url entries.</string>
+    <string name="danmaku_search_http_error">Danmaku search failed: HTTP %1$d. Check the API URL and access permissions; do not use a site configuration URL.</string>
+    <string name="danmaku_search_network_error">Cannot reach the danmaku search API. Check the address and network.</string>
+    <string name="danmaku_search_empty_response">The danmaku search API returned an empty response.</string>
+</resources>

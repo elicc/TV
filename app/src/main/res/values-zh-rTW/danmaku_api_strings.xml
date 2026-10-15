@@ -1,0 +1,9 @@
+<resources>
+    <string name="danmaku_api_help">填寫 FongMi 搜尋 API，非站點 JSON。\n含 {name} / {episode} 用 GET，否則 POST。\n可掃碼輸入網址。</string>
+    <string name="danmaku_api_invalid_url">請輸入有效的 HTTP 或 HTTPS 搜尋接口網址。</string>
+    <string name="danmaku_api_site_config">這是站點設定檔，不是彈幕搜尋接口。請填寫 FongMi 搜尋 API。</string>
+    <string name="danmaku_api_invalid_response">彈幕搜尋返回格式不支援，應為包含 name/url 的陣列。</string>
+    <string name="danmaku_search_http_error">彈幕搜尋失敗：HTTP %1$d。請檢查接口網址和存取權限，不要填寫站點設定網址。</string>
+    <string name="danmaku_search_network_error">無法連接彈幕搜尋接口，請檢查網址和網路。</string>
+    <string name="danmaku_search_empty_response">彈幕搜尋接口返回了空回應。</string>
+</resources>

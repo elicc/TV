@@ -1,0 +1,6 @@
+<resources>
+    <string name="dialog_import">导入</string>
+    <string name="player_mpv_conf_conflict_hint">以下选项由应用管理，可能覆盖 mpv.conf 中的设置：%1$s</string>
+    <string name="player_mpv_conf_priority_hint">应用管理的选项优先于 mpv.conf，其他选项仍然生效。</string>
+    <string name="player_mpv_conf_import_failed">无法导入 mpv.conf</string>
+</resources>

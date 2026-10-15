@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Property;
 import android.view.KeyEvent;
@@ -191,9 +192,9 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        setIntent(intent);
         mActionHandled = false;
         if (intent.hasExtra(TclSearchBridgeSettings.EXTRA_REQUEST)) {
-            setIntent(intent);
             if (!mContentReady) return;
         }
         checkAction(intent);
@@ -337,7 +338,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             VideoActivity.push(this, intent.getStringExtra(Intent.EXTRA_TEXT));
         } else if (Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) {
             PermissionUtil.requestFile(this, allGranted -> checkType(intent));
-        } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+        } else if (Intent.ACTION_SEARCH.equals(intent.getAction()) || MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH.equals(intent.getAction())) {
+            // Use the existing result picker; do not auto-play an ambiguous voice match.
             String keyword = intent.getStringExtra(SearchManager.QUERY);
             boolean bridge = intent.hasExtra(TclSearchBridgeSettings.EXTRA_REQUEST);
             if (bridge && !TclSearchBridgeSettings.consume(intent)) return;

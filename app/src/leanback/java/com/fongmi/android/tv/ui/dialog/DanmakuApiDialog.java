@@ -9,13 +9,13 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.DanmakuApi;
 import com.fongmi.android.tv.databinding.DialogUaBinding;
 import com.fongmi.android.tv.event.ServerEvent;
 import com.fongmi.android.tv.impl.DanmakuListener;
 import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.utils.QRCode;
-import com.fongmi.android.tv.utils.ResUtil;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
@@ -41,7 +41,7 @@ public class DanmakuApiDialog extends BaseAlertDialog {
 
     @Override
     protected MaterialAlertDialogBuilder getBuilder() {
-        return builder().setView(getBinding().getRoot());
+        return builder().setTitle(R.string.danmaku_api).setView(getBinding().getRoot());
     }
 
     @Override
@@ -49,8 +49,11 @@ public class DanmakuApiDialog extends BaseAlertDialog {
         String text;
         binding.text.setText(text = DanmakuSetting.getEffectiveApiUrl());
         binding.text.setSelection(TextUtils.isEmpty(text) ? 0 : text.length());
+        binding.text.setHint(R.string.danmaku_api);
         binding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(4), 200, 0));
-        binding.info.setText(ResUtil.getString(R.string.push_info, Server.get().getAddress()).replace("\uff0c", "\n"));
+        binding.info.setText(R.string.danmaku_api_help);
+        binding.info.setTextSize(14);
+        binding.info.setMaxLines(5);
     }
 
     @Override
@@ -64,7 +67,13 @@ public class DanmakuApiDialog extends BaseAlertDialog {
     }
 
     private void onPositive(View view) {
-        getListener().setDanmakuApi(binding.text.getText().toString().trim());
+        String url = binding.text.getText().toString().trim();
+        if (!url.isEmpty() && !DanmakuApi.isValidUrl(url)) {
+            binding.text.setError(getString(R.string.danmaku_api_invalid_url));
+            binding.text.requestFocus();
+            return;
+        }
+        getListener().setDanmakuApi(url);
         dismiss();
     }
 

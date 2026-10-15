@@ -428,6 +428,10 @@
     <string name="metadata_confirm_use">使用</string>
     <string name="metadata_confirm_keep">保留源站</string>
     <string name="metadata_candidate_available">%1$s，有新的资料可用，按确认键使用</string>
+    <string name="detail_line">播放线路</string>
+    <string name="detail_episode_range">选集范围</string>
+    <string name="detail_part">分段</string>
+    <string name="detail_sources">其他源</string>
     <string name="metadata_agent_title">元数据增强服务</string>
     <string name="metadata_agent_hint">可选的远程豆瓣与大模型匹配服务。服务地址留空时继续使用内置匹配。</string>
     <string name="metadata_agent_url_hint">服务地址，例如 http://192.168.1.100:8765</string>

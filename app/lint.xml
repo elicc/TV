@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- AndroidTvDetector (lint 32.3.1) resets its flags for each source manifest
+         and treats a shared Leanback dependency as TV support. The TV launcher,
+         banner and optional hardware are correctly declared in src/leanback,
+         not in main or the mobile flavor. Keep checking the TV source manifest;
+         tools/tests/test_manifest_contracts.py also checks both merged outputs. -->
+    <issue id="MissingLeanbackLauncher">
+        <ignore path="src/main/AndroidManifest.xml" />
+        <ignore path="src/mobile/AndroidManifest.xml" />
+    </issue>
+    <issue id="MissingLeanbackSupport">
+        <ignore path="src/main/AndroidManifest.xml" />
+        <ignore path="src/mobile/AndroidManifest.xml" />
+    </issue>
+    <issue id="ImpliedTouchscreenHardware">
+        <ignore path="src/main/AndroidManifest.xml" />
+        <ignore path="src/mobile/AndroidManifest.xml" />
+    </issue>
+</lint>

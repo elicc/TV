@@ -1,0 +1,6 @@
+<resources>
+    <string name="dialog_import">Import</string>
+    <string name="player_mpv_conf_conflict_hint">These options are managed by the app and may override mpv.conf: %1$s</string>
+    <string name="player_mpv_conf_priority_hint">Options managed by the app take precedence over mpv.conf. Other options remain in effect.</string>
+    <string name="player_mpv_conf_import_failed">Unable to import mpv.conf</string>
+</resources>
