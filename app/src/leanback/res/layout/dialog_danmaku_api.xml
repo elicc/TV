@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/tv_setting_panel">
+
+    <TextView
+        style="@style/Tv.Danmaku.Text"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
+        android:textSize="24sp"
+        android:text="@string/danmaku_api" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView style="@style/Tv.Danmaku.Hint" android:text="@string/tv_dm_edit_hint" />
+
+            <com.fongmi.android.tv.ui.custom.CustomEditText
+                android:id="@+id/text"
+                style="@style/Tv.Danmaku.Input"
+                android:layout_marginTop="8dp"
+                android:inputType="textUri"
+                android:imeOptions="actionDone"
+                android:hint="@string/danmaku_api"
+                android:nextFocusDown="@id/testName"
+                android:importantForAutofill="no" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:baselineAligned="false">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="20dp">
+
+                    <TextView style="@style/Tv.Danmaku.Hint" android:text="@string/tv_dm_probe_hint" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/testName"
+                            style="@style/Tv.Danmaku.Input"
+                            android:layout_width="0dp"
+                            android:layout_weight="2"
+                            android:layout_marginEnd="8dp"
+                            android:inputType="text"
+                            android:hint="@string/tv_dm_test_title"
+                            android:nextFocusRight="@id/testEpisode"
+                            android:nextFocusDown="@id/testEpisode" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/testEpisode"
+                            style="@style/Tv.Danmaku.Input"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:inputType="text"
+                            android:hint="@string/tv_dm_test_episode"
+                            android:nextFocusLeft="@id/testName"
+                            android:nextFocusRight="@id/test"
+                            android:nextFocusDown="@id/test" />
+
+                        <TextView
+                            android:id="@+id/test"
+                            style="@style/Tv.Danmaku.Action"
+                            android:nextFocusLeft="@id/testEpisode"
+                            android:nextFocusDown="@id/positive"
+                            android:text="@string/tv_dm_probe" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/result"
+                        style="@style/Tv.Danmaku.Hint"
+                        android:layout_marginTop="12dp"
+                        android:accessibilityLiveRegion="polite"
+                        android:text="@string/tv_dm_idle" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="120dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <ImageView android:id="@+id/code" android:layout_width="112dp" android:layout_height="112dp" android:importantForAccessibility="no" />
+                    <TextView style="@style/Tv.Danmaku.Hint" android:textSize="12sp" android:layout_marginTop="4dp" android:text="@string/tv_dm_scan" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp">
+        <TextView android:id="@+id/useDefault" style="@style/Tv.Danmaku.Action" android:nextFocusUp="@id/text" android:text="@string/tv_dm_use_default" />
+        <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <TextView android:id="@+id/negative" style="@style/Tv.Danmaku.Action" android:layout_marginEnd="12dp" android:nextFocusUp="@id/testEpisode" android:text="@string/dialog_negative" />
+        <TextView android:id="@+id/positive" style="@style/Tv.Danmaku.Action" android:nextFocusUp="@id/test" android:text="@string/tv_dm_savedraft" />
+    </LinearLayout>
+</LinearLayout>

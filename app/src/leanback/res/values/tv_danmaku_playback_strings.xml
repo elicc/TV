@@ -1,0 +1,11 @@
+<resources>
+    <string name="tv_danmaku_search">Search</string>
+    <string name="tv_danmaku_local">Local file</string>
+    <string name="tv_danmaku_appearance">Appearance</string>
+    <string name="tv_danmaku_api">Search interface</string>
+    <string name="tv_danmaku_reset_section">Restore section</string>
+    <string name="tv_danmaku_adjust_hint">↑↓ Select · ←→ Adjust · Back Return</string>
+    <string name="tv_danmaku_reset_hint">Changes apply immediately. Restore resets this section; hold to reset all.</string>
+    <string name="tv_danmaku_source_hint">Choose a source, or search / load a local file.</string>
+    <string name="tv_danmaku_search_hint">Check the season and episode before selecting a result.</string>
+</resources>

@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -118,6 +119,7 @@ public final class DanmakuSearchDialog extends BaseBottomSheetDialog implements 
     private void showProgress() {
         binding.recycler.setVisibility(GONE);
         binding.progress.setVisibility(VISIBLE);
+        status(null);
     }
 
     private void showResults(boolean empty) {
@@ -142,12 +144,25 @@ public final class DanmakuSearchDialog extends BaseBottomSheetDialog implements 
     private void onSuccess(List<Danmaku> items) {
         adapter.addAll(items);
         showResults(items.isEmpty());
-        if (items.isEmpty()) Notify.show(R.string.error_empty);
+        if (items.isEmpty()) {
+            status(ResUtil.getString(R.string.error_empty));
+            Notify.show(R.string.error_empty);
+        } else status(null);
     }
 
     private void onError(Exception e) {
         showResults(true);
-        Notify.show(TextUtils.isEmpty(e.getMessage()) ? ResUtil.getString(R.string.error_empty) : e.getMessage());
+        String message = TextUtils.isEmpty(e.getMessage()) ? ResUtil.getString(R.string.error_empty) : e.getMessage();
+        status(message);
+        Notify.show(message);
+    }
+
+    private void status(String message) {
+        TextView status = binding.getRoot().findViewById(android.R.id.message);
+        if (status == null) return; // TV-only status; mobile keeps its existing layout.
+        status.setText(message);
+        status.setVisibility(TextUtils.isEmpty(message) ? GONE : VISIBLE);
+        if (!TextUtils.isEmpty(message)) binding.keyword.requestFocus();
     }
 
     @Override

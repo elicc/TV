@@ -1,0 +1,5 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="?attr/tvColorSelected" />
+    <item android:state_focused="true" android:color="?attr/tvColorSurfaceRaised" />
+    <item android:color="?attr/tvColorSurface" />
+</selector>

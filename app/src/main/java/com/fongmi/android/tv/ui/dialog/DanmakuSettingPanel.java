@@ -98,17 +98,9 @@ final class DanmakuSettingPanel {
 
     private void bindTabs() {
         MaterialButton[] tabs = {binding.tabAppearance, binding.tabTiming, binding.tabDensity, binding.tabDisplay};
-        for (MaterialButton tab : tabs) checkOnFocus(tab);
         binding.tabGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
             for (int i = 0; i < tabs.length; i++) if (checkedId == tabs[i].getId()) showTab(i);
-        });
-    }
-
-    private void checkOnFocus(MaterialButton button) {
-        if (!Util.isLeanback()) return;
-        button.setOnFocusChangeListener((v, focused) -> {
-            if (focused) binding.tabGroup.check(button.getId());
         });
     }
 

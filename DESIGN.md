@@ -11,6 +11,8 @@
 - 本轮综合交接：[A2.1 综合调整与执行方案](docs/UI_UX_A2_EXECUTION_PLAN.md)，已评估 `docs/UI_UX_OPTIMIZATION.md` 并核验关键结论；详细取舍、模糊规则、任务与验收以该文件为准。A2 图片保留为概念布局参考；当前截图、偏差及未验证项见 [实施报告](docs/TV_UI_IMPLEMENTATION.md)。
 - 当前 leanback Debug APK 已由工作区源码构建并安装验证；原始设计审查截图仍只代表当时基线。
 
+- 弹幕接口编辑增量：采用独立定界表单、可滚动内容和固定草稿操作栏，复用设置页主题；验证边界见 [弹幕接口弹窗修复](docs/TV_DANMAKU_EDITOR_FIX.md)。
+
 ## Brand
 - Personality: 安静、清晰、可信赖的个人影视播放器，不是广告或会员售卖平台。
 - Trust signals: 明示当前内容源、播放状态、失败原因；不伪造评分、热度、HDR/4K 或推荐能力。

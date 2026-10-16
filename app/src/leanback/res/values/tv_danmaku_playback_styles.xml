@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<resources>
+    <style name="TvDanmakuButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/tv_danmaku_control_text</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:insetTop">2dp</item>
+        <item name="android:insetBottom">2dp</item>
+        <item name="backgroundTint">@color/tv_danmaku_control_fill</item>
+        <item name="strokeColor">@color/tv_danmaku_control_stroke</item>
+        <item name="strokeWidth">@dimen/tv_focus_width</item>
+        <item name="cornerRadius">@dimen/tv_radius_control</item>
+        <item name="rippleColor">?attr/tvColorFocusGlow</item>
+    </style>
+    <style name="TvDanmakuChip" parent="Widget.Material3.Chip.Filter">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/tv_danmaku_control_text</item>
+        <item name="chipMinHeight">44dp</item>
+        <item name="chipBackgroundColor">@color/tv_danmaku_control_fill</item>
+        <item name="chipStrokeColor">@color/tv_danmaku_control_stroke</item>
+        <item name="chipStrokeWidth">@dimen/tv_focus_width</item>
+        <item name="checkedIconVisible">true</item>
+        <item name="checkedIconTint">?attr/tvColorAccent</item>
+        <item name="rippleColor">?attr/tvColorFocusGlow</item>
+    </style>
+    <style name="TvDanmakuSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="android:minHeight">56dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/tv_danmaku_control_text</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:background">@drawable/selector_chip_round</item>
+        <item name="android:focusable">true</item>
+    </style>
+    <style name="TvDanmakuSlider" parent="Widget.Material3.Slider">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:background">@drawable/selector_focus_ring</item>
+        <item name="thumbColor">?attr/tvColorAccent</item>
+        <item name="trackColorActive">?attr/tvColorAccent</item>
+        <item name="trackColorInactive">?attr/tvColorOutline</item>
+        <item name="haloColor">?attr/tvColorFocusGlow</item>
+    </style>
+</resources>

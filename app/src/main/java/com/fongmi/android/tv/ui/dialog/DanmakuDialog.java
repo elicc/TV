@@ -22,6 +22,7 @@ import com.fongmi.android.tv.ui.adapter.DanmakuAdapter;
 import com.fongmi.android.tv.ui.custom.SpaceItemDecoration;
 import com.fongmi.android.tv.utils.FileChooser;
 import com.fongmi.android.tv.utils.FileUtil;
+import com.fongmi.android.tv.utils.Util;
 
 public final class DanmakuDialog extends BaseBottomSheetDialog implements DanmakuAdapter.OnClickListener {
 
@@ -60,7 +61,14 @@ public final class DanmakuDialog extends BaseBottomSheetDialog implements Danmak
         binding.recycler.addItemDecoration(new SpaceItemDecoration(1, 16));
         binding.recycler.post(() -> binding.recycler.scrollToPosition(adapter.getSelected()));
         binding.recycler.setVisibility(adapter.getItemCount() == 0 ? View.GONE : View.VISIBLE);
-        binding.search.setVisibility(player.getMetadata() == null || DanmakuSetting.getEffectiveApiUrl().isEmpty() ? View.GONE : View.VISIBLE);
+        boolean canSearch = player.getMetadata() != null && !DanmakuSetting.getEffectiveApiUrl().isEmpty();
+        binding.search.setVisibility(canSearch ? View.VISIBLE : View.GONE);
+        if (Util.isLeanback()) {
+            ((View) binding.search.getParent()).setVisibility(canSearch ? View.VISIBLE : View.GONE);
+            View empty = binding.getRoot().findViewById(android.R.id.empty);
+            if (empty != null) empty.setVisibility(adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+            (canSearch ? binding.search : binding.setting).requestFocus();
+        }
     }
 
     @Override

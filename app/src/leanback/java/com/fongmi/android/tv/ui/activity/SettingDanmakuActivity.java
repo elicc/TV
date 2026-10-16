@@ -15,6 +15,9 @@ import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.setting.Setting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.ui.dialog.DanmakuApiDialog;
+import com.fongmi.android.tv.ui.dialog.DanmakuSettingDialog;
+
+import okhttp3.HttpUrl;
 
 public class SettingDanmakuActivity extends BaseActivity implements DanmakuListener {
 
@@ -24,10 +27,6 @@ public class SettingDanmakuActivity extends BaseActivity implements DanmakuListe
         activity.startActivity(new Intent(activity, SettingDanmakuActivity.class));
     }
 
-    private String getApiStatus() {
-        return getString(TextUtils.isEmpty(DanmakuSetting.getEffectiveApiUrl()) ? R.string.none : R.string.yes);
-    }
-
     @Override
     protected ViewBinding getBinding() {
         return mBinding = ActivitySettingDanmakuBinding.inflate(getLayoutInflater());
@@ -35,64 +34,79 @@ public class SettingDanmakuActivity extends BaseActivity implements DanmakuListe
 
     @Override
     protected void initView(Bundle savedInstanceState) {
+        refresh();
         mBinding.danmakuLoad.requestFocus();
-        mBinding.danmakuApiText.setText(getApiStatus());
-        mBinding.danmakuAutoText.setText(Setting.getSwitch(DanmakuSetting.isAuto()));
-        mBinding.danmakuLoadText.setText(Setting.getSwitch(DanmakuSetting.isLoad()));
-        mBinding.danmakuSpiderText.setText(Setting.getSwitch(DanmakuSetting.isSpiderFirst()));
-        updateApiVisibility();
+        showHelp(R.string.danmaku_load, R.string.tv_dm_load_hint);
     }
 
     @Override
     protected void initEvent() {
-        mBinding.danmakuApi.setOnClickListener(this::onDanmakuApi);
-        mBinding.danmakuAuto.setOnClickListener(this::setDanmakuAuto);
-        mBinding.danmakuLoad.setOnClickListener(this::setDanmakuLoad);
-        mBinding.danmakuSpider.setOnClickListener(this::setDanmakuSpider);
+        mBinding.back.setOnClickListener(v -> finish());
+        bindHelp(mBinding.danmakuLoad, R.string.danmaku_load, R.string.tv_dm_load_hint);
+        bindHelp(mBinding.danmakuApi, R.string.danmaku_api, R.string.tv_dm_api_hint);
+        bindHelp(mBinding.danmakuAuto, R.string.danmaku_auto_load, R.string.tv_dm_auto_hint);
+        bindHelp(mBinding.danmakuSpider, R.string.tv_dm_priority, R.string.tv_dm_priority_hint);
+        bindHelp(mBinding.danmakuProbe, R.string.tv_dm_probe, R.string.tv_dm_probe_hint);
+        bindHelp(mBinding.danmakuAppearance, R.string.tv_dm_appearance, R.string.tv_dm_appearance_hint);
+        mBinding.danmakuLoad.setOnClickListener(v -> {
+            DanmakuSetting.putLoad(!DanmakuSetting.isLoad());
+            refresh();
+        });
+        mBinding.danmakuAuto.setOnClickListener(v -> {
+            DanmakuSetting.putAuto(!DanmakuSetting.isAuto());
+            refresh();
+        });
+        mBinding.danmakuSpider.setOnClickListener(v -> {
+            DanmakuSetting.putSpiderFirst(!DanmakuSetting.isSpiderFirst());
+            refresh();
+        });
+        mBinding.danmakuApi.setOnClickListener(v -> DanmakuApiDialog.show(this));
+        mBinding.danmakuProbe.setOnClickListener(v -> DanmakuApiDialog.showProbe(this));
+        mBinding.danmakuAppearance.setOnClickListener(v -> DanmakuSettingDialog.create().show(this));
     }
 
-    private void setDanmakuLoad(View view) {
-        DanmakuSetting.putLoad(!DanmakuSetting.isLoad());
-        mBinding.danmakuLoadText.setText(Setting.getSwitch(DanmakuSetting.isLoad()));
-        updateApiVisibility();
+    private void bindHelp(View view, int title, int description) {
+        view.setOnFocusChangeListener((v, focused) -> {
+            if (focused) showHelp(title, description);
+        });
     }
 
-    private void updateApiVisibility() {
+    private void showHelp(int title, int description) {
+        mBinding.helpTitle.setText(title);
+        mBinding.helpText.setText(description);
+    }
+
+    private String apiSummary() {
+        String effective = DanmakuSetting.getEffectiveApiUrl();
+        HttpUrl url = HttpUrl.parse(effective);
+        if (url == null) return getString(R.string.tv_dm_unconfigured);
+        // Never display a path, query or user-info: these may contain credentials.
+        String host = url.host() + (url.port() == HttpUrl.defaultPort(url.scheme()) ? "" : ":" + url.port());
+        return getString(TextUtils.isEmpty(DanmakuSetting.getApiUrl()) ? R.string.tv_dm_default : R.string.tv_dm_custom, host);
+    }
+
+    private void enabled(View view, boolean enabled) {
+        view.setEnabled(enabled);
+        view.setFocusable(enabled);
+        view.setAlpha(enabled ? 1f : 0.5f);
+    }
+
+    private void refresh() {
         boolean load = DanmakuSetting.isLoad();
-        mBinding.danmakuApi.setVisibility(load ? View.VISIBLE : View.GONE);
-        updateAutoVisibility();
-    }
-
-    private void updateAutoVisibility() {
-        boolean show = DanmakuSetting.isLoad() && !TextUtils.isEmpty(DanmakuSetting.getEffectiveApiUrl());
-        mBinding.danmakuAuto.setVisibility(show ? View.VISIBLE : View.GONE);
-        updateSpiderVisibility();
-    }
-
-    private void updateSpiderVisibility() {
-        boolean show = DanmakuSetting.isLoad() && !TextUtils.isEmpty(DanmakuSetting.getEffectiveApiUrl()) && DanmakuSetting.isAuto();
-        mBinding.danmakuSpider.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
-
-    private void onDanmakuApi(View view) {
-        DanmakuApiDialog.show(this);
+        boolean api = !TextUtils.isEmpty(DanmakuSetting.getEffectiveApiUrl());
+        boolean auto = DanmakuSetting.isAuto();
+        mBinding.danmakuLoadText.setText(Setting.getSwitch(load));
+        mBinding.danmakuApiText.setText(apiSummary());
+        mBinding.apiSummary.setText(apiSummary() + "\n\n" + getString(R.string.tv_dm_probe_hint));
+        enabled(mBinding.danmakuAuto, load && api);
+        enabled(mBinding.danmakuSpider, load && api && auto);
+        mBinding.danmakuAutoText.setText(!load ? getString(R.string.tv_dm_requires_load) : !api ? getString(R.string.tv_dm_requires_api) : Setting.getSwitch(auto));
+        mBinding.danmakuSpiderText.setText(!load ? getString(R.string.tv_dm_requires_load) : !api ? getString(R.string.tv_dm_requires_api) : !auto ? getString(R.string.tv_dm_requires_auto) : Setting.getSwitch(DanmakuSetting.isSpiderFirst()));
     }
 
     @Override
     public void setDanmakuApi(String url) {
         DanmakuSetting.putApiUrl(url);
-        mBinding.danmakuApiText.setText(getApiStatus());
-        updateAutoVisibility();
-    }
-
-    private void setDanmakuAuto(View view) {
-        DanmakuSetting.putAuto(!DanmakuSetting.isAuto());
-        mBinding.danmakuAutoText.setText(Setting.getSwitch(DanmakuSetting.isAuto()));
-        updateSpiderVisibility();
-    }
-
-    private void setDanmakuSpider(View view) {
-        DanmakuSetting.putSpiderFirst(!DanmakuSetting.isSpiderFirst());
-        mBinding.danmakuSpiderText.setText(Setting.getSwitch(DanmakuSetting.isSpiderFirst()));
+        refresh();
     }
 }

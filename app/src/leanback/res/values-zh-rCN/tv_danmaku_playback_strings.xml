@@ -1,0 +1,11 @@
+<resources>
+    <string name="tv_danmaku_search">搜索</string>
+    <string name="tv_danmaku_local">本地文件</string>
+    <string name="tv_danmaku_appearance">显示设置</string>
+    <string name="tv_danmaku_api">搜索接口</string>
+    <string name="tv_danmaku_reset_section">重置本组</string>
+    <string name="tv_danmaku_adjust_hint">↑↓ 选择 · ←→ 调整 · 返回上一级</string>
+    <string name="tv_danmaku_reset_hint">修改即时生效；重置仅还原当前分组，长按还原全部。</string>
+    <string name="tv_danmaku_source_hint">选择弹幕来源，也可搜索或加载本地文件。</string>
+    <string name="tv_danmaku_search_hint">请选择正确的剧季和集数，搜索结果不保证完全匹配。</string>
+</resources>

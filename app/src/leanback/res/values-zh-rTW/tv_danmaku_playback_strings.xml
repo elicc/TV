@@ -1,0 +1,11 @@
+<resources>
+    <string name="tv_danmaku_search">搜尋</string>
+    <string name="tv_danmaku_local">本機檔案</string>
+    <string name="tv_danmaku_appearance">顯示設定</string>
+    <string name="tv_danmaku_api">搜尋接口</string>
+    <string name="tv_danmaku_reset_section">重設本組</string>
+    <string name="tv_danmaku_adjust_hint">↑↓ 選擇 · ←→ 調整 · 返回上一級</string>
+    <string name="tv_danmaku_reset_hint">修改即時生效；重設僅還原目前分組，長按還原全部。</string>
+    <string name="tv_danmaku_source_hint">選擇彈幕來源，也可搜尋或載入本機檔案。</string>
+    <string name="tv_danmaku_search_hint">請選擇正確的劇季和集數，搜尋結果不保證完全匹配。</string>
+</resources>

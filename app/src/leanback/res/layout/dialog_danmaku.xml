@@ -1,70 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="16dp">
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/danmaku_select"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/search"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:focusable="true"
-            android:src="@drawable/ic_action_search"
-            android:visibility="gone" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/choose"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:focusable="true"
-            android:src="@drawable/ic_action_choose" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/setting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:focusable="true"
-            android:src="@drawable/ic_danmaku_setting" />
-
+<?xml version="1.0" ?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="?attr/tvColorSurface" android:orientation="vertical" android:paddingTop="24dp">
+    <com.google.android.material.textview.MaterialTextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingBottom="12dp" android:text="@string/danmaku_select" android:textColor="?attr/tvColorTextPrimary" android:textSize="22sp" android:id="@+id/title"/>
+    <com.google.android.material.textview.MaterialTextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingBottom="12dp" android:id="@android:id/empty" android:text="@string/tv_danmaku_source_hint" android:textColor="?attr/tvColorTextSecondary" android:textSize="16sp"/>
+    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:layout_marginEnd="20dp" android:layout_marginBottom="20dp" android:orientation="horizontal">
+        <androidx.appcompat.widget.LinearLayoutCompat android:id="@+id/searchAction" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <androidx.appcompat.widget.AppCompatImageView android:id="@+id/search" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginStart="4dp" android:layout_marginEnd="4dp" android:padding="12dp" android:background="@drawable/selector_chip_round" android:focusable="true" android:contentDescription="@string/tv_danmaku_search" android:src="@drawable/ic_action_search" app:tint="?attr/tvColorTextPrimary"/>
+            <com.google.android.material.textview.MaterialTextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingTop="4dp" android:text="@string/tv_danmaku_search" android:textColor="?attr/tvColorTextSecondary" android:textSize="16sp"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+        <androidx.appcompat.widget.LinearLayoutCompat android:id="@+id/chooseAction" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <androidx.appcompat.widget.AppCompatImageView android:id="@+id/choose" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginStart="4dp" android:layout_marginEnd="4dp" android:padding="12dp" android:background="@drawable/selector_chip_round" android:focusable="true" android:contentDescription="@string/tv_danmaku_local" android:src="@drawable/ic_action_choose" app:tint="?attr/tvColorTextPrimary"/>
+            <com.google.android.material.textview.MaterialTextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingTop="4dp" android:text="@string/tv_danmaku_local" android:textColor="?attr/tvColorTextSecondary" android:textSize="16sp"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+        <androidx.appcompat.widget.LinearLayoutCompat android:id="@+id/settingAction" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <androidx.appcompat.widget.AppCompatImageView android:id="@+id/setting" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginStart="4dp" android:layout_marginEnd="4dp" android:padding="12dp" android:background="@drawable/selector_chip_round" android:focusable="true" android:contentDescription="@string/tv_danmaku_appearance" android:src="@drawable/ic_nav_settings" app:tint="?attr/tvColorTextPrimary"/>
+            <com.google.android.material.textview.MaterialTextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingTop="4dp" android:text="@string/tv_danmaku_appearance" android:textColor="?attr/tvColorTextSecondary" android:textSize="16sp"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.appcompat.widget.LinearLayoutCompat>
-
-    <com.fongmi.android.tv.ui.custom.CustomRecyclerView
-        android:id="@+id/recycler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:overScrollMode="never"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="24dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:maxHeight="204dp"
-        tools:listitem="@layout/adapter_danmaku" />
-
+    <com.fongmi.android.tv.ui.custom.CustomRecyclerView android:id="@+id/recycler" android:layout_width="match_parent" android:layout_height="wrap_content" android:clipChildren="false" android:clipToPadding="false" android:overScrollMode="never" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingBottom="24dp" android:visibility="visible" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" app:maxHeight="204dp" tools:listitem="@layout/adapter_danmaku"/>
 </androidx.appcompat.widget.LinearLayoutCompat>
