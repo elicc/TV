@@ -37,6 +37,10 @@ ICONS = {
     "ic_setting_back.xml": ("chevron-left.svg", 16),
     "ic_playback_more.xml": ("chevron-right.svg", 20),
     "ic_search_record_delete.xml": ("x.svg", 12),
+    "ic_danmaku_local.xml": ("folder-open.svg", 20),
+    "ic_danmaku_edit.xml": ("pencil.svg", 16),
+    "ic_danmaku_episode_prev.xml": ("chevron-left.svg", 16),
+    "ic_danmaku_episode_next.xml": ("chevron-right.svg", 16),
 }
 
 

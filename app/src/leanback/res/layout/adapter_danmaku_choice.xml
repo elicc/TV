@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Episode chip sized to its name; the grid column (full row for one source, half for
+     more) only caps the width, so long names ellipsize at the column edge. -->
+<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/text"
+    android:layout_width="wrap_content"
+    android:layout_height="@dimen/tv_danmaku_choice_height"
+    android:minWidth="64dp"
+    android:background="@drawable/selector_detail_choice"
+    android:foreground="@drawable/selector_detail_choice_indicator_overlay"
+    android:stateListAnimator="@animator/tv_focus_scale"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center"
+    android:ellipsize="end"
+    android:singleLine="true"
+    android:marqueeRepeatLimit="marquee_forever"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:textColor="@color/selector_flag_choice_text"
+    android:textSize="@dimen/tv_text_caption"
+    tools:text="腾讯视频弹幕" />

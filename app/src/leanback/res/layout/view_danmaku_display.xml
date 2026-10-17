@@ -1,24 +1,10 @@
 <?xml version="1.0" ?>
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showScrollSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_scroll" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_scroll"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showTopSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_top" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_top"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showBottomSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_bottom" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_bottom"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showReverseSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_reverse" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_reverse"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showPositionedSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_positioned" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_positioned"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSubtitleSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_subtitle" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_subtitle"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-    <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingTop="8dp" android:paddingBottom="8dp">
-        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSpecialSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/danmaku_show_special" style="@style/TvDanmakuSwitch" android:contentDescription="@string/danmaku_show_special"/>
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showScrollSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_scroll"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showTopSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_top"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showBottomSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_bottom"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showReverseSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_reverse"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showPositionedSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_positioned"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSubtitleSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_subtitle"/>
+    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSpecialSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_special"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

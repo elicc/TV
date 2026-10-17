@@ -291,6 +291,7 @@ class TvThemeTests(unittest.TestCase):
             "ic_setting_nav_data": ("shield-check.svg", 24),
             "ic_setting_nav_about": ("info.svg", 24),
             "ic_setting_back": ("chevron-left.svg", 16),
+            "ic_danmaku_local": ("folder-open.svg", 20),
         }
         for target, (source, size) in sources.items():
             vector = (RES / f"drawable/{target}.xml").read_text()

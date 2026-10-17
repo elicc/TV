@@ -29,12 +29,16 @@ public abstract class BaseBottomSheetDialog extends BottomSheetDialogFragment {
         }
     };
 
+    private PlaybackDrawerHost drawerHost;
+
     protected abstract ViewBinding getBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container);
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        // Decided once: a sheet opened from the fullscreen console stays docked to it.
+        drawerHost = getActivity() instanceof PlaybackDrawerHost host && host.usePlaybackDrawer() ? host : null;
         dialog.setOnShowListener(d -> setSheet(dialog));
         Window window = dialog.getWindow();
         if (window == null) return dialog;
@@ -74,11 +78,39 @@ public abstract class BaseBottomSheetDialog extends BottomSheetDialogFragment {
         return 0;
     }
 
+    protected final boolean isPlaybackDrawer() {
+        return drawerHost != null;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (drawerHost == null || !(getDialog() instanceof BottomSheetDialog dialog)) return;
+        FrameLayout sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (sheet != null) drawerHost.onPlaybackDrawerStart(dialog, sheet);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (drawerHost != null) drawerHost.onPlaybackDrawerStop();
+    }
+
     private void setSheet(BottomSheetDialog dialog) {
         FrameLayout sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (sheet == null) return;
-        setHeight(sheet, getMaxHeight());
+        if (!isPlaybackDrawer()) setHeight(sheet, getMaxHeight());
+        else sheet.getViewTreeObserver().addOnGlobalLayoutListener(() -> onDrawerLayout(sheet));
         setBehavior(sheet);
+    }
+
+    // The behavior keeps an expanded sheet's top when its content later grows or
+    // shrinks; a docked drawer must instead keep its bottom on the console. Runs
+    // after the whole pass, since the behavior restores the top after child layout.
+    private void onDrawerLayout(FrameLayout sheet) {
+        if (!(sheet.getParent() instanceof View parent)) return;
+        int offset = parent.getHeight() - sheet.getBottom();
+        if (offset != 0 && BottomSheetBehavior.from(sheet).getState() == BottomSheetBehavior.STATE_EXPANDED) sheet.offsetTopAndBottom(offset);
     }
 
     private void setHeight(FrameLayout sheet, int maxHeight) {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Title candidate for the danmaku search drawer; selected = the active keyword. -->
+<com.google.android.material.textview.MaterialTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/TvPlaybackDrawerChip"
+    android:layout_marginEnd="8dp"
+    tools:text="雷霆营救" />

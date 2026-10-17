@@ -4,6 +4,7 @@ import android.graphics.Rect;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.fongmi.android.tv.utils.ResUtil;
@@ -15,6 +16,11 @@ public class SpaceItemDecoration extends RecyclerView.ItemDecoration {
 
     public SpaceItemDecoration(int spacing) {
         this(-1, spacing);
+    }
+
+    /** Spacing for the list's own layout: flavors may lay the same list out as a grid. */
+    public static SpaceItemDecoration of(RecyclerView view, int spacing) {
+        return new SpaceItemDecoration(view.getLayoutManager() instanceof GridLayoutManager grid ? grid.getSpanCount() : 1, spacing);
     }
 
     public SpaceItemDecoration(int spanCount, int spacing) {

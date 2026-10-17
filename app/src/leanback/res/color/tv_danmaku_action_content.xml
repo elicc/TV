@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Picker actions stay quieter than the source chips until focused. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="?attr/tvColorTextPrimary" />
+    <item android:color="?attr/tvColorTextSecondary" />
+</selector>

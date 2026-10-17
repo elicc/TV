@@ -86,7 +86,8 @@ public final class DanmakuSettingDialog {
 
         @Override
         protected int getWidth() {
-            return Math.min(ResUtil.dp2px(420), ResUtil.getScreenWidth() / 2);
+            // TV rows are single-line, so a narrower sheet leaves more of the live preview visible.
+            return Math.min(ResUtil.dp2px(Util.isLeanback() ? 380 : 420), ResUtil.getScreenWidth() / 2);
         }
 
         @Override

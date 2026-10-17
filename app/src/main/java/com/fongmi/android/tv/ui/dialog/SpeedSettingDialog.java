@@ -41,7 +41,8 @@ public final class SpeedSettingDialog {
     public void show(FragmentActivity activity) {
         FragmentManager manager = activity.getSupportFragmentManager();
         for (Fragment fragment : manager.getFragments()) if (fragment instanceof BottomSheet || fragment instanceof SideSheet) return;
-        if (Util.isFullscreenLand(activity) || Util.isLeanback()) new SideSheet(player, save).show(manager, null);
+        boolean drawer = activity instanceof PlaybackDrawerHost host && host.usePlaybackDrawer();
+        if (!drawer && (Util.isFullscreenLand(activity) || Util.isLeanback())) new SideSheet(player, save).show(manager, null);
         else new BottomSheet(player, save).show(manager, null);
     }
 

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV drawer layout: same ids as the shared sheet, laid out wide so it docks above
+     the playback console in two short rows instead of a tall side panel. -->
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="24dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TvPlaybackDrawerTitle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="@string/speed_setting" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reset"
+            style="@style/TvDanmakuTextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/speed_setting_reset" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <include
+            android:id="@+id/speed"
+            layout="@layout/view_setting_slider"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/longPressSpeed"
+            layout="@layout/view_setting_slider"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="12dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:text="@string/speed_setting_quick"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="@dimen/tv_text_caption" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/presetGroup"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:chipSpacingHorizontal="6dp"
+            app:singleLine="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset01"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="0.1" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset02"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="0.5" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset03"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="0.8" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset04"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="1.0" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset05"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="1.2" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset06"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="1.5" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset07"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="2.0" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset08"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="2.5" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset09"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="3.0" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset10"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="3.5" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset11"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="4.0" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/preset12"
+                    style="@style/TvDanmakuChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="false"
+                    android:fontFeatureSettings="tnum"
+                    android:text="5.0" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/skipSilenceRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/tv_danmaku_row"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/speed_setting_skip_silence"
+                android:textColor="?attr/tvColorTextPrimary"
+                android:textSize="@dimen/tv_text_caption" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/skipSilenceSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -51,7 +51,7 @@ public final class ChapterDialog extends BaseBottomSheetDialog implements Chapte
         binding.recycler.setItemAnimator(null);
         binding.recycler.setHasFixedSize(true);
         binding.recycler.setAdapter(adapter.addAll(player.getCurrentMediaChapters()));
-        binding.recycler.addItemDecoration(new SpaceItemDecoration(1, 16));
+        binding.recycler.addItemDecoration(SpaceItemDecoration.of(binding.recycler, 16));
         binding.title.setText(R.string.dialog_select_chapter);
         binding.recycler.post(() -> binding.recycler.scrollToPosition(adapter.getSelected()));
         binding.recycler.setVisibility(adapter.getItemCount() == 0 ? View.GONE : View.VISIBLE);

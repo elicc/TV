@@ -12,7 +12,7 @@ import com.fongmi.android.tv.player.PlayerManager;
 import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.utils.SliderUtil;
 import com.fongmi.android.tv.utils.Util;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.slider.Slider;
 
@@ -44,7 +44,7 @@ final class DanmakuSettingPanel {
         bindReset();
         showTab(0);
         if (Util.isLeanback()) binding.tabAppearance.requestFocus();
-        binding.tabGroup.check(binding.tabAppearance.getId());
+        if (toggleGroup() != null) toggleGroup().check(binding.tabAppearance.getId());
     }
 
     void release() {
@@ -97,11 +97,32 @@ final class DanmakuSettingPanel {
     }
 
     private void bindTabs() {
-        MaterialButton[] tabs = {binding.tabAppearance, binding.tabTiming, binding.tabDensity, binding.tabDisplay};
-        binding.tabGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-            for (int i = 0; i < tabs.length; i++) if (checkedId == tabs[i].getId()) showTab(i);
-        });
+        View[] tabs = tabs();
+        MaterialButtonToggleGroup group = toggleGroup();
+        if (group != null) {
+            group.addOnButtonCheckedListener((source, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                for (int i = 0; i < tabs.length; i++) if (checkedId == tabs[i].getId()) showTab(i);
+            });
+            return;
+        }
+        // TV text tabs follow the remote: landing on a tab shows its section, no OK press.
+        for (int i = 0; i < tabs.length; i++) {
+            int index = i;
+            tabs[i].setOnFocusChangeListener((view, focused) -> {
+                if (focused && currentTab != index) showTab(index);
+            });
+            tabs[i].setOnClickListener(view -> showTab(index));
+        }
+    }
+
+    private View[] tabs() {
+        return new View[]{binding.tabAppearance, binding.tabTiming, binding.tabDensity, binding.tabDisplay};
+    }
+
+    private MaterialButtonToggleGroup toggleGroup() {
+        View group = binding.tabGroup;
+        return group instanceof MaterialButtonToggleGroup toggle ? toggle : null;
     }
 
     private void bindReset() {
@@ -140,8 +161,15 @@ final class DanmakuSettingPanel {
 
     private void showTab(int index) {
         View[] roots = {binding.appearance.getRoot(), binding.timing.getRoot(), binding.density.getRoot(), binding.display.getRoot()};
-        MaterialButton[] tabs = {binding.tabAppearance, binding.tabTiming, binding.tabDensity, binding.tabDisplay};
-        for (int i = 0; i < roots.length; i++) roots[i].setVisibility(visibleIf(index == i));
+        View[] firsts = {binding.appearance.textBoldSwitch, binding.timing.timeOffsetSlider, binding.density.maxOnScreenSlider, binding.display.showScrollSwitch};
+        View[] tabs = tabs();
+        boolean textTabs = toggleGroup() == null;
+        for (int i = 0; i < roots.length; i++) {
+            roots[i].setVisibility(visibleIf(index == i));
+            if (textTabs) tabs[i].setSelected(index == i);
+        }
+        // Going up from a section returns to its own tab instead of the geometrically nearest one.
+        firsts[index].setNextFocusUpId(tabs[index].getId());
         binding.reset.setNextFocusDownId(tabs[currentTab = index].getId());
     }
 

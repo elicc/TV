@@ -56,4 +56,8 @@
     <dimen name="tv_text_display">48sp</dimen>
     <dimen name="tv_text_navigation">@dimen/tv_text_body</dimen>
     <dimen name="tv_text_title">@dimen/tv_text_section</dimen>
+    <dimen name="tv_danmaku_label_width">104dp</dimen>
+    <dimen name="tv_danmaku_choice_height">40dp</dimen>
+    <!-- Three item rows (40dp + 16dp gaps) plus bottom padding. -->
+    <dimen name="tv_playback_drawer_list_max_height">164dp</dimen>
 </resources>

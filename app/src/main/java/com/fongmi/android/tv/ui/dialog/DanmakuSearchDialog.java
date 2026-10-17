@@ -67,7 +67,7 @@ public final class DanmakuSearchDialog extends BaseBottomSheetDialog implements 
         binding.recycler.setAdapter(adapter);
         binding.recycler.setItemAnimator(null);
         binding.recycler.setHasFixedSize(false);
-        binding.recycler.addItemDecoration(new SpaceItemDecoration(1, 16));
+        binding.recycler.addItemDecoration(SpaceItemDecoration.of(binding.recycler, 16));
         Util.showKeyboard(binding.keyword);
         setKeyword(getTitle());
     }

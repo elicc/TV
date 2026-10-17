@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Docked playback drawer: compact header, then one row of engine choices. -->
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="16dp">
+    <androidx.appcompat.widget.LinearLayoutCompat style="@style/TvPlaybackDrawerHeader">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/player_engine"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
+            style="@style/TvPlaybackDrawerTitle"
+            android:layout_width="0dp"
+            android:layout_weight="1" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/debug"
@@ -37,45 +31,36 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
-        android:paddingBottom="24dp">
+        android:paddingBottom="12dp">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/exo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/TvPlaybackDrawerChip"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/selector_chip_round"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:text="@string/play_exo"
-            android:textColor="@color/text"
-            android:textSize="14sp" />
+            android:text="@string/play_exo" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/mpv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/TvPlaybackDrawerChip"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/selector_chip_round"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:text="@string/play_mpv"
-            android:textColor="@color/text"
-            android:textSize="14sp" />
+            android:text="@string/play_mpv" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/other"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/selector_chip_round"
+            style="@style/TvPlaybackDrawerChip"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:text="@string/play_other"
-            android:textColor="@color/text"
-            android:textSize="14sp" />
+            android:text="@string/play_other" />
+
 
     </androidx.appcompat.widget.LinearLayoutCompat>
+
 </androidx.appcompat.widget.LinearLayoutCompat>

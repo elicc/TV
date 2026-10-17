@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Search result: name plus the platform guessed from it; selected = the loaded source. -->
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/tv_danmaku_choice_height"
+    android:background="@drawable/selector_detail_choice"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:foreground="@drawable/selector_detail_choice_indicator_overlay"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:stateListAnimator="@animator/tv_focus_scale">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:duplicateParentState="true"
+        android:ellipsize="end"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:singleLine="true"
+        android:textColor="@color/selector_flag_choice_text"
+        android:textSize="@dimen/tv_text_caption"
+        tools:text="雷霆营救(2025)【电影】from tencent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/platform"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:singleLine="true"
+        android:textColor="?attr/tvColorTextMuted"
+        android:textSize="@dimen/tv_text_meta"
+        tools:text="腾讯" />
+
+</androidx.appcompat.widget.LinearLayoutCompat>

@@ -65,6 +65,25 @@
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowAnimationStyle">@style/NoAnim</item>
+        <item name="sliderStyle">@style/Widget.Tv.Slider</item>
+    </style>
+
+    <!-- Progress-bar slider: thin rounded track, a dot at the value, no M3 handle
+         bar, track gap or stop marker. The halo marks remote focus. -->
+    <style name="Widget.Tv.Slider" parent="Widget.Material3.Slider">
+        <item name="tickVisible">false</item>
+        <item name="trackHeight">4dp</item>
+        <item name="trackInsideCornerSize">2dp</item>
+        <item name="trackStopIndicatorSize">0dp</item>
+        <item name="thumbWidth">14dp</item>
+        <item name="thumbHeight">14dp</item>
+        <item name="thumbTrackGapSize">0dp</item>
+        <item name="thumbElevation">0dp</item>
+        <item name="haloRadius">13dp</item>
+        <item name="haloColor">?attr/tvColorFocusGlow</item>
+        <item name="thumbColor">?attr/tvColorAccent</item>
+        <item name="trackColorActive">?attr/tvColorAccent</item>
+        <item name="trackColorInactive">@color/tv_border_subtle</item>
     </style>
 
     <style name="Theme.Splash" parent="Theme.App">

@@ -1,48 +1,135 @@
 <?xml version="1.0" ?>
 <resources>
-    <style name="TvDanmakuButton" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="android:minHeight">48dp</item>
+    <!-- Playback danmaku picker: compact icon actions above the source chips. -->
+    <style name="TvDanmakuPickerAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:drawableTint">@color/tv_danmaku_action_content</item>
+        <item name="android:background">@drawable/selector_detail_choice</item>
+        <item name="android:stateListAnimator">@animator/tv_focus_scale</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/tv_danmaku_action_content</item>
+        <item name="android:textSize">@dimen/tv_text_caption</item>
+    </style>
+
+    <!-- Setting sheet: detail-page provider tabs, flat 44dp rows, one row per value. -->
+    <style name="TvDanmakuTab">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:background">@drawable/selector_metadata_tab</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/selector_metadata_tab_text</item>
+        <item name="android:textSize">@dimen/tv_text_caption</item>
+    </style>
+    <style name="TvDanmakuTextButton" parent="Widget.Material3.Button.TextButton">
+        <item name="android:minHeight">32dp</item>
         <item name="android:minWidth">0dp</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/tv_danmaku_control_text</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">8dp</item>
-        <item name="android:maxLines">2</item>
-        <item name="android:insetTop">2dp</item>
-        <item name="android:insetBottom">2dp</item>
-        <item name="backgroundTint">@color/tv_danmaku_control_fill</item>
-        <item name="strokeColor">@color/tv_danmaku_control_stroke</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/tv_danmaku_action_content</item>
+        <item name="backgroundTint">@color/tv_danmaku_focus_fill</item>
+        <item name="strokeColor">@color/tv_danmaku_focus_stroke</item>
         <item name="strokeWidth">@dimen/tv_focus_width</item>
-        <item name="cornerRadius">@dimen/tv_radius_control</item>
-        <item name="rippleColor">?attr/tvColorFocusGlow</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="rippleColor">@android:color/transparent</item>
+    </style>
+    <style name="TvDanmakuRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:background">@drawable/tv_danmaku_row</item>
+        <item name="android:addStatesFromChildren">true</item>
+    </style>
+    <!-- Style-dependent values sit one step in, under the effect they refine. -->
+    <style name="TvDanmakuLabel">
+        <item name="android:layout_width">@dimen/tv_danmaku_label_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+    <style name="TvDanmakuLabel.Sub">
+        <item name="android:textColor">?attr/tvColorTextSecondary</item>
+    </style>
+    <style name="TvDanmakuValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">52dp</item>
+        <item name="android:gravity">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:textColor">?attr/tvColorAccent</item>
+        <item name="android:textSize">@dimen/tv_text_caption</item>
+    </style>
+    <style name="TvDanmakuSlider" parent="Widget.Tv.Slider">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@null</item>
+        <item name="android:focusable">true</item>
+        <item name="labelBehavior">gone</item>
+    </style>
+    <style name="TvDanmakuSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:background">@drawable/tv_danmaku_row</item>
+        <item name="android:focusable">true</item>
+        <item name="android:textColor">?attr/tvColorTextPrimary</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+    <style name="TvDanmakuChipGroup">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="chipSpacingHorizontal">6dp</item>
+        <item name="selectionRequired">true</item>
+        <item name="singleSelection">true</item>
+        <item name="singleLine">true</item>
     </style>
     <style name="TvDanmakuChip" parent="Widget.Material3.Chip.Filter">
-        <item name="android:minHeight">48dp</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/tv_danmaku_control_text</item>
-        <item name="chipMinHeight">44dp</item>
-        <item name="chipBackgroundColor">@color/tv_danmaku_control_fill</item>
-        <item name="chipStrokeColor">@color/tv_danmaku_control_stroke</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/tv_text_caption</item>
+        <item name="android:textColor">@color/tv_danmaku_chip_text</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipCornerRadius">6dp</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="chipEndPadding">8dp</item>
+        <item name="textStartPadding">2dp</item>
+        <item name="textEndPadding">2dp</item>
+        <item name="iconEndPadding">2dp</item>
+        <item name="chipIconSize">14dp</item>
+        <item name="chipBackgroundColor">@color/tv_danmaku_chip_fill</item>
+        <item name="chipStrokeColor">@color/tv_danmaku_focus_stroke</item>
         <item name="chipStrokeWidth">@dimen/tv_focus_width</item>
         <item name="checkedIconVisible">true</item>
         <item name="checkedIconTint">?attr/tvColorAccent</item>
-        <item name="rippleColor">?attr/tvColorFocusGlow</item>
-    </style>
-    <style name="TvDanmakuSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
-        <item name="android:minHeight">56dp</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:textColor">@color/tv_danmaku_control_text</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:background">@drawable/selector_chip_round</item>
-        <item name="android:focusable">true</item>
-    </style>
-    <style name="TvDanmakuSlider" parent="Widget.Material3.Slider">
-        <item name="android:minHeight">48dp</item>
-        <item name="android:background">@drawable/selector_focus_ring</item>
-        <item name="thumbColor">?attr/tvColorAccent</item>
-        <item name="trackColorActive">?attr/tvColorAccent</item>
-        <item name="trackColorInactive">?attr/tvColorOutline</item>
-        <item name="haloColor">?attr/tvColorFocusGlow</item>
+        <item name="rippleColor">@android:color/transparent</item>
     </style>
 </resources>

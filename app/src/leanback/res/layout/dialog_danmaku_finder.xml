@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Docked playback drawer for danmaku search: the query is built from chips and an
+     episode stepper so the remote rarely needs the keyboard; results in two columns. -->
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.LinearLayoutCompat style="@style/TvPlaybackDrawerHeader">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TvPlaybackDrawerTitle"
+            android:layout_width="wrap_content"
+            android:text="@string/tv_danmaku_finder_title" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/query"
+            style="@style/TvPlaybackDrawerTitle"
+            android:layout_width="0dp"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:textColor="?attr/tvColorTextMuted"
+            android:textSize="@dimen/tv_text_meta"
+            tools:text="雷霆营救 · 第01集" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/count"
+            style="@style/TvPlaybackDrawerTitle"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:textColor="?attr/tvColorTextMuted"
+            android:textSize="@dimen/tv_text_meta"
+            tools:text="共 12 个结果" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/setting"
+            style="@style/TvDanmakuPickerAction"
+            android:layout_marginEnd="0dp"
+            android:drawableStart="@drawable/ic_nav_settings"
+            android:nextFocusRight="@id/setting"
+            android:nextFocusDown="@id/keyword"
+            android:text="@string/tv_danmaku_api" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        style="@style/TvDanmakuFinderRow"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TvDanmakuFinderLabel"
+            android:text="@string/tv_danmaku_name_label" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/keywords"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="horizontal" />
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/keyword"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/tv_danmaku_choice_height"
+            android:background="@drawable/selector_detail_choice"
+            android:drawableStart="@drawable/ic_danmaku_edit"
+            android:drawablePadding="6dp"
+            android:drawableTint="?attr/tvColorTextSecondary"
+            android:foreground="@drawable/selector_detail_choice_indicator_overlay"
+            android:hint="@string/tv_danmaku_name_edit"
+            android:imeOptions="actionSearch"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLength="64"
+            android:maxWidth="@dimen/tv_choice_max_width"
+            android:minWidth="96dp"
+            android:nextFocusRight="@id/setting"
+            android:nextFocusUp="@id/setting"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:singleLine="true"
+            android:stateListAnimator="@animator/tv_focus_scale"
+            android:textColor="@color/selector_flag_choice_text"
+            android:textColorHint="?attr/tvColorTextSecondary"
+            android:textSize="@dimen/tv_text_caption" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        style="@style/TvDanmakuFinderRow"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            style="@style/TvDanmakuFinderLabel"
+            android:text="@string/tv_danmaku_episode_label" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/prev"
+            style="@style/TvDanmakuFinderStep"
+            android:contentDescription="@string/tv_danmaku_episode_prev"
+            android:drawableStart="@drawable/ic_danmaku_episode_prev" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/episode"
+            style="@style/TvPlaybackDrawerChip"
+            tools:text="第01集" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/next"
+            style="@style/TvDanmakuFinderStep"
+            android:contentDescription="@string/tv_danmaku_episode_next"
+            android:drawableStart="@drawable/ic_danmaku_episode_next" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/anyEpisode"
+            style="@style/TvPlaybackDrawerChip"
+            android:layout_marginStart="8dp"
+            android:nextFocusRight="@id/anyEpisode"
+            android:text="@string/tv_danmaku_episode_any" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/feedback"
+        style="@style/TvDanmakuFinderRow"
+        android:layout_marginTop="8dp"
+        android:minHeight="@dimen/tv_danmaku_choice_height"
+        android:visibility="gone">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:indeterminate="true"
+            app:indicatorColor="?attr/tvColorAccent"
+            app:indicatorSize="18dp"
+            app:trackThickness="2dp" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@android:id/message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityLiveRegion="polite"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="?attr/tvColorTextSecondary"
+            android:textSize="@dimen/tv_text_caption" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/retry"
+            style="@style/TvDanmakuPickerAction"
+            android:layout_marginStart="12dp"
+            android:text="@string/tv_danmaku_retry" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/configure"
+            style="@style/TvDanmakuPickerAction"
+            android:layout_marginEnd="0dp"
+            android:drawableStart="@drawable/ic_nav_settings"
+            android:nextFocusRight="@id/configure"
+            android:text="@string/tv_danmaku_configure" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <com.fongmi.android.tv.ui.custom.CustomRecyclerView
+        android:id="@+id/recycler"
+        style="@style/TvPlaybackDrawerList"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:spanCount="2"
+        tools:listitem="@layout/adapter_danmaku_result" />
+
+</androidx.appcompat.widget.LinearLayoutCompat>

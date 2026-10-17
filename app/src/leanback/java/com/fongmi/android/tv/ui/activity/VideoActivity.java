@@ -17,6 +17,10 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
+import android.view.Gravity;
+import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -103,7 +107,8 @@ import com.fongmi.android.tv.ui.custom.CustomMovement;
 import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.ui.dialog.ChapterDialog;
 import com.fongmi.android.tv.ui.dialog.ContentDialog;
-import com.fongmi.android.tv.ui.dialog.DanmakuDialog;
+import com.fongmi.android.tv.ui.dialog.DanmakuPickerDialog;
+import com.fongmi.android.tv.ui.dialog.PlaybackDrawerHost;
 import com.fongmi.android.tv.ui.dialog.EditionDialog;
 import com.fongmi.android.tv.ui.dialog.ParseDialog;
 import com.fongmi.android.tv.ui.dialog.PlayerEngineDialog;
@@ -122,6 +127,8 @@ import com.fongmi.android.tv.utils.Traffic;
 import com.fongmi.android.tv.utils.TvTheme;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -131,7 +138,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, EpisodePickerDialog.Host, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
+public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, EpisodePickerDialog.Host, DanmakuPickerDialog.Host, PlaybackDrawerHost, CustomKeyDownVod.Listener, ParseDialog.Listener, ArrayAdapter.OnClickListener, FlagAdapter.OnClickListener, EpisodeAdapter.OnClickListener, QualityAdapter.OnClickListener, QuickAdapter.OnClickListener, Clock.Callback {
 
     private static final String TRACE_TAG = "PlaybackTrace";
     // Only rows below the fixed player belong to this vertical navigation chain.
@@ -169,6 +176,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private AlertDialog resumeDialog;
     private int episodePickerGeneration;
     private boolean episodePickerVisible;
+    private boolean danmakuPickerVisible;
+    private int playbackDrawers;
     private boolean fullscreen;
     private boolean useParse;
     private boolean detailReady;
@@ -1881,7 +1890,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onSpeed() {
         SpeedSettingDialog.create().player(player()).save(true).show(this);
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private boolean onSpeedLong() {
@@ -1895,7 +1904,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onParse() {
         ParseDialog.create().show(this);
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private void onReplay() {
@@ -1956,7 +1965,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onPlayer() {
         PlayerEngineDialog.show(this, mBinding.control.action.player, player());
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private void onDecode() {
@@ -1966,22 +1975,84 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     private void onTrack(View view) {
         TrackDialog.create().type(Integer.parseInt(view.getTag().toString())).player(player()).view(mBinding.player.getSubtitleView()).show(this);
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private void onEdition() {
         EditionDialog.create().player(player()).show(this);
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private void onChapter() {
         ChapterDialog.create().player(player()).show(this);
-        hideControl();
+        hideControlUnderSheet();
     }
 
     private void onDanmaku() {
-        DanmakuDialog.create().player(player()).show(this);
-        hideControl();
+        if (danmakuPickerVisible || getSupportFragmentManager().isStateSaved()) return;
+        danmakuPickerVisible = true;
+        App.removeCallbacks(mR1);
+        DanmakuPickerDialog.create().player(player()).showNow(getSupportFragmentManager(), DanmakuPickerDialog.TAG);
+    }
+
+    /** Fullscreen sheets dock on the console, so it stays up beneath them. */
+    private void hideControlUnderSheet() {
+        if (!isFullscreen()) hideControl();
+    }
+
+    @Override
+    public boolean usePlaybackDrawer() {
+        return isFullscreen();
+    }
+
+    @Override
+    public void onPlaybackDrawerStart(BottomSheetDialog dialog, FrameLayout sheet) {
+        playbackDrawers++;
+        App.removeCallbacks(mR1);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            // End the window at the console's top edge: the sheet then slides up out
+            // of the console and never covers it, matching the episode/danmaku pickers.
+            window.setDimAmount(0f);
+            window.setWindowAnimations(0);
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, getWindow().getDecorView().getHeight() - danmakuPickerBottomOffset());
+            window.setGravity(Gravity.TOP);
+        }
+        BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(sheet);
+        behavior.setMaxWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        behavior.setDraggable(false);
+        int inset = ResUtil.getDimensionPixelSize(R.dimen.tv_safe_horizontal) - ResUtil.dp2px(24);
+        sheet.setPaddingRelative(inset, 0, inset, 0);
+        sheet.setElevation(0f);
+        // The behavior installs its rounded surface on first layout; replace it afterwards.
+        sheet.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                sheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                sheet.setBackground(mBinding.control.getRoot().getBackground().getConstantState().newDrawable().mutate());
+            }
+        });
+    }
+
+    @Override
+    public void onPlaybackDrawerStop() {
+        playbackDrawers = Math.max(0, playbackDrawers - 1);
+        if (playbackDrawers == 0 && isVisible(mBinding.control.getRoot())) setR1Callback();
+    }
+
+    @Override
+    public int danmakuPickerBottomOffset() {
+        return isVisible(mBinding.control.getRoot()) ? mBinding.control.getRoot().getHeight() : 0;
+    }
+
+    @Override
+    public void closeDanmakuPicker(boolean handled) {
+        danmakuPickerVisible = false;
+        if (isFinishing() || isDestroyed()) return;
+        if (handled || !isFullscreen()) {
+            hideControl();
+            mBinding.video.requestFocus();
+        } else showControl(mBinding.control.action.danmaku);
     }
 
     private void onToggle() {
@@ -2153,7 +2224,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     }
 
     private void setR1Callback() {
-        if (isScrubbing() || episodePickerVisible) return;
+        if (isScrubbing() || episodePickerVisible || danmakuPickerVisible || playbackDrawers > 0) return;
         App.post(mR1, TvMotion.OSD_TIMEOUT);
     }
 

@@ -55,6 +55,16 @@ public class DanmakuApiDialog extends AppCompatDialogFragment {
         new DanmakuApiDialog().show(fragment.getChildFragmentManager(), null);
     }
 
+    /** Opened from playback search: the probe starts from the query that just failed. */
+    public static void show(Fragment fragment, String name, String episode) {
+        DanmakuApiDialog dialog = new DanmakuApiDialog();
+        Bundle args = new Bundle();
+        args.putString("name", name);
+        args.putString("episode", episode);
+        dialog.setArguments(args);
+        dialog.show(fragment.getChildFragmentManager(), null);
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -73,6 +83,10 @@ public class DanmakuApiDialog extends AppCompatDialogFragment {
         binding.text.setText(text);
         binding.text.setSelection(TextUtils.isEmpty(text) ? 0 : text.length());
         binding.code.setImageBitmap(QRCode.getBitmap(Server.get().getAddress(4), 240, 0));
+        if (getArguments() != null) {
+            binding.testName.setText(getArguments().getString("name", ""));
+            binding.testEpisode.setText(getArguments().getString("episode", ""));
+        }
         if (getArguments() != null && getArguments().getBoolean("probe")) binding.testName.requestFocus();
         else binding.text.requestFocus();
     }
