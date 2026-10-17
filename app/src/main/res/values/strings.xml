@@ -29,6 +29,8 @@
     <string name="pause">Pause</string>
     <string name="play_op">OP</string>
     <string name="play_ed">ED</string>
+    <string name="play_op_limit">Opening can be at most <xliff:g name="time">%s</xliff:g></string>
+    <string name="play_ed_limit">Ending can be at most <xliff:g name="time">%s</xliff:g></string>
     <string name="play_exo">EXO</string>
     <string name="play_mpv">MPV</string>
     <string name="play_other">Other</string>

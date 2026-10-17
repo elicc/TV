@@ -42,7 +42,14 @@ public class VodHistoryPolicy {
         } else if (match == null) {
             if (!restoreSelection(history, item.getFlags())) startOver(history, item.getFlags());
         } else if (match.confirmed() && match.episode() != null) applyResume(history, match);
+        // Applied after every branch: starting over or opening an explicit episode keeps the work's skips.
+        VodSkipStore.apply(history, isSeries(item.getFlags()));
         return new Resolution(history, match);
+    }
+
+    static boolean isSeries(List<Flag> flags) {
+        for (Flag flag : flags) if (flag.getEpisodes().size() > 1) return true;
+        return false;
     }
 
     private boolean restoreSelection(History history, List<Flag> flags) {
@@ -87,8 +94,11 @@ public class VodHistoryPolicy {
         // The new media's duration is unknown until it is prepared.
         history.setDuration(source.getKey().equals(history.getKey()) ? source.getDuration() : C.TIME_UNSET);
         history.setProgressTime(source.getProgressTime());
-        history.setOpening(source.getOpening());
-        history.setEnding(source.getEnding());
+        // Rows written before the work-level store still carry their skips across sources.
+        if (!VodSkipStore.has(history)) {
+            history.setOpening(source.getOpening());
+            history.setEnding(source.getEnding());
+        }
     }
 
     public void startOver(History history, List<Flag> flags) {

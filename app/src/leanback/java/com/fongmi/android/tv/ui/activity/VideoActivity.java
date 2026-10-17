@@ -162,6 +162,8 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private QuickAdapter mQuickAdapter;
     private QuickStatusAdapter mQuickStatusAdapter;
     private boolean mSourceHasMore;
+    private long mSkipAdjustTime;
+    private int mSkipRepeat;
     private ArtworkAdapter mArtworkAdapter;
     private CastAdapter mCastAdapter;
     private ViewGroup.LayoutParams mFrameParams;
@@ -1919,14 +1921,15 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         long position = player().getPosition();
         long duration = player().getDuration();
         if (player().canSetOpening(position, duration)) setOpening(position);
+        else if (position > 0 && duration > 0) Notify.show(getString(R.string.play_op_limit, Util.timeMs(Constant.getOpEdLimit(duration))));
     }
 
     private void onOpeningAdd() {
-        setOpening(Math.max(0, Math.max(0, mHistory.getOpening()) + 1000));
+        setOpening(clampSkip(Math.max(0, mHistory.getOpening()) + skipStep()));
     }
 
     private void onOpeningSub() {
-        setOpening(Math.max(0, Math.max(0, mHistory.getOpening()) - 1000));
+        setOpening(Math.max(0, Math.max(0, mHistory.getOpening()) - skipStep()));
     }
 
     private boolean onOpeningReset() {
@@ -1943,14 +1946,28 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         long position = player().getPosition();
         long duration = player().getDuration();
         if (player().canSetEnding(position, duration)) setEnding(duration - position);
+        else if (position > 0 && duration > 0) Notify.show(getString(R.string.play_ed_limit, Util.timeMs(Constant.getOpEdLimit(duration))));
     }
 
     private void onEndingAdd() {
-        setEnding(Math.max(0, Math.max(0, mHistory.getEnding()) + 1000));
+        setEnding(clampSkip(Math.max(0, mHistory.getEnding()) + skipStep()));
     }
 
     private void onEndingSub() {
-        setEnding(Math.max(0, Math.max(0, mHistory.getEnding()) - 1000));
+        setEnding(Math.max(0, Math.max(0, mHistory.getEnding()) - skipStep()));
+    }
+
+    /** Taps move by a second; a held key widens the step so a minutes-long skip is reachable. */
+    private long skipStep() {
+        long now = SystemClock.uptimeMillis();
+        mSkipRepeat = now - mSkipAdjustTime < 200 ? mSkipRepeat + 1 : 0;
+        mSkipAdjustTime = now;
+        return mSkipRepeat < 5 ? 1000 : mSkipRepeat < 15 ? 5000 : 10000;
+    }
+
+    private long clampSkip(long value) {
+        long duration = player().getDuration();
+        return duration > 0 ? Math.min(value, Constant.getOpEdLimit(duration)) : value;
     }
 
     private boolean onEndingReset() {

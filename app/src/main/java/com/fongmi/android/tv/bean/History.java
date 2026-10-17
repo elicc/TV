@@ -17,6 +17,7 @@ import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.impl.Diffable;
 import com.fongmi.android.tv.playback.vod.VodResumeStore;
+import com.fongmi.android.tv.playback.vod.VodSkipStore;
 import com.fongmi.android.tv.utils.Task;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
@@ -129,6 +130,7 @@ public class History implements Diffable<History> {
     public static void delete(int cid) {
         for (History history : AppDatabase.get().getHistoryDao().findAll())
             if (history.getCid() == cid) VodResumeStore.forget(history.getKey());
+        VodSkipStore.clear(cid);
         AppDatabase.get().getHistoryDao().delete(cid);
     }
 
@@ -139,6 +141,7 @@ public class History implements Diffable<History> {
     public static void clearAll() {
         Task.executeSerial(() -> {
             for (History history : AppDatabase.get().getHistoryDao().findAll()) VodResumeStore.forget(history.getKey());
+            VodSkipStore.clearAll();
             AppDatabase.get().getHistoryDao().delete();
         });
     }

@@ -18,9 +18,12 @@ public class Constant {
     public static final long TIMEOUT_PARSE_LIVE = TimeUnit.SECONDS.toMillis(10);
     public static final long HISTORY_TIME = TimeUnit.DAYS.toMillis(60);
 
+    /** Fixed tiers fit episodes; long films get a fifth of their length for credits, never more than half. */
     public static long getOpEdLimit(long duration) {
-        if (duration < TimeUnit.MINUTES.toMillis(15)) return TimeUnit.MINUTES.toMillis(3);
-        if (duration < TimeUnit.MINUTES.toMillis(30)) return TimeUnit.MINUTES.toMillis(6);
-        return TimeUnit.MINUTES.toMillis(10);
+        long tier;
+        if (duration < TimeUnit.MINUTES.toMillis(15)) tier = TimeUnit.MINUTES.toMillis(3);
+        else if (duration < TimeUnit.MINUTES.toMillis(30)) tier = TimeUnit.MINUTES.toMillis(6);
+        else tier = TimeUnit.MINUTES.toMillis(10);
+        return Math.min(duration / 2, Math.max(tier, duration / 5));
     }
 }

@@ -1095,6 +1095,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         long position = player().getPosition();
         long duration = player().getDuration();
         if (player().canSetEnding(position, duration)) setEnding(duration - position);
+        else if (position > 0 && duration > 0) Notify.show(getString(R.string.play_ed_limit, Util.timeMs(Constant.getOpEdLimit(duration))));
         setR1Callback();
     }
 
@@ -1113,6 +1114,7 @@ public class VideoActivity extends PlaybackActivity implements Clock.Callback, C
         long position = player().getPosition();
         long duration = player().getDuration();
         if (player().canSetOpening(position, duration)) setOpening(position);
+        else if (position > 0 && duration > 0) Notify.show(getString(R.string.play_op_limit, Util.timeMs(Constant.getOpEdLimit(duration))));
         setR1Callback();
     }
 

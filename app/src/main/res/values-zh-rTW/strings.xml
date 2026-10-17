@@ -29,6 +29,8 @@
     <string name="pause">暫停</string>
     <string name="play_op">片頭</string>
     <string name="play_ed">片尾</string>
+    <string name="play_op_limit">超出片頭上限，最長 <xliff:g name="time">%s</xliff:g></string>
+    <string name="play_ed_limit">超出片尾上限，最長 <xliff:g name="time">%s</xliff:g></string>
     <string name="play_exo">EXO</string>
     <string name="play_mpv">MPV</string>
     <string name="play_other">其它</string>

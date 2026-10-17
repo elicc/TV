@@ -61,6 +61,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
     private ObjectAnimator mSourcePulse;
     private AlertDialog historyDialog;
     private int hotRequestToken;
+    private boolean clearOnReturn;
     private DoubanCollection collection = DoubanCollection.HOT_MOVIES;
 
     public static void start(Activity activity) {
@@ -376,6 +377,7 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         App.post(() -> mRecordAdapter.add(keyword), 250);
         Util.hideKeyboard(mBinding.keyword);
         CollectActivity.start(this, keyword);
+        clearOnReturn = true;
     }
 
     private void showSourceDialog() {
@@ -596,6 +598,11 @@ public class SearchActivity extends BaseActivity implements WordAdapter.OnClickL
         super.onResume();
         mRecordAdapter.refresh();
         mBinding.mic.setFocusable(true);
+        // Coming back from the results starts a new search; the keyword stays in the history.
+        if (clearOnReturn) {
+            clearOnReturn = false;
+            setKeyword("");
+        }
         setSourceChip(VodConfig.get().getHome(), getColor(R.color.tv_success));
         mKeyboard.focusDefault();
     }

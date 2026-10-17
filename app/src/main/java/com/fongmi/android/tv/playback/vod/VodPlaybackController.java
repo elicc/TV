@@ -399,10 +399,9 @@ public class VodPlaybackController {
         trace("RESUME_REJECTED position=" + history.getPosition());
         host.confirmResumePosition(history, () -> {
             if (state.getHistory() != history || host.isHostFinishing() || state.getActiveRequest() != null) return;
+            // The rejected value is the position; the work's opening/ending skips still apply.
             history.setPosition(0);
             history.setDuration(C.TIME_UNSET);
-            history.setOpening(C.TIME_UNSET);
-            history.setEnding(C.TIME_UNSET);
             host.renderHistory(history);
             requestSelectedEpisode();
         });
@@ -424,11 +423,17 @@ public class VodPlaybackController {
     }
 
     public void setOpening(long opening) {
-        if (state.getHistory() != null) state.getHistory().setOpening(opening);
+        History history = state.getHistory();
+        if (history == null) return;
+        history.setOpening(opening);
+        VodSkipStore.save(history, VodHistoryPolicy.isSeries(state.getFlags()));
     }
 
     public void setEnding(long ending) {
-        if (state.getHistory() != null) state.getHistory().setEnding(ending);
+        History history = state.getHistory();
+        if (history == null) return;
+        history.setEnding(ending);
+        VodSkipStore.save(history, VodHistoryPolicy.isSeries(state.getFlags()));
     }
 
     public void setScale(int scale) {
