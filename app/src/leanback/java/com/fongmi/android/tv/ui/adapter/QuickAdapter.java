@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.text.TextUtils;
 import android.widget.TextView;
@@ -92,7 +93,12 @@ public class QuickAdapter extends RecyclerView.Adapter<QuickAdapter.ViewHolder> 
         Vod item = mItems.get(position);
         holder.binding.name.setText(item.getName());
         holder.binding.site.setText(item.getSiteName());
-        holder.binding.remark.setText(item.getRemarks());
+        // Some sites send "0" as an empty remark. Keep the line's height so
+        // every card in the rail stays the same size.
+        String remark = item.getRemarks();
+        boolean hasRemark = !TextUtils.isEmpty(remark) && !"0".equals(remark.trim());
+        holder.binding.remark.setText(hasRemark ? remark : "");
+        holder.binding.remark.setVisibility(hasRemark ? View.VISIBLE : View.INVISIBLE);
         holder.setMarquee(holder.itemView.hasFocus());
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));
     }

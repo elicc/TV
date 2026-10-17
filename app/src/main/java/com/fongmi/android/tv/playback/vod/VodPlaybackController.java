@@ -191,8 +191,8 @@ public class VodPlaybackController {
         fallbackPolicy.retrySources();
     }
 
-    public void loadMoreSources() {
-        fallbackPolicy.loadMoreSources();
+    public void loadAllSources() {
+        fallbackPolicy.loadAllSources();
     }
 
     public void selectFlag(Flag item) {

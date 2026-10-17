@@ -14,10 +14,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -26,7 +26,8 @@ import java.util.function.Consumer;
 final class VodSourceSearchRunner {
     private static final int MAX_IN_FLIGHT = 3;
     private final List<Future<?>> futures = new ArrayList<>();
-    private final Queue<Site> pending = new ArrayDeque<>();
+    private final Deque<Site> pending = new ArrayDeque<>();
+    private final List<Site> failedSites = new ArrayList<>();
     private final Map<String, Vod> items = new LinkedHashMap<>();
     private long epoch;
     private long generation;
@@ -52,10 +53,23 @@ final class VodSourceSearchRunner {
         pump(request, generation, keyword, output);
     }
 
-    void loadMore(long generation) {
-        if (this.generation != generation || output == null || completed < requested || requested >= total) return;
+    /** Searches every remaining site, still at most {@link #MAX_IN_FLIGHT} at a time. */
+    void loadAll(long generation) {
+        if (this.generation != generation || output == null || requested >= total) return;
         long request = epoch;
-        requested = Math.min(requested + MAX_IN_FLIGHT, total);
+        requested = total;
+        publish(generation, keyword, output);
+        pump(request, generation, keyword, output);
+    }
+
+    /** Searches failed sites again while keeping every source already found. */
+    void retryFailed(long generation) {
+        if (this.generation != generation || output == null || failedSites.isEmpty() || completed < requested) return;
+        long request = epoch;
+        for (int i = failedSites.size() - 1; i >= 0; i--) pending.addFirst(failedSites.get(i));
+        completed -= failedSites.size();
+        failed -= failedSites.size();
+        failedSites.clear();
         publish(generation, keyword, output);
         pump(request, generation, keyword, output);
     }
@@ -65,6 +79,7 @@ final class VodSourceSearchRunner {
         for (Future<?> future : futures) future.cancel(true);
         futures.clear();
         pending.clear();
+        failedSites.clear();
         items.clear();
         output = null;
         total = completed = failed = running = requested = 0;
@@ -79,21 +94,23 @@ final class VodSourceSearchRunner {
                     .withTimeout(Constant.TIMEOUT_SEARCH, TimeUnit.MILLISECONDS, Task.scheduler());
             futures.add(future);
             future.addCallback(Task.callback(
-                    result -> App.post(() -> accept(request, generation, keyword, result, false, output)),
-                    error -> App.post(() -> accept(request, generation, keyword, null, true, output))),
+                    result -> App.post(() -> accept(request, generation, site, keyword, result, false, output)),
+                    error -> App.post(() -> accept(request, generation, site, keyword, null, true, output))),
                     MoreExecutors.directExecutor());
         }
     }
 
-    private void accept(long request, long generation, String keyword, Result result, boolean error,
+    private void accept(long request, long generation, Site site, String keyword, Result result, boolean error,
                         Consumer<VodSourceResult> output) {
         // Check after posting to main, not just before it: old responses must not
         // enter a new film/search session while the main thread was busy.
         if (request != epoch) return;
         running--;
         completed++;
-        if (error || result == null || !result.getMsg().isEmpty() && result.getList().isEmpty()) failed++;
-        else for (Vod item : result.getList()) items.put(VodSourceResult.identity(item), item);
+        if (error || result == null || !result.getMsg().isEmpty() && result.getList().isEmpty()) {
+            failed++;
+            failedSites.add(site);
+        } else for (Vod item : result.getList()) items.put(VodSourceResult.identity(item), item);
         publish(generation, keyword, output);
         pump(request, generation, keyword, output);
     }

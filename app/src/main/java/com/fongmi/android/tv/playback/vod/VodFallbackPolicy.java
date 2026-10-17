@@ -7,6 +7,7 @@ import com.fongmi.android.tv.bean.Vod;
 import com.github.catvod.utils.Trans;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -56,14 +57,24 @@ class VodFallbackPolicy {
     }
 
     void retrySources() {
-        if (state.getSourceResult().isLoading()) return;
+        VodSourceResult result = state.getSourceResult();
+        if (result.isLoading()) return;
         // A retry discovers alternatives; it must not silently switch playback.
+        if (result.failed() > 0) {
+            // Only the sites that failed are searched again; sources already
+            // found stay in the rail instead of restarting the whole discovery.
+            state.setAutoFallback(false);
+            state.setSelectFirstSource(false);
+            dataSource.retryFailedSources(result.generation());
+            return;
+        }
         search(state.getSearchKeyword().isEmpty() ? host.getVodName() : state.getSearchKeyword(), false);
     }
 
-    void loadMoreSources() {
+    /** Detail discovery starts with one batch; this searches every remaining site. */
+    void loadAllSources() {
         VodSourceResult result = state.getSourceResult();
-        if (!result.isLoading() && result.hasMore()) dataSource.loadMoreSources(result.generation());
+        if (result.hasMore()) dataSource.loadAllSources(result.generation());
     }
 
     private void startSearch(String keyword) {
@@ -85,14 +96,18 @@ class VodFallbackPolicy {
         boolean hasAlternatives = items.stream().anyMatch(item -> !isCurrent(item));
         if (!state.isSelectFirstSource() || !nextSource()) renderSources();
         if (hasAlternatives) host.onSearchResult();
-        // A pending manual/error switch must not stall at a lazy batch boundary.
-        // Plain detail discovery stops here until the viewer requests more.
-        if (state.isSelectFirstSource()) loadMoreSources();
+        // A pending manual/error switch must not stall at the first lazy batch.
+        // Plain detail discovery stops here until the viewer reaches the rail.
+        if (state.isSelectFirstSource()) loadAllSources();
     }
 
     void renderSources() {
         List<Vod> items = new ArrayList<>(state.getSources());
         items.removeIf(this::isCurrent);
+        // Substring matches also return commentaries/related titles; keep the
+        // exact title first. List.sort is stable, so arrival order is kept within each group.
+        String name = normalize(host.getVodName());
+        items.sort(Comparator.comparing(item -> !normalize(item.getName()).equals(name)));
         host.renderSourceSearch(state.getSourceResult().withItems(items));
     }
 
@@ -125,11 +140,11 @@ class VodFallbackPolicy {
         if (nextSource()) return;
         // Upgrade an in-flight discovery to a pending switch without cancelling
         // its requests or discarding results that have already arrived.
-        if (state.getSourceResult().isLoading()) return;
         if (state.getSourceResult().hasMore()) {
-            loadMoreSources();
+            loadAllSources();
             return;
         }
+        if (state.getSourceResult().isLoading()) return;
         startSearch(host.getVodName());
     }
 

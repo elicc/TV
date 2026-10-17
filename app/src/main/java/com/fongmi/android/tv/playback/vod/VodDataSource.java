@@ -16,7 +16,9 @@ public interface VodDataSource {
 
     void searchSources(long generation, List<Site> sites, String keyword, boolean incremental);
 
-    void loadMoreSources(long generation);
+    void loadAllSources(long generation);
+
+    void retryFailedSources(long generation);
 
     void cancelSourceSearch();
 }

@@ -226,8 +226,13 @@ public class VideoViewModel extends SiteViewModel implements VodDataSource {
     }
 
     @Override
-    public void loadMoreSources(long generation) {
-        sourceSearches.loadMore(generation);
+    public void loadAllSources(long generation) {
+        sourceSearches.loadAll(generation);
+    }
+
+    @Override
+    public void retryFailedSources(long generation) {
+        sourceSearches.retryFailed(generation);
     }
 
     @Override

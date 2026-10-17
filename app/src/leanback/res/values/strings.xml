@@ -24,10 +24,10 @@
     <string name="metadata_cast">Cast</string>
     <string name="metadata_artworks_count">Posters %1$d</string>
     <string name="metadata_cast_count">Cast %1$d</string>
-    <string name="detail_sources_loading">Finding other sources…</string>
-    <string name="detail_sources_empty">No matching sources. Select to retry.</string>
-    <string name="detail_sources_error">Source search failed. Select to retry.</string>
-    <string name="detail_sources_partial">Some sources failed. Select to retry.</string>
-    <string name="detail_sources_more">More sources. Browse right or select to load.</string>
+    <string name="detail_sources_loading">Finding other sources · <xliff:g name="searched">%1$d</xliff:g>/<xliff:g name="total">%2$d</xliff:g></string>
+    <string name="detail_sources_pending">Sites left to search: <xliff:g name="count">%d</xliff:g>. Select to search.</string>
+    <string name="detail_sources_failed">Sites without response: <xliff:g name="count">%d</xliff:g>. Select to retry.</string>
+    <string name="detail_sources_empty">No other sources found.</string>
+    <string name="detail_sources_empty_failed">No other sources found. Sites without response: <xliff:g name="count">%d</xliff:g>. Select to retry.</string>
     <string name="detail_sources_disabled">No sources enabled for quick search.</string>
 </resources>

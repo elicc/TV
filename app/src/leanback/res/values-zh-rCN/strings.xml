@@ -33,10 +33,10 @@
     <string name="metadata_cast">演职人员</string>
     <string name="metadata_artworks_count">影片海报 %1$d</string>
     <string name="metadata_cast_count">演职人员 %1$d</string>
-    <string name="detail_sources_loading">正在查找其他源…</string>
-    <string name="detail_sources_empty">未找到匹配源，按确定重试</string>
-    <string name="detail_sources_error">源搜索失败，按确定重试</string>
-    <string name="detail_sources_partial">部分源搜索失败，按确定重试</string>
-    <string name="detail_sources_more">还有其他源，向右浏览或按确定加载</string>
+    <string name="detail_sources_loading">正在查找其他源 · <xliff:g name="searched">%1$d</xliff:g>/<xliff:g name="total">%2$d</xliff:g></string>
+    <string name="detail_sources_pending">还有 <xliff:g name="count">%d</xliff:g> 个站点未搜索，按确定查找</string>
+    <string name="detail_sources_failed"><xliff:g name="count">%d</xliff:g> 个站点未响应，按确定重试</string>
+    <string name="detail_sources_empty">未找到其他源</string>
+    <string name="detail_sources_empty_failed">未找到其他源，<xliff:g name="count">%d</xliff:g> 个站点未响应，按确定重试</string>
     <string name="detail_sources_disabled">没有启用可快速搜索的源</string>
 </resources>

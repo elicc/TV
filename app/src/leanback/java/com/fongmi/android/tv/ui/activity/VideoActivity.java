@@ -162,9 +162,6 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
     private QuickAdapter mQuickAdapter;
     private QuickStatusAdapter mQuickStatusAdapter;
     private boolean mSourceHasMore;
-    private boolean mSourceLoading;
-    private long mSourceGeneration;
-    private int mSourcePageRequestedAtCount = -1;
     private ArtworkAdapter mArtworkAdapter;
     private CastAdapter mCastAdapter;
     private ViewGroup.LayoutParams mFrameParams;
@@ -500,13 +497,10 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         mQuickAdapter = new QuickAdapter(this);
         mQuickStatusAdapter = new QuickStatusAdapter(this::onSourceStatusClick);
         mBinding.quick.setAdapter(new ConcatAdapter(mQuickAdapter, mQuickStatusAdapter));
-        mBinding.quick.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
-            @Override
-            public void onChildViewHolderSelected(RecyclerView parent, RecyclerView.ViewHolder child, int position, int subposition) {
-                if (child != null && child.itemView.hasFocus()) {
-                    mBinding.quick.post(() -> loadMoreSourcesNearEnd(position));
-                }
-            }
+        // Detail discovery searches one batch of sites up front. Reaching the
+        // rail shows intent to switch, so search every remaining site from here.
+        mBinding.quick.getViewTreeObserver().addOnGlobalFocusChangeListener((oldFocus, newFocus) -> {
+            if (mSourceHasMore && isDescendantOrSelf(newFocus, mBinding.quick)) mVod.loadAllSources();
         });
     }
 
@@ -995,7 +989,7 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
 
     @Override
     public void renderSources(List<Vod> items) {
-        mQuickStatusAdapter.setStatus(0, false);
+        mQuickStatusAdapter.setStatus(null, false);
         mQuickAdapter.setItems(items);
         setRowVisibility(mBinding.quickRow, mBinding.quick, !mQuickAdapter.isEmpty());
     }
@@ -1010,22 +1004,16 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         View focused = mBinding.quick.findFocus();
         boolean statusFocused = focused != null && focused.getId() == R.id.quickStatus;
         boolean firstItems = mQuickAdapter.isEmpty() && !result.items().isEmpty();
-        if (mSourceGeneration != result.generation()) mSourcePageRequestedAtCount = -1;
-        mSourceGeneration = result.generation();
         mSourceHasMore = result.hasMore();
-        mSourceLoading = result.isLoading();
+        // Focus may have reached the rail before this search published its first batch.
+        if (mSourceHasMore && mBinding.quick.hasFocus()) mBinding.quick.post(mVod::loadAllSources);
         mQuickAdapter.setItems(result.items());
         boolean hasItems = !mQuickAdapter.isEmpty();
-        VodSourceResult.Status status = result.status();
-        boolean showStatus = status != VodSourceResult.Status.IDLE
-                && (!hasItems || result.isLoading() || result.hasMore() || result.failed() > 0);
-        int message = result.isLoading() ? R.string.detail_sources_loading
-                : result.hasMore() ? R.string.detail_sources_more
-                : status == VodSourceResult.Status.DISABLED ? R.string.detail_sources_disabled
-                : status == VodSourceResult.Status.ERROR ? R.string.detail_sources_error
-                : hasItems ? R.string.detail_sources_partial : R.string.detail_sources_empty;
-        mQuickStatusAdapter.setStatus(showStatus ? message : 0,
-                showStatus && !result.isLoading() && status != VodSourceResult.Status.DISABLED);
+        CharSequence message = sourceStatus(result, hasItems);
+        boolean showStatus = message != null;
+        // Progress and "disabled" are information; every other footer is an action.
+        boolean actionable = showStatus && !result.isLoading() && (result.hasMore() || result.failed() > 0);
+        mQuickStatusAdapter.setStatus(message, actionable);
         setRowVisibility(mBinding.quickRow, mBinding.quick, hasItems || showStatus);
         // Reset after Leanback consumes insertion offsets, not before layout.
         if (firstItems) mBinding.quick.resetToStartAfterLayout();
@@ -1037,21 +1025,24 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
         }
     }
 
-    private void onSourceStatusClick() {
-        if (mSourceHasMore) mVod.loadMoreSources();
-        else mVod.retrySources();
+    /**
+     * Footer of the source rail. It reports search progress, offers the remaining or failed
+     * sites, and disappears once every site answered and there is nothing left to do.
+     */
+    @Nullable
+    private CharSequence sourceStatus(VodSourceResult result, boolean hasItems) {
+        VodSourceResult.Status status = result.status();
+        if (status == VodSourceResult.Status.IDLE) return null;
+        if (status == VodSourceResult.Status.DISABLED) return getString(R.string.detail_sources_disabled);
+        if (result.isLoading()) return getString(R.string.detail_sources_loading, result.completed(), result.total());
+        if (result.hasMore()) return getString(R.string.detail_sources_pending, result.total() - result.requested());
+        if (result.failed() > 0) return getString(hasItems ? R.string.detail_sources_failed : R.string.detail_sources_empty_failed, result.failed());
+        return hasItems ? null : getString(R.string.detail_sources_empty);
     }
 
-    private void loadMoreSourcesNearEnd(int position) {
-        int count = mQuickAdapter.getItemCount();
-        if (isFinishing() || isDestroyed() || !mBinding.quick.hasFocus()
-                || mBinding.quick.getSelectedPosition() != position || mSourceLoading || !mSourceHasMore) return;
-        // Last visible page of source cards (the footer itself is an explicit
-        // button). One request per result count prevents empty batches from
-        // draining every remaining site through selection/layout callbacks.
-        if (position < Math.max(0, count - 4) || position >= count || mSourcePageRequestedAtCount == count) return;
-        mSourcePageRequestedAtCount = count;
-        mVod.loadMoreSources();
+    private void onSourceStatusClick() {
+        if (mSourceHasMore) mVod.loadAllSources();
+        else mVod.retrySources();
     }
 
     @Override
