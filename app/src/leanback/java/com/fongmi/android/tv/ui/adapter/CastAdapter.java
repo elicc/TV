@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.ui.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -13,9 +14,15 @@ import com.fongmi.android.tv.utils.ImgUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Compact, focusable cast cards used by the TV detail page. */
 public class CastAdapter extends RecyclerView.Adapter<CastAdapter.ViewHolder> {
+    private static final Pattern ROLE = Pattern.compile("^[饰飾配]\\s+(.+)$");
+    private static final Set<String> JOB_TITLES = Set.of("演员", "演員", "配音", "导演", "導演", "编剧", "編劇", "制片人", "製片人");
+
     private final List<MovieCast> items = new ArrayList<>();
     private final OnItemClickListener listener;
 
@@ -57,6 +64,9 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.ViewHolder> {
         String avatar = cast == null ? "" : cast.getAvatar();
         String character = cast == null ? "" : cast.getCharacter();
         holder.binding.name.setText(name);
+        String role = role(character);
+        holder.binding.character.setText(role);
+        holder.binding.character.setVisibility(role.isEmpty() ? View.GONE : View.VISIBLE);
         // A recycled holder must not retain a previous person's bitmap while a
         // new request is in flight. ImgUtil supplies the deterministic initial.
         Glide.with(holder.binding.avatar).clear(holder.binding.avatar);
@@ -68,6 +78,24 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.ViewHolder> {
             MovieCast person = items.get(current);
             if (person != null && !person.getName().isEmpty()) listener.onItemClick(person.getName());
         });
+    }
+
+    /** Whether any credit carries a role name worth a second line. */
+    public static boolean hasRoles(List<MovieCast> cast) {
+        if (cast == null) return false;
+        for (MovieCast person : cast) if (person != null && !role(person.getCharacter()).isEmpty()) return true;
+        return false;
+    }
+
+    /**
+     * Douban writes roles as "饰 沈星" (or "配 沈星" for voice parts) and otherwise only a job
+     * title such as "配音"; job titles carry no role name, so they are not shown.
+     */
+    private static String role(String character) {
+        String role = character == null ? "" : character.trim();
+        Matcher matcher = ROLE.matcher(role);
+        if (matcher.matches()) return matcher.group(1).trim();
+        return JOB_TITLES.contains(role) ? "" : role;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

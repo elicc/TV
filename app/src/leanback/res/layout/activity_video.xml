@@ -208,7 +208,8 @@
 
 
     <!-- Keep the media stack compact: its bottom anchors reserve the remaining
-         height for the two-line synopsis without stretching the player. -->
+         height for the synopsis (two lines beside cast roles, otherwise three)
+         without stretching the player. -->
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/detailTabs"
         android:translationZ="8dp"
@@ -243,8 +244,8 @@
             android:focusable="true"
             android:gravity="center"
             android:nextFocusLeft="@id/video"
-            android:nextFocusUp="@id/video"
-            android:nextFocusDown="@id/description"
+            android:nextFocusUp="@id/description"
+            android:nextFocusDown="@id/change"
             android:text="@string/metadata_source"
             android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_meta"/>
@@ -257,8 +258,8 @@
             android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
-            android:nextFocusUp="@id/video"
-            android:nextFocusDown="@id/description"
+            android:nextFocusUp="@id/description"
+            android:nextFocusDown="@id/change"
             android:text="@string/metadata_douban"
             android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_meta"/>
@@ -270,8 +271,8 @@
             android:background="@drawable/selector_metadata_tab"
             android:focusable="true"
             android:gravity="center"
-            android:nextFocusUp="@id/video"
-            android:nextFocusDown="@id/description"
+            android:nextFocusUp="@id/description"
+            android:nextFocusDown="@id/change"
             android:text="@string/metadata_tmdb"
             android:textColor="@color/selector_metadata_tab_text"
             android:textSize="@dimen/tv_text_meta"/>
@@ -335,10 +336,13 @@
             android:layout_height="0dp"
             android:visibility="gone" />
 
+        <!-- Artwork cards keep the compact rail height; the rail only grows for
+             the cast role line, so centre the posters inside it. -->
         <androidx.leanback.widget.HorizontalGridView
             android:id="@+id/artworks"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="54dp"
+            android:layout_gravity="center_vertical"
             android:clipChildren="true"
             android:clipToPadding="true"
             android:paddingStart="@dimen/tv_gap_xs"
@@ -455,8 +459,10 @@
         </com.google.android.flexbox.FlexboxLayout>
     </FrameLayout>
 
+    <!-- Director and cast share one non-focusable line; the vertical space this
+         saves goes to the cast role line or a third synopsis line. -->
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/director"
+        android:id="@+id/credit"
         android:translationZ="8dp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -464,16 +470,17 @@
         android:layout_alignStart="@+id/name"
         android:layout_toEndOf="@+id/video"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:layout_marginEnd="24dp"
-        android:nextFocusDown="@id/actor"
         android:drawableStart="@drawable/tv_accent_bar"
         android:drawablePadding="6dp"
         android:ellipsize="end"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
         android:singleLine="true"
         android:textColor="?attr/tvColorTextSecondary"
         android:textSize="@dimen/tv_text_meta"
-        tools:text="導演：FongMi" />
+        tools:text="導演：FongMi  ·  演員：FongMi、FongMi" />
 
     <!-- Keep the score in a dedicated, fixed position. The source metadata row
          can already consume the full right column on TV, so appending the badge
@@ -500,40 +507,17 @@
         tools:text="★ 8.5 · 107.0万" />
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/actor"
-        android:translationZ="8dp"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/director"
-        android:layout_alignStart="@+id/name"
-        android:layout_toEndOf="@+id/video"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="24dp"
-        android:background="@drawable/selector_detail_text_focus"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:drawableStart="@drawable/tv_accent_bar"
-        android:drawablePadding="6dp"
-        android:nextFocusDown="@id/description"
-        android:textColor="?attr/tvColorTextSecondary"
-        android:textSize="@dimen/tv_text_meta"
-        tools:text="演員：FongMi" />
-
-    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/description"
         android:translationZ="8dp"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_below="@+id/actor"
+        android:layout_below="@+id/credit"
         android:layout_above="@+id/detailTabs"
         android:layout_alignStart="@+id/name"
         android:layout_toEndOf="@+id/video"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/selector_detail_text_focus"
         android:ellipsize="end"
@@ -545,7 +529,7 @@
         android:paddingTop="2dp"
         android:paddingBottom="2dp"
         android:includeFontPadding="false"
-        android:nextFocusUp="@id/actor"
+        android:nextFocusUp="@id/video"
         android:nextFocusDown="@id/change"
         android:textColor="?attr/tvColorTextSecondary"
         android:textSize="@dimen/tv_text_meta"
