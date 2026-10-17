@@ -2689,10 +2689,20 @@ public class VideoActivity extends PlaybackActivity implements VodPlaybackHost, 
             mKeyDown.reset();
             return;
         }
-        if (mVod != null) mVod.onUserSeek();
-        if (seekTo(time)) hideCenter();
         App.removeCallbacks(mR5);
         mKeyDown.reset();
+        // A quick second press can leave nothing to apply; restore the badge
+        // the preview replaced instead of seeking to the current position.
+        if (time == 0) {
+            if (isMediaPaused()) showInfo();
+            else hideCenter();
+            return;
+        }
+        if (mVod != null) mVod.onUserSeek();
+        if (seekTo(time)) hideCenter();
+        // Seeking while already buffering fires no state change, so restore the
+        // spinner onSeeking() hid; otherwise the frozen frame looks stalled.
+        if (isBuffering()) showProgress();
     }
 
     private Runnable mR5 = this::hideCenter;

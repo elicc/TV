@@ -22,12 +22,12 @@ import com.fongmi.android.tv.utils.TvTheme;
 
 /**
  * The stock bar retains seeking, chapters and accessibility. A quiet played
- * tint becomes a brighter gradient, the buffered range remains visible, and a
- * small pulsing thumb appears on D-pad focus. Without a duration the empty
- * track still draws, as a disabled bar. On focus the played segment also
- * thickens and soft crests flow from its start into the playhead, so the bar
- * reads as focused at a glance. Remains a DefaultTimeBar for PlayerSeekView's
- * constructor check.
+ * tint becomes a brighter gradient, the buffered range ahead of it stays
+ * visible, and a small pulsing thumb appears on D-pad focus. Without a
+ * duration the empty track still draws, as a disabled bar. On focus the played
+ * segment also thickens and soft crests flow from its start into the playhead,
+ * so the bar reads as focused at a glance. Remains a DefaultTimeBar for
+ * PlayerSeekView's constructor check.
  */
 public class TvTimeBar extends DefaultTimeBar {
 
@@ -173,10 +173,12 @@ public class TvTimeBar extends DefaultTimeBar {
         // shows, so the console never has a gap where the bar belongs.
         if (duration <= 0 || current < 0) return;
         float right = left + Math.min(current / (float) duration, 1f) * width;
-        if (bufferedPosition > 0) {
-            float bufferedRight = left + Math.min(bufferedPosition / (float) duration, 1f) * width;
+        float bufferedRight = left + Math.min(bufferedPosition / (float) duration, 1f) * width;
+        // Only the part ahead of the playhead is drawn: underneath the
+        // translucent played tint it would only muddy the gradient.
+        if (bufferedRight > right) {
             bufferedPaint.setColor(Color.argb(76, 255, 255, 255));
-            track.set(left, top, Math.max(bufferedRight, left + 1f), top + barHeight);
+            track.set(right, top, bufferedRight, top + barHeight);
             canvas.drawRoundRect(track, radius, radius, bufferedPaint);
         }
         segment.set(left, top, Math.max(right, left + 1f), top + barHeight);

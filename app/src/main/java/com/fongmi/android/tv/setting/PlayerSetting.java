@@ -14,6 +14,8 @@ public class PlayerSetting {
     private static final int MAX_SIZE = 3;
     private static final int MIN_BUFFER = 1;
     private static final int MAX_BUFFER = 10;
+    // Each step is ExoPlayer's 50 s default, so an untouched setting buffers 300 s ahead.
+    private static final int DEFAULT_BUFFER = 6;
     private static final int MIN_BACKGROUND = 0;
     private static final int MAX_BACKGROUND = 2;
 
@@ -104,7 +106,7 @@ public class PlayerSetting {
     }
 
     public static int getBuffer() {
-        return Math.clamp(Prefers.getInt("buffer"), MIN_BUFFER, MAX_BUFFER);
+        return Math.clamp(Prefers.getInt("buffer", DEFAULT_BUFFER), MIN_BUFFER, MAX_BUFFER);
     }
 
     public static void putBuffer(int buffer) {
