@@ -61,6 +61,7 @@ public class PlayerManager implements ParseCallback {
     private DanmakuConfig danmakuConfig;
     private long pendingStartPositionMs;
     private boolean danmakuEnabled;
+    private boolean danmakuDeferred;
     private boolean initTrack;
     private int retry;
     private int decode;
@@ -139,7 +140,21 @@ public class PlayerManager implements ParseCallback {
     }
 
     private void notifyDanmakuSourceChanged() {
+        danmakuDeferred = false;
         callback.onDanmakuSourceChanged(getSelectedDanmakuUri());
+    }
+
+    /**
+     * Notifies a new danmaku source once the player is ready. Downloading and parsing a source
+     * takes bandwidth and CPU that video startup needs, so it waits for the first ready state.
+     */
+    private void notifyDanmakuSourceWhenReady() {
+        if (getSelectedDanmakuUri() == null || player == null || player.getPlaybackState() == Player.STATE_READY) {
+            notifyDanmakuSourceChanged();
+            return;
+        }
+        danmakuDeferred = true;
+        callback.onDanmakuSourceChanged(null);
     }
 
     public MediaMetadata getMetadata() {
@@ -538,7 +553,7 @@ public class PlayerManager implements ParseCallback {
         pendingPreload = null;
         initTrack = false;
         engine.start(spec, startPositionMs);
-        notifyDanmakuSourceChanged();
+        notifyDanmakuSourceWhenReady();
         App.post(runnable, timeout);
         callback.onPrepare();
     }
@@ -564,10 +579,16 @@ public class PlayerManager implements ParseCallback {
         return item == null ? null : item.getUri();
     }
 
+    /** Returns the danmaku source the view should load now, which excludes a deferred one. */
+    @Nullable
+    public Uri getLoadableDanmakuUri() {
+        return danmakuDeferred ? null : getSelectedDanmakuUri();
+    }
+
     public void setDanmaku(Danmaku item) {
         if (spec == null) return;
         spec.selectDanmaku(item);
-        notifyDanmakuSourceChanged();
+        notifyDanmakuSourceWhenReady();
     }
 
     public void toggleDanmaku(Danmaku item) {
@@ -647,6 +668,7 @@ public class PlayerManager implements ParseCallback {
         public void onPlaybackStateChanged(int state) {
             if (state == Player.STATE_READY || state == Player.STATE_ENDED) App.removeCallbacks(runnable);
             if (state == Player.STATE_READY) startPreloadIfReady();
+            if (state == Player.STATE_READY && danmakuDeferred) notifyDanmakuSourceChanged();
         }
 
         @Override

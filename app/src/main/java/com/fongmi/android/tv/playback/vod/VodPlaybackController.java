@@ -539,6 +539,7 @@ public class VodPlaybackController {
         publishPlaybackMetadata(episode);
         trace("PLAY_REQUEST_BEGIN key=" + request.getKey() + " flag=" + request.getFlag() + " idLen=" + request.getId().length());
         dataSource.playerContent(request);
+        VodPlaybackMedia.prefetchDanmaku(request.getKey(), state.getHistory(), episode);
         host.onPlaybackRequested();
     }
 

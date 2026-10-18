@@ -30,9 +30,12 @@ import androidx.media3.ui.PlayerSeekView;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.TimeBar;
 import androidx.media3.ui.danmaku.DanmakuConfig;
+import androidx.media3.ui.danmaku.DanmakuController;
 
+import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.BuildConfig;
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.DanmakuCache;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.playback.PlaybackIntent;
 import com.fongmi.android.tv.player.PlayerManager;
@@ -43,17 +46,19 @@ import com.fongmi.android.tv.setting.PlayerSetting;
 import com.fongmi.android.tv.setting.SubtitleSetting;
 import com.fongmi.android.tv.ui.base.BaseActivity;
 import com.fongmi.android.tv.utils.ResUtil;
-import com.github.catvod.net.OkHttp;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PlaybackActivity extends BaseActivity implements MediaController.Listener, Player.Listener, ServiceConnection {
 
     private static final String TRACE_TAG = "PlaybackTrace";
+    private static final String DANMAKU_TAG = "DanmakuLoad";
 
     private final List<ServiceReadyObserver<?>> serviceReadyObservers = new ArrayList<>();
     private final List<Runnable> foreverObserverRemovers = new ArrayList<>();
@@ -454,7 +459,8 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     private void configurePlayerView() {
         PlayerView playerView = getPlayerView();
         playerView.setRender(PlayerSetting.getRender());
-        playerView.setDanmakuOkHttpClient(OkHttp.player());
+        playerView.setDanmakuOkHttpClient(DanmakuCache.client());
+        playerView.getDanmakuController().setListener(danmakuLoadListener);
         playerView.setDanmakuEnabled(DanmakuSetting.isShow());
         playerView.setDanmakuConfig(DanmakuSetting.getConfig());
         SubtitleSetting.applyStyle(this, playerView.getSubtitleView());
@@ -462,7 +468,9 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     private void syncDanmakuSource() {
         if (!isActivePlaybackOwner()) return;
-        getPlayerView().setDanmakuSource(player().getSelectedDanmakuUri());
+        Uri uri = player().getLoadableDanmakuUri();
+        danmakuLoadListener.onSourceChanged(uri);
+        getPlayerView().setDanmakuSource(uri);
     }
 
     private void releasePlaybackService() {
@@ -531,6 +539,49 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         serviceReadyObservers.forEach(ServiceReadyObserver::dispatch);
     }
 
+    /**
+     * Retries danmaku sources that failed to load and keeps searched sources on disk. A failed
+     * load is otherwise silent: danmaku stays blank until something else resets the source.
+     */
+    private final class DanmakuLoadListener implements DanmakuController.Listener {
+
+        private final long[] retryDelaysMs = {2_000, 5_000, 15_000};
+        private final Runnable retry = this::retry;
+        private Uri uri;
+        private int attempts;
+
+        void onSourceChanged(@Nullable Uri uri) {
+            if (Objects.equals(this.uri, uri)) return;
+            App.removeCallbacks(retry);
+            this.uri = uri;
+            attempts = 0;
+        }
+
+        @Override
+        public void onLoadCompleted(@NonNull Uri uri, int count) {
+            if (uri.equals(this.uri)) App.removeCallbacks(retry);
+            DanmakuCache.onLoaded(uri, count);
+        }
+
+        @Override
+        public void onLoadError(@NonNull Uri uri, @NonNull IOException error) {
+            Log.w(DANMAKU_TAG, "load failed: " + uri.getScheme() + " " + uri.getHost() + " " + error.getClass().getSimpleName());
+            DanmakuCache.onFailed(uri);
+            if (!uri.equals(this.uri) || !isNetworkUri(uri) || attempts >= retryDelaysMs.length) return;
+            App.post(retry, retryDelaysMs[attempts++]);
+        }
+
+        private boolean isNetworkUri(Uri uri) {
+            return "http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme());
+        }
+
+        private void retry() {
+            if (uri != null && isActivePlaybackOwner() && uri.equals(player().getLoadableDanmakuUri())) getPlayerView().setDanmakuSource(uri);
+        }
+    }
+
+    private final DanmakuLoadListener danmakuLoadListener = new DanmakuLoadListener();
+
     private final PlaybackService.PlayerCallback mPlayerCallback = new PlaybackService.PlayerCallback() {
 
         @Override
@@ -567,7 +618,9 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
         @Override
         public void onDanmakuSourceChanged(Uri uri) {
-            if (isActivePlaybackOwner()) getPlayerView().setDanmakuSource(uri);
+            if (!isActivePlaybackOwner()) return;
+            danmakuLoadListener.onSourceChanged(uri);
+            getPlayerView().setDanmakuSource(uri);
         }
 
         @Override
@@ -683,6 +736,8 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         trace("PLAYBACK_ON_DESTROY_BEGIN");
         clearObservers();
         detachPlayerView();
+        danmakuLoadListener.onSourceChanged(null);
+        getPlayerView().getDanmakuController().setListener(null);
         super.onDestroy();
         releasePlaybackService();
         trace("PLAYBACK_ON_DESTROY_END");
