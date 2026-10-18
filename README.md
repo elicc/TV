@@ -121,7 +121,9 @@ ADB="$ANDROID_HOME/platform-tools/adb"
 # Apple Silicon 的 TV 模拟器为 arm64-v8a（adb shell getprop ro.product.cpu.abilist 可查）
 "$ANDROID_HOME/emulator/emulator" -avd Television_4K &
 
-"$ADB" install -r app/build/outputs/apk/leanback/debug/app-leanback-arm64-v8a-debug.apk
+# 必须完整安装：APK 旁有 .idsig 时，裸 `adb install` 会走增量安装并在数据传完前返回，
+# 应用运行中再经 ADB 按需拉取代码，无线 ADB 一断设备就会卡死。真机（TCL）请用 scripts/deploy-leanback.sh。
+"$ADB" install -r --no-incremental app/build/outputs/apk/leanback/debug/app-leanback-arm64-v8a-debug.apk
 "$ADB" shell monkey -p com.fongmi.android.tv -c android.intent.category.LAUNCHER 1   # 启动
 
 # 验证模拟器运行的确实是本次编译产物（SHA256 应完全一致）

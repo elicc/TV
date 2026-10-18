@@ -29,7 +29,9 @@
 ```bash
 ./gradlew :app:assembleLeanbackDebug --offline --console=plain
 adb connect 192.168.1.22:5555
-adb -s 192.168.1.22:5555 install -r app/build/outputs/apk/leanback/debug/app-leanback-armeabi-v7a-debug.apk
+# 本机 OEM 校验拒绝完整（流式）安装，只接受 v4 签名的增量安装；而由 adb 经无线网络边传边装时，
+# 数据块晚到会让 system_server 以 SIGBUS 崩溃（黑屏、遥控无响应）。脚本会先推送 APK 与 .idsig，再在电视本地安装。
+scripts/deploy-leanback.sh -s 192.168.1.22:5555 --no-launch
 python3 tools/android/tcl_search_bridge_accessibility.py --serial 192.168.1.22:5555 enable
 python3 tools/android/tcl_search_bridge_accessibility.py --serial 192.168.1.22:5555 status
 ```

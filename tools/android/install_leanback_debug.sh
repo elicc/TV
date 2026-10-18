@@ -20,7 +20,15 @@ if [[ ! -f "$apk_path" ]]; then
     exit 2
 fi
 
-adb -s "$device_serial" install -r "$apk_path"
+# TCL MT5879 only accepts the v4-signed incremental install, and serving it from adb can kill system_server
+# when a block arrives late (see scripts/deploy-leanback.sh). Install from local storage instead.
+remote_apk="/data/local/tmp/${package_name}.apk"
+adb -s "$device_serial" push "$apk_path" "$remote_apk" >/dev/null
+adb -s "$device_serial" push "$apk_path.idsig" "$remote_apk.idsig" >/dev/null
+install_output="$(adb -s "$device_serial" shell cmd package install-incremental -r "$remote_apk" 2>&1 | tr -d '\r' || true)"
+adb -s "$device_serial" shell rm -f "$remote_apk" "$remote_apk.idsig" || true
+printf '%s\n' "$install_output"
+[[ "$install_output" == *Success* ]] || exit 3
 
 # Android 11 TV firmware may implement the app-op while omitting both standard Settings
 # activities used to grant it. Provision the app before its first launch so ConfigVault can read

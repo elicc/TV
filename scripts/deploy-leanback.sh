@@ -131,10 +131,19 @@ print "Installed versionCode: ${INSTALLED_VERSION:-<none>}"
 INSTALL_FLAGS=(-r -t)
 [[ "$FORCE_REINSTALL" == true ]] && INSTALL_FLAGS=(-r -t -d -g)
 # This APK has a v4 .idsig because TCL MT5879's OverseasAppConfig rejects the
-# streamed path with INSTALL_FAILED_VERIFICATION_FAILURE. Make the v4-aware
-# transport explicit and wait until all blocks are materialized before adb
-# exits; without --wait this TV can close the data loader and remove the app.
-adb -s "$SERIAL" install --incremental --wait "${INSTALL_FLAGS[@]}" "$APK" || fail "adb install failed" 3
+# streamed path with INSTALL_FAILED_VERIFICATION_FAILURE and only accepts the
+# v4-signed incremental one. Serving that install from adb is not safe either:
+# Package Manager parses the APK while blocks are still on the way, and a block
+# that misses the IncFS read timeout on a busy TV over Wi-Fi kills
+# system_server with SIGBUS (black screen, remote ignored until the framework
+# restarts). Push the APK with its .idsig and install from local storage, so
+# every block is copied before the install completes.
+REMOTE_APK="/data/local/tmp/${PKG}.apk"
+adb -s "$SERIAL" push "$APK" "$REMOTE_APK" >/dev/null || fail "adb push failed" 3
+adb -s "$SERIAL" push "$IDSIG" "$REMOTE_APK.idsig" >/dev/null || fail "adb push failed" 3
+INSTALL_OUTPUT=$(adb -s "$SERIAL" shell cmd package install-incremental "${INSTALL_FLAGS[@]}" "$REMOTE_APK" 2>&1 | tr -d '\r' || true)
+adb -s "$SERIAL" shell rm -f "$REMOTE_APK" "$REMOTE_APK.idsig" || true
+[[ "$INSTALL_OUTPUT" == *Success* ]] || fail "install failed: $INSTALL_OUTPUT" 3
 INSTALLED_PATH=$(adb -s "$SERIAL" shell pm path "$PKG" 2>/dev/null | tr -d '\r' | grep -m1 '^package:' || true)
 [[ -n "$INSTALLED_PATH" ]] || fail "adb install reported success but $PKG is not registered" 3
 print "Install complete."
