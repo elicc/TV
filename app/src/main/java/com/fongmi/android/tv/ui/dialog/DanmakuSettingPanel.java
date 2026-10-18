@@ -94,6 +94,7 @@ final class DanmakuSettingPanel {
         setupSwitch(display.showPositionedSwitch, DanmakuSetting.isShowPositioned(), DanmakuSetting::putShowPositioned, null);
         setupSwitch(display.showSubtitleSwitch, DanmakuSetting.isShowSubtitle(), DanmakuSetting::putShowSubtitle, null);
         setupSwitch(display.showSpecialSwitch, DanmakuSetting.isShowSpecial(), DanmakuSetting::putShowSpecial, null);
+        setupChip(display.frameRateChipGroup, DanmakuSetting.getFrameRate(), this::frameRateChipForValue, this::frameRateForChip, DanmakuSetting::putFrameRate);
     }
 
     private void bindTabs() {
@@ -256,6 +257,15 @@ final class DanmakuSettingPanel {
         if (chipId == appearance.colorColorful.getId()) return DanmakuConfig.COLOR_MODE_COLORFUL;
         if (chipId == appearance.colorGradient.getId()) return DanmakuConfig.COLOR_MODE_GRADIENT;
         return DanmakuConfig.COLOR_MODE_DEFAULT;
+    }
+
+    private int frameRateChipForValue(int value) {
+        var display = binding.display;
+        return value == DanmakuSetting.FRAME_RATE_SAVING ? display.frameRateSaving.getId() : display.frameRateSmooth.getId();
+    }
+
+    private int frameRateForChip(int chipId) {
+        return chipId == binding.display.frameRateSaving.getId() ? DanmakuSetting.FRAME_RATE_SAVING : DanmakuSetting.FRAME_RATE_SMOOTH;
     }
 
     private void setupFloat(Slider slider, TextView label, float value, String format, FloatSetter setter) {

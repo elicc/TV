@@ -237,6 +237,9 @@
     <string name="danmaku_show_positioned">Positioned</string>
     <string name="danmaku_show_subtitle">Subtitle type</string>
     <string name="danmaku_show_special">Special type</string>
+    <string name="danmaku_frame_rate">Frame rate</string>
+    <string name="danmaku_frame_rate_smooth">60 fps (smooth)</string>
+    <string name="danmaku_frame_rate_saving">30 fps (power saving)</string>
     <string name="danmaku_section_appearance">Appearance</string>
     <string name="danmaku_section_display">Display</string>
     <string name="danmaku_section_timing">Timing</string>

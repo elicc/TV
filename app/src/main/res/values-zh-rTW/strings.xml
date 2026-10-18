@@ -237,6 +237,9 @@
     <string name="danmaku_show_positioned">定位彈幕</string>
     <string name="danmaku_show_subtitle">字幕型</string>
     <string name="danmaku_show_special">特效型</string>
+    <string name="danmaku_frame_rate">彈幕幀率</string>
+    <string name="danmaku_frame_rate_smooth">60 幀（流暢）</string>
+    <string name="danmaku_frame_rate_saving">30 幀（省電）</string>
     <string name="danmaku_section_appearance">外觀</string>
     <string name="danmaku_section_display">顯示</string>
     <string name="danmaku_section_timing">時間</string>

@@ -7,4 +7,11 @@
     <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showPositionedSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_positioned"/>
     <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSubtitleSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_subtitle"/>
     <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/showSpecialSwitch" style="@style/TvDanmakuSwitch" android:text="@string/danmaku_show_special"/>
+    <androidx.appcompat.widget.LinearLayoutCompat style="@style/TvDanmakuRow" android:addStatesFromChildren="false">
+        <com.google.android.material.textview.MaterialTextView style="@style/TvDanmakuLabel" android:text="@string/danmaku_frame_rate"/>
+        <com.google.android.material.chip.ChipGroup android:id="@+id/frameRateChipGroup" style="@style/TvDanmakuChipGroup">
+            <com.google.android.material.chip.Chip android:id="@+id/frameRateSmooth" style="@style/TvDanmakuChip" android:text="@string/danmaku_frame_rate_smooth"/>
+            <com.google.android.material.chip.Chip android:id="@+id/frameRateSaving" style="@style/TvDanmakuChip" android:text="@string/danmaku_frame_rate_saving"/>
+        </com.google.android.material.chip.ChipGroup>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -9,6 +9,8 @@ import com.github.catvod.utils.Prefers;
 
 public class DanmakuSetting {
 
+    public static final int FRAME_RATE_SMOOTH = 60;
+    public static final int FRAME_RATE_SAVING = 30;
     private static final float MIN_TEXT_SCALE = 0.5f;
     private static final float MAX_TEXT_SCALE = 3.0f;
     private static final float MIN_TRANSPARENCY = 0.0f;
@@ -293,6 +295,14 @@ public class DanmakuSetting {
         Prefers.put("danmaku_show_special", value);
     }
 
+    public static int getFrameRate() {
+        return Prefers.getInt("danmaku_frame_rate", FRAME_RATE_SMOOTH) == FRAME_RATE_SAVING ? FRAME_RATE_SAVING : FRAME_RATE_SMOOTH;
+    }
+
+    public static void putFrameRate(int value) {
+        Prefers.put("danmaku_frame_rate", value == FRAME_RATE_SAVING ? FRAME_RATE_SAVING : FRAME_RATE_SMOOTH);
+    }
+
     public static String getEffectiveApiUrl() {
         String userUrl = getApiUrl();
         if (!TextUtils.isEmpty(userUrl)) return userUrl;
@@ -340,6 +350,7 @@ public class DanmakuSetting {
         putShowPositioned(config.showPositioned);
         putShowSubtitle(config.showSubtitle);
         putShowSpecial(config.showSpecial);
+        putFrameRate(FRAME_RATE_SMOOTH);
     }
 
     public static DanmakuConfig getConfig() {
@@ -371,6 +382,7 @@ public class DanmakuSetting {
                 .setShowPositioned(isShowPositioned())
                 .setShowSubtitle(isShowSubtitle())
                 .setShowSpecial(isShowSpecial())
+                .setFrameRate(getFrameRate())
                 .build();
     }
 }
