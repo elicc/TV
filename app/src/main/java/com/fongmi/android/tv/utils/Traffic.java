@@ -1,6 +1,7 @@
 package com.fongmi.android.tv.utils;
 
 import android.net.TrafficStats;
+import android.os.SystemClock;
 import android.view.View;
 import android.widget.TextView;
 
@@ -19,17 +20,18 @@ public class Traffic {
     private static long lastTimeStamp;
 
     public static void setSpeed(TextView view) {
-        if (TrafficStats.getUidRxBytes(UID) == TrafficStats.UNSUPPORTED) return;
+        long nowTotalRxBytes = TrafficStats.getUidRxBytes(UID);
+        if (nowTotalRxBytes == TrafficStats.UNSUPPORTED) return;
+        long nowTimeStamp = SystemClock.elapsedRealtime();
+        long elapsed = nowTimeStamp - lastTimeStamp;
         view.setVisibility(View.VISIBLE);
-        view.setText(getSpeed());
-    }
-
-    private static String getSpeed() {
-        long nowTimeStamp = System.currentTimeMillis();
-        long nowTotalRxBytes = TrafficStats.getUidRxBytes(UID) / 1024;
-        long speed = (nowTotalRxBytes - lastTotalRxBytes) * 1000 / Math.max(nowTimeStamp - lastTimeStamp, 1);
+        if (lastTimeStamp == 0 || elapsed <= 0) view.setText("");
+        else view.setText(format((nowTotalRxBytes - lastTotalRxBytes) * 1000 / elapsed / 1024));
         lastTimeStamp = nowTimeStamp;
         lastTotalRxBytes = nowTotalRxBytes;
+    }
+
+    private static String format(long speed) {
         return speed < 1000 ? speed + UNIT_KB : format.format(speed / 1024f) + UNIT_MB;
     }
 

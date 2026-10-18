@@ -9,7 +9,6 @@ import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.cache.Cache;
 import androidx.media3.datasource.cache.CacheDataSource;
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
 import androidx.media3.datasource.okhttp.OkHttpDataSource;
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider;
@@ -22,7 +21,6 @@ import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
 import com.fongmi.android.tv.App;
-import com.fongmi.android.tv.setting.PreloadSetting;
 import com.github.catvod.net.OkHttp;
 import com.github.catvod.utils.Path;
 
@@ -30,8 +28,6 @@ import java.io.File;
 import java.util.Map;
 
 public class ExoMediaSourceFactory implements MediaSource.Factory {
-
-    private static final int CACHE_SPACE_PERCENT = 80;
 
     private static StandaloneDatabaseProvider databaseProvider;
     private static Cache cache;
@@ -75,19 +71,16 @@ public class ExoMediaSourceFactory implements MediaSource.Factory {
     static synchronized Cache getCache() {
         if (cache != null) return cache;
         File dir = Path.exoCache();
-        return cache = new SimpleCache(dir, new LeastRecentlyUsedCacheEvictor(getMaxCacheSize(dir)), getDatabaseProvider());
+        return cache = new SimpleCache(dir, new ExoCacheEvictor(dir), getDatabaseProvider());
     }
 
     private static StandaloneDatabaseProvider getDatabaseProvider() {
-        if (databaseProvider == null) databaseProvider = new StandaloneDatabaseProvider(App.get());
+        if (databaseProvider != null) return databaseProvider;
+        databaseProvider = new StandaloneDatabaseProvider(App.get());
+        // SimpleCache writes its index while holding the cache lock. A rollback journal needs several fsyncs per
+        // transaction, which on slow TV storage throttles every reader and writer of the cache.
+        databaseProvider.setWriteAheadLoggingEnabled(true);
         return databaseProvider;
-    }
-
-    private static long getMaxCacheSize(File dir) {
-        long usedBytes = Path.size(dir);
-        long availableBytes = Math.max(0, Path.available(dir));
-        long storageBudget = (usedBytes + availableBytes) * CACHE_SPACE_PERCENT / 100;
-        return Math.min(PreloadSetting.getSizeBytes(), storageBudget);
     }
 
     @NonNull
@@ -121,7 +114,7 @@ public class ExoMediaSourceFactory implements MediaSource.Factory {
     }
 
     private DataSource.Factory getDataSourceFactory() {
-        if (dataSourceFactory == null) dataSourceFactory = () -> getCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory())).createDataSource();
+        if (dataSourceFactory == null) dataSourceFactory = () -> new ExoReadAheadDataSource(getCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory())).createDataSource());
         return dataSourceFactory;
     }
 
