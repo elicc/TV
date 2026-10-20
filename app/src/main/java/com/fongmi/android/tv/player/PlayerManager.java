@@ -21,6 +21,7 @@ import androidx.media3.ui.danmaku.DanmakuConfig;
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.Constant;
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.DanmakuEarlyRequest;
 import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.bean.Sub;
@@ -147,12 +148,14 @@ public class PlayerManager implements ParseCallback {
     /**
      * Notifies a new danmaku source once the player is ready. Downloading and parsing a source
      * takes bandwidth and CPU that video startup needs, so it waits for the first ready state.
+     * The request is sent now, though, so the service prepares the source meanwhile.
      */
     private void notifyDanmakuSourceWhenReady() {
         if (getSelectedDanmakuUri() == null || player == null || player.getPlaybackState() == Player.STATE_READY) {
             notifyDanmakuSourceChanged();
             return;
         }
+        DanmakuEarlyRequest.start(getSelectedDanmakuUri());
         danmakuDeferred = true;
         callback.onDanmakuSourceChanged(null);
     }

@@ -101,7 +101,8 @@ public final class DanmakuCache {
     }
 
     private static Response intercept(Interceptor.Chain chain) throws IOException {
-        Response response = chain.proceed(chain.request());
+        Response response = DanmakuEarlyRequest.take(chain);
+        if (response == null) response = chain.proceed(chain.request());
         Entry entry = TRACKED.get(chain.request().url().toString());
         ResponseBody body = response.body();
         if (entry == null || !response.isSuccessful() || body == null) return response;
