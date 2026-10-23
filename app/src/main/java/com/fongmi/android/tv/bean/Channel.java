@@ -246,23 +246,25 @@ public class Channel {
         return getData(ZoneId.systemDefault());
     }
 
-    public void setData(Epg data) {
+    // The list is changed by EPG loading threads while the UI thread reads it.
+    public synchronized void setData(Epg data) {
         if (dataList == null) dataList = new ArrayList<>();
         dataList.removeIf(e -> e.equal(data.getDate()));
         dataList.add(data);
     }
 
-    public Epg getData(ZoneId zoneId) {
+    public synchronized Epg getData(ZoneId zoneId) {
         String today = LocalDate.now(zoneId).format(Formatters.DATE);
         if (dataList == null) return new Epg();
         return dataList.stream().filter(e -> e.equal(today)).findFirst().orElse(new Epg());
     }
 
-    public List<Epg> getDataList() {
-        return dataList == null ? Collections.emptyList() : dataList;
+    /** Returns a copy, so callers can iterate it while another thread calls {@link #setData}. */
+    public synchronized List<Epg> getDataList() {
+        return dataList == null ? Collections.emptyList() : new ArrayList<>(dataList);
     }
 
-    public void setDataList(List<Epg> list) {
+    public synchronized void setDataList(List<Epg> list) {
         this.dataList = new ArrayList<>(list);
     }
 
