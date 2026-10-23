@@ -107,6 +107,10 @@ public class Live {
     @SerializedName("groups")
     private List<Group> groups;
 
+    // The EPG files whose programmes are already bound to the channels, and the time each was last written.
+    @Ignore
+    private transient Map<String, Long> epgBound;
+
     @SerializedName("boot")
     private boolean boot;
 
@@ -300,6 +304,15 @@ public class Live {
         List<String> items = new ArrayList<>();
         for (String epg : getEpg().split(",")) if (!epg.contains("{") && (epg.contains("xml") || epg.contains("gz"))) items.add(epg);
         return items;
+    }
+
+    public synchronized boolean isEpgBound(String url, long modified) {
+        return epgBound != null && Long.valueOf(modified).equals(epgBound.get(url));
+    }
+
+    public synchronized void setEpgBound(String url, long modified) {
+        if (epgBound == null) epgBound = new HashMap<>();
+        epgBound.put(url, modified);
     }
 
     public boolean isEmpty() {
