@@ -196,6 +196,7 @@
                     android:id="@+id/settings"
                     style="@style/Tv.SettingsIconButton"
                     android:layout_marginEnd="10dp"
+                    android:nextFocusRight="@id/navVod"
                     android:src="@drawable/ic_nav_settings"
                     android:contentDescription="@string/home_setting" />
 

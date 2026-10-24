@@ -107,9 +107,12 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private Runnable mR2;
     private Runnable mR3;
     private Runnable mR4;
+    private Runnable mR5;
     private List<Group> mHides;
     private Group mGroup;
     private Channel mChannel;
+    // The channel whose guide the EPG panel holds; any channel in the list.
+    private Channel mEpgChannel;
     private String mPlaybackKey;
     private EpgState mEpgState = EpgState.IDLE;
     private boolean mEpgPanelVisible;
@@ -186,6 +189,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         mR2 = this::setTraffic;
         mR3 = this::hideInfo;
         mR4 = this::hideUI;
+        mR5 = this::setProgram;
         setRecyclerView();
         setVideoView();
         setViewModel();
@@ -220,6 +224,16 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
                 if (child == null || !parent.hasFocus() || position < 0 || position >= mGroupAdapter.getItemCount()) return;
                 Group group = mGroupAdapter.get(position);
                 if (group != mGroup) onChildSelected(child, group);
+            }
+        });
+        mBinding.channel.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
+            @Override
+            public void onChildViewHolderSelected(@NonNull RecyclerView parent, @Nullable RecyclerView.ViewHolder child, int position, int subposition) {
+                // A guide that is still loading keeps the focus on its row.
+                // Moving to another row closes it, so that it cannot take the
+                // focus from that row when it arrives.
+                if (!mEpgPanelVisible || position < 0 || position >= mChannelAdapter.getItemCount()) return;
+                if (!mChannelAdapter.get(position).equals(mEpgChannel)) dismissEpg();
             }
         });
     }
@@ -320,6 +334,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         observeWhenServiceReady(mViewModel.playback(), this::onPlaybackObserved);
         observeWhenServiceReady(mViewModel.error(), this::onLoadErrorObserved);
         observeForever(mViewModel.epg(), this::onEpgLoaded);
+        observeForever(mViewModel.guide(), this::onGuideLoaded);
         mViewModel.live().observe(this, this::onLiveParsed);
         mViewModel.xml().observe(this, this::onXmlParsed);
     }
@@ -611,8 +626,9 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void showEpg(Channel item) {
-        if (mChannel == null || !mChannel.equals(item) || !mChannel.getGroup().equals(mGroup)) return;
-        Epg cached = mChannel.getData(mViewModel.getZoneId());
+        if (item == null) return;
+        if (!item.equals(mEpgChannel)) setEpgChannel(item);
+        Epg cached = item.getData(mViewModel.getZoneId());
         if (mEpgDataAdapter.getItemCount() == 0 && !cached.getList().isEmpty()) {
             mEpgState = EpgState.READY;
             mEpgDataAdapter.addAll(cached.getList());
@@ -620,10 +636,30 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         if (mEpgState == EpgState.IDLE) {
             mEpgState = EpgState.LOADING;
             mEpgDataAdapter.clear();
-            mViewModel.getEpg(mChannel);
+            mViewModel.getEpg(item);
         }
         mEpgPanelVisible = true;
         renderEpgPanel(true);
+    }
+
+    // Point the guide panel at a channel, which need not be the playing one.
+    private void setEpgChannel(Channel item) {
+        mEpgChannel = item;
+        Epg cached = item.getData(mViewModel.getZoneId());
+        boolean playing = isPlayingChannel(item);
+        // Only the playing channel can be on a catch-up programme; any other
+        // channel marks the programme on air now.
+        if (!playing) cached.selected();
+        mEpgState = cached.getList().isEmpty() ? EpgState.LOADING : EpgState.READY;
+        mEpgDataAdapter.addAll(cached.getList());
+        // The playing channel's guide is loaded with its details. Reloading it
+        // would reset the catch-up programme it marks, so only fill a gap.
+        if (!playing) mViewModel.getGuide(item);
+        else if (cached.getList().isEmpty()) mViewModel.getEpg(item);
+    }
+
+    private boolean isPlayingChannel(Channel item) {
+        return mChannel != null && mChannel.equals(item);
     }
 
     @Override
@@ -699,7 +735,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
             mBinding.epgEmpty.setText(message);
             return;
         }
-        int selected = mChannel == null ? 0 : mChannel.getData(mViewModel.getZoneId()).getSelected();
+        int selected = mEpgChannel == null ? 0 : mEpgChannel.getData(mViewModel.getZoneId()).getSelected();
         mBinding.epgData.setSelectedPosition(Math.max(selected, 0));
         if (requestFocus) mBinding.epgData.requestFocus();
     }
@@ -745,14 +781,60 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
             osd.setTranslationY(0f);
         }
         mBinding.widget.top.setVisibility(View.VISIBLE);
-        App.post(view::requestFocus, 25);
+        setProgram();
+        // The remembered focus may be the time bar, which live streams hide.
+        App.post(() -> (view.isShown() ? view : mBinding.control.action.config).requestFocus(), 25);
         setR1Callback();
         hideInfo();
     }
 
+    /**
+     * Live streams have no duration and cannot be scrubbed, so the player's
+     * timeline would only count up from zero. Show the programme on air (or the
+     * one played back) instead, and keep the time bar for on-demand media.
+     */
+    private void setProgram() {
+        App.removeCallbacks(mR5);
+        if (isGone(mBinding.control.getRoot())) return;
+        boolean vod = player().isVod();
+        // Hide the seek row inside the view: PlayerSeekView stops its progress updates while it is not visible itself.
+        mBinding.control.seek.getChildAt(0).setVisibility(vod ? View.VISIBLE : View.GONE);
+        mBinding.control.program.setVisibility(vod ? View.GONE : View.VISIBLE);
+        if (!vod) setProgram(mLive.getCatchupData());
+        App.post(mR5, 1000);
+    }
+
+    private void setProgram(@Nullable EpgData catchup) {
+        EpgData data = catchup != null ? catchup : getOnAir();
+        boolean timed = data != null && data.getEndTime() > data.getStartTime();
+        mBinding.control.programBadge.setText(catchup != null ? R.string.tv_catchup_badge : R.string.tv_live_badge);
+        mBinding.control.programTitle.setText(data == null ? "" : data.getTitle());
+        mBinding.control.programTimeline.setVisibility(timed ? View.VISIBLE : View.GONE);
+        mBinding.control.programRemain.setVisibility(timed && catchup == null ? View.VISIBLE : View.GONE);
+        if (!timed) return;
+        long duration = data.getEndTime() - data.getStartTime();
+        long elapsed = catchup != null ? player().getPosition() : System.currentTimeMillis() - data.getStartTime();
+        elapsed = Math.max(0, Math.min(elapsed, duration));
+        long left = duration - elapsed;
+        mBinding.control.programStart.setText(data.getStart());
+        mBinding.control.programEnd.setText(data.getEnd());
+        mBinding.control.programBar.setDuration(duration);
+        mBinding.control.programBar.setPosition(elapsed);
+        mBinding.control.programBar.setBufferedPosition(elapsed);
+        mBinding.control.programRemain.setText(left < 60_000 ? getString(R.string.tv_live_ending) : getString(R.string.tv_live_remain, (int) ((left + 59_999) / 60_000)));
+    }
+
+    /** The playing channel's programme on air now, by the clock rather than the guide's selection. */
+    @Nullable
+    private EpgData getOnAir() {
+        if (mChannel == null) return null;
+        for (EpgData item : mChannel.getData(mViewModel.getZoneId()).getList()) if (item.isInRange()) return item;
+        return null;
+    }
+
     private void hideControl() {
         mBinding.widget.top.setVisibility(View.GONE);
-        App.removeCallbacks(mR1);
+        App.removeCallbacks(mR1, mR5);
         View osd = mBinding.control.getRoot();
         osd.animate().cancel();
         if (osd.getVisibility() == View.VISIBLE && TvMotion.motionEnabled(osd)) {
@@ -856,7 +938,21 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void onItemClick(EpgData item) {
-        mLive.selectEpg(item, player().getPosition());
+        if (mEpgChannel == null || isPlayingChannel(mEpgChannel)) mLive.selectEpg(item, player().getPosition());
+        else playEpgChannel(item);
+    }
+
+    // A programme in another channel's guide switches to that channel: the
+    // programme on air plays live, an earlier one plays back if the channel
+    // supports catch-up, as in the playing channel's guide.
+    private void playEpgChannel(EpgData item) {
+        Channel channel = mEpgChannel;
+        if (mGroup == null || (!item.isInRange() && !channel.hasCatchup() && !channel.isRtsp())) return;
+        int position = mGroup.getChannel().indexOf(channel);
+        if (position >= 0) mGroup.setPosition(position);
+        mLive.selectChannel(channel.group(mGroup));
+        if (item.isInRange()) hideUI();
+        else mLive.selectEpg(item);
     }
 
     private void addKeep(Channel item) {
@@ -880,6 +976,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         boolean hasCache = !cached.getList().isEmpty();
         mEpgState = hasCache ? EpgState.READY : EpgState.LOADING;
         mEpgPanelVisible = false;
+        mEpgChannel = mChannel;
         mEpgDataAdapter.clear();
         if (hasCache) mEpgDataAdapter.addAll(cached.getList());
         mBinding.epgEmpty.setVisibility(View.GONE);
@@ -897,28 +994,49 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     }
 
     private void onEpgLoaded(Epg epg) {
-        if (mChannel == null || !mChannel.getTvgId().equals(epg.getKey())) return;
-        if (epg.isError()) {
-            Epg cached = mChannel.getData(mViewModel.getZoneId());
-            if (!cached.getList().isEmpty()) epg = cached;
-            else {
-                mEpgState = EpgState.ERROR;
-                mEpgDataAdapter.clear();
-                renderEpgPanel(true);
-                return;
-            }
-        }
-        mEpgState = epg.getList().isEmpty() ? EpgState.EMPTY : EpgState.READY;
+        if (isEpgOf(mChannel, epg)) setPlayingEpg(withCache(mChannel, epg));
+        onGuideLoaded(epg);
+    }
+
+    private void setPlayingEpg(Epg epg) {
+        if (epg.isError()) return;
         EpgData data = epg.getEpgData();
         boolean hasTitle = !data.getTitle().isEmpty();
-        mEpgDataAdapter.addAll(epg.getList());
         mBinding.widget.name.setMaxEms(hasTitle ? 12 : 48);
         mBinding.widget.play.setText(data.format());
         mLive.onEpgChanged(data);
         // The channel row is also the entry point for the second-level guide.
         // Rebind it when EPG arrives so its affordance is never stale.
         mChannelAdapter.notifyDataSetChanged();
+        // A loaded guide marks the programme on air. Picking a past programme
+        // from another channel's guide loads the guide again as the channel
+        // switches, so mark the programme being played back once more.
+        EpgData catchup = mLive.getCatchupData();
+        if (catchup != null) for (EpgData item : epg.getList()) item.setSelected(catchup);
+    }
+
+    private void onGuideLoaded(Epg epg) {
+        if (!isEpgOf(mEpgChannel, epg)) return;
+        epg = withCache(mEpgChannel, epg);
+        if (epg.isError()) {
+            mEpgState = EpgState.ERROR;
+            mEpgDataAdapter.clear();
+        } else {
+            mEpgState = epg.getList().isEmpty() ? EpgState.EMPTY : EpgState.READY;
+            mEpgDataAdapter.addAll(epg.getList());
+        }
         renderEpgPanel(true);
+    }
+
+    private boolean isEpgOf(Channel channel, Epg epg) {
+        return channel != null && channel.getTvgId().equals(epg.getKey());
+    }
+
+    // A failed request falls back to the guide loaded before.
+    private Epg withCache(Channel channel, Epg epg) {
+        if (!epg.isError()) return epg;
+        Epg cached = channel.getData(mViewModel.getZoneId());
+        return cached.getList().isEmpty() ? epg : cached;
     }
 
     private void onXmlParsed(boolean success) {
@@ -1069,6 +1187,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         mGroupAdapter.clear();
         mHides.clear();
         mChannel = null;
+        mEpgChannel = null;
         mGroup = null;
         mEpgState = EpgState.IDLE;
         mEpgPanelVisible = false;
@@ -1323,7 +1442,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     protected void onDestroy() {
         mClock.release();
         Source.get().exit();
-        App.removeCallbacks(mR0, mR1, mR2, mR3, mR4);
+        App.removeCallbacks(mR0, mR1, mR2, mR3, mR4, mR5);
         super.onDestroy();
     }
 }

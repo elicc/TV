@@ -11,4 +11,8 @@
     <string name="tv_playback_epg_selected">已選擇 · %1$s</string>
     <string name="tv_playback_epg_open">開啟節目表</string>
     <string name="tv_live_group_show">顯示頻道分組</string>
+    <string name="tv_live_badge">直播</string>
+    <string name="tv_catchup_badge">回看</string>
+    <string name="tv_live_remain">還剩 %1$d 分鐘</string>
+    <string name="tv_live_ending">即將結束</string>
 </resources>

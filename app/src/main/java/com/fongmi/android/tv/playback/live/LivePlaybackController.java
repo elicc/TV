@@ -97,6 +97,13 @@ public class LivePlaybackController {
         else nextChannel();
     }
 
+    /** The programme the channel plays back, or null while it plays live. */
+    @Nullable
+    public EpgData getCatchupData() {
+        LivePlayRequest request = state.getActiveRequest();
+        return request != null && request.isCatchup() && request.matches(state.getChannel()) ? request.getCatchupData() : null;
+    }
+
     public void onEpgChanged(EpgData data) {
         if (state.getChannel() != null) publishPlaybackMetadata(data);
     }

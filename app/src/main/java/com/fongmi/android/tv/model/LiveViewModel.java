@@ -29,14 +29,17 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     private final MutableLiveData<String> error;
     private final MutableLiveData<Boolean> xml;
     private final MutableLiveData<Live> live;
+    private final MutableLiveData<Epg> guide;
     private final MutableLiveData<Epg> epg;
 
     private final ViewModelTaskRunner<TaskType> tasks;
     private final LivePlaybackState playbackState;
     private volatile ZoneId zoneId;
+    private volatile String guideTag;
     private volatile String epgTag;
 
     public LiveViewModel() {
+        this.guide = new MutableLiveData<>();
         this.epg = new MutableLiveData<>();
         this.xml = new MutableLiveData<>();
         this.live = new MutableLiveData<>();
@@ -61,6 +64,10 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
 
     public LiveData<Epg> epg() {
         return epg;
+    }
+
+    public LiveData<Epg> guide() {
+        return guide;
     }
 
     public LiveData<Live> live() {
@@ -93,17 +100,31 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     public void getEpg(Channel item) {
         LiveApi.cancelEpg(epgTag);
         String tag = epgTag = "epg:" + item.getTvgId() + ":" + System.nanoTime();
-        execute(TaskType.EPG_CACHE, () -> LiveApi.getCachedEpg(item, zoneId), cached -> {
-            if (cached != null) {
-                epg.postValue(cached);
-                if (LiveApi.isEpgFresh(cached)) return;
-            }
-            requestEpg(item, tag);
-        }, error -> requestEpg(item, tag));
+        loadEpg(item, tag, epg, TaskType.EPG_CACHE, TaskType.EPG);
     }
 
-    private void requestEpg(Channel item, String tag) {
-        execute(TaskType.EPG, () -> LiveApi.getEpg(item, zoneId, tag), epg::postValue, error -> epg.postValue(Epg.error(item.getTvgId())));
+    /**
+     * Loads the guide of a channel that is browsed but not playing. It has its own tasks so that
+     * it never cancels {@link #getEpg}, which the playing channel's details wait for.
+     */
+    public void getGuide(Channel item) {
+        LiveApi.cancelEpg(guideTag);
+        String tag = guideTag = "guide:" + item.getTvgId() + ":" + System.nanoTime();
+        loadEpg(item, tag, guide, TaskType.GUIDE_CACHE, TaskType.GUIDE);
+    }
+
+    private void loadEpg(Channel item, String tag, MutableLiveData<Epg> result, TaskType cacheType, TaskType type) {
+        execute(cacheType, () -> LiveApi.getCachedEpg(item, zoneId), cached -> {
+            if (cached != null) {
+                result.postValue(cached);
+                if (LiveApi.isEpgFresh(cached)) return;
+            }
+            requestEpg(item, tag, result, type);
+        }, error -> requestEpg(item, tag, result, type));
+    }
+
+    private void requestEpg(Channel item, String tag, MutableLiveData<Epg> result, TaskType type) {
+        execute(type, () -> LiveApi.getEpg(item, zoneId, tag), result::postValue, error -> result.postValue(Epg.error(item.getTvgId())));
     }
 
     @Override
@@ -141,6 +162,7 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
     @Override
     protected void onCleared() {
         LiveApi.cancelEpg(epgTag);
+        LiveApi.cancelEpg(guideTag);
         tasks.cancelAll();
         playbackState.reset();
     }
@@ -150,6 +172,8 @@ public class LiveViewModel extends ViewModel implements LiveDataSource {
         LIVE(Constant.TIMEOUT_LIVE),
         EPG_CACHE(Constant.TIMEOUT_EPG),
         EPG(Constant.TIMEOUT_EPG),
+        GUIDE_CACHE(Constant.TIMEOUT_EPG),
+        GUIDE(Constant.TIMEOUT_EPG),
         XML(Constant.TIMEOUT_XML),
         URL(Constant.TIMEOUT_PARSE_LIVE);
 

@@ -24,7 +24,7 @@ For documentation, use Node.js 22.18+ (22.x) or 24+, then run from `website/`:
 - `npm run lint && npm run typecheck && npm run build` — validate and generate static output in `out/`.
 - `npm start` — preview the built site over HTTP.
 
-## TV Device Testing (TCL MT5879, `192.168.1.22:5555`)
+## TV Device Testing
 
 - Install only with `scripts/deploy-leanback.sh -s 192.168.1.22:5555`. It pushes the APK and `.idsig` and installs incrementally from the local file on the device. Never use any adb-served install (`adb install`, `adb install -r`, `--incremental`, `pm install` of a streamed APK): they crash `system_server` in the package installer (SIGBUS in `libandroidfw`), and a plain `adb install -r` once left the TV completely offline (no ping) until it was power-cycled. Check `dumpsys dropbox --print system_server_native_crash` if the TV freezes.
 - Someone may be watching the TV. Key events you did not send show up in app traces; do not reinstall or restart the app then.

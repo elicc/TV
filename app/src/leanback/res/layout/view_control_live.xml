@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
@@ -9,6 +10,99 @@
     android:paddingTop="12dp"
     android:paddingEnd="@dimen/tv_safe_horizontal"
     android:paddingBottom="@dimen/tv_safe_vertical">
+
+    <!-- Live streams have no duration or seek range, so the player's own
+         timeline is replaced by the programme's start, end and elapsed share.
+         The seek view below keeps its margin while its row is hidden. -->
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/program"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/program_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_detail_tag_primary"
+                android:singleLine="true"
+                android:text="@string/tv_live_badge"
+                android:textColor="?attr/tvColorOnAccent"
+                android:textSize="@dimen/tv_text_caption" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/program_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textColor="?attr/tvColorTextPrimary"
+                android:textSize="@dimen/tv_text_body"
+                tools:text="新闻联播" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/program_remain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:fontFeatureSettings="tnum"
+                android:singleLine="true"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="@dimen/tv_text_body"
+                tools:text="还剩 12 分钟" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/program_timeline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/program_start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFeatureSettings="tnum"
+                android:textColor="?attr/tvColorTextPrimary"
+                android:textSize="@dimen/tv_text_body"
+                tools:text="19:00" />
+
+            <!-- Display only: a live programme cannot be scrubbed. -->
+            <com.fongmi.android.tv.ui.custom.TvTimeBar
+                android:id="@+id/program_bar"
+                style="@style/Tv.SeekBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/program_end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFeatureSettings="tnum"
+                android:textColor="?attr/tvColorTextSecondary"
+                android:textSize="@dimen/tv_text_body"
+                tools:text="19:30" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.media3.ui.PlayerSeekView
         android:id="@+id/seek"

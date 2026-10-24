@@ -11,4 +11,8 @@
     <string name="tv_playback_epg_selected">Selected · %1$s</string>
     <string name="tv_playback_epg_open">Open programme guide</string>
     <string name="tv_live_group_show">Show channel groups</string>
+    <string name="tv_live_badge">LIVE</string>
+    <string name="tv_catchup_badge">REPLAY</string>
+    <string name="tv_live_remain">%1$d min left</string>
+    <string name="tv_live_ending">Ending soon</string>
 </resources>
