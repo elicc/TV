@@ -5,6 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextPaint;
+import android.transition.ChangeBounds;
+import android.transition.Fade;
+import android.transition.TransitionManager;
+import android.transition.TransitionSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +41,8 @@ import com.fongmi.android.tv.bean.Keep;
 import com.fongmi.android.tv.bean.Live;
 import com.fongmi.android.tv.bean.Result;
 import com.fongmi.android.tv.databinding.ActivityLiveBinding;
+import com.fongmi.android.tv.databinding.AdapterChannelBinding;
+import com.fongmi.android.tv.databinding.AdapterGroupBinding;
 import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.impl.Callback;
 import com.fongmi.android.tv.impl.ConfigListener;
@@ -81,6 +88,11 @@ import java.util.List;
 
 public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnClickListener, ChannelAdapter.OnClickListener, EpgDataAdapter.OnClickListener, CustomKeyDownLive.Listener, CustomLiveListView.Callback, PassListener, ConfigListener, LiveListener, LivePlaybackHost {
 
+    private static final int GROUP_MIN_DP = 72;
+    private static final int GROUP_MAX_PERCENT = 18;
+    private static final int CHANNEL_MIN_PERCENT = 22;
+    private static final int CHANNEL_MAX_PERCENT = 36;
+
     private ActivityLiveBinding mBinding;
     private LiveViewModel mViewModel;
     private LivePlaybackController mLive;
@@ -89,7 +101,6 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private EpgDataAdapter mEpgDataAdapter;
     private CustomKeyDownLive mKeyDown;
     private Clock mClock;
-    private View mOldView;
     private View mFocus2;
     private Runnable mR0;
     private Runnable mR1;
@@ -102,6 +113,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private String mPlaybackKey;
     private EpgState mEpgState = EpgState.IDLE;
     private boolean mEpgPanelVisible;
+    private boolean mHidden;
     private int count;
 
     private enum EpgState {
@@ -220,12 +232,66 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         mBinding.channel.setAdapter(mChannelAdapter = new ChannelAdapter(this));
         mBinding.epgData.setAdapter(mEpgDataAdapter = new EpgDataAdapter(this));
         int screenWidth = ResUtil.getScreenWidth();
-        // Keep the drawer useful without covering the programme video: the
-        // category rail is compact and the channel rail gets the larger share.
-        setWidth(mBinding.group, screenWidth * 12 / 100);
-        setWidth(mBinding.channel, screenWidth * 28 / 100);
+        setWidth(mBinding.group, ResUtil.dp2px(GROUP_MIN_DP));
+        setWidth(mBinding.channelPane, screenWidth * CHANNEL_MIN_PERCENT / 100);
         setWidth(mBinding.epgEmpty, screenWidth * 28 / 100);
         setWidth(mBinding.epgData, screenWidth * 28 / 100);
+    }
+
+    // Fit each rail to its longest label within a min/max range: short group
+    // names no longer leave an empty strip, and channel names get the room the
+    // collapsed group rail gives back without covering too much of the video.
+    // Widths are measured once over every channel so the rail never jumps
+    // while the user browses groups.
+    private void setRailWidth() {
+        int screenWidth = ResUtil.getScreenWidth();
+        setWidth(mBinding.group, clamp(measureGroupWidth(), ResUtil.dp2px(GROUP_MIN_DP), screenWidth * GROUP_MAX_PERCENT / 100));
+        setWidth(mBinding.channelPane, clamp(measureChannelWidth(), screenWidth * CHANNEL_MIN_PERCENT / 100, screenWidth * CHANNEL_MAX_PERCENT / 100));
+    }
+
+    private int measureGroupWidth() {
+        AdapterGroupBinding row = AdapterGroupBinding.inflate(getLayoutInflater());
+        List<String> names = new ArrayList<>();
+        for (Group group : mGroupAdapter.unmodifiableList()) names.add(group.getName());
+        row.name.setText(longest(row.name.getPaint(), names));
+        return measureRow(row.getRoot(), mBinding.group);
+    }
+
+    private int measureChannelWidth() {
+        AdapterChannelBinding row = AdapterChannelBinding.inflate(getLayoutInflater());
+        List<String> names = new ArrayList<>();
+        boolean logo = false;
+        for (Group group : mGroupAdapter.unmodifiableList()) {
+            for (Channel channel : group.getChannel()) {
+                names.add(channel.getShow());
+                logo |= !channel.getLogo().isEmpty();
+            }
+        }
+        row.name.setText(longest(row.name.getPaint(), names));
+        row.logo.setVisibility(logo ? View.VISIBLE : View.GONE);
+        row.epgArrow.setVisibility(View.VISIBLE);
+        return measureRow(row.getRoot(), mBinding.channel);
+    }
+
+    private String longest(TextPaint paint, List<String> names) {
+        String longest = "";
+        float max = 0;
+        for (String name : names) {
+            float width = paint.measureText(name);
+            if (width <= max) continue;
+            longest = name;
+            max = width;
+        }
+        return longest;
+    }
+
+    private int measureRow(View row, View list) {
+        row.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        return row.getMeasuredWidth() + list.getPaddingStart() + list.getPaddingEnd();
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(value, max));
     }
 
     private void setVideoView() {
@@ -304,6 +370,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         List<Group> items = new ArrayList<>();
         for (Group group : live.getGroups()) (group.isHidden() ? mHides : items).add(group);
         mGroupAdapter.addAll(items);
+        setRailWidth();
         setPosition(LiveConfig.get().findKeepPosition(items));
     }
 
@@ -332,16 +399,20 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         boolean change = mBinding.group.getSelectedPosition() != position;
         if (change) mBinding.group.setSelectedPosition(position);
         if (change) mChannelAdapter.addAll(mGroup.getChannel());
+        if (change) setChannelHeader(mGroup);
         mBinding.channel.setSelectedPosition(mGroup.getPosition());
     }
 
     private void onChildSelected(@Nullable RecyclerView.ViewHolder child, Group group) {
-        if (mOldView != null) mOldView.setSelected(false);
-        if ((mOldView = child != null ? child.itemView : null) == null) return;
+        if (child == null) return;
         for (Group item : mGroupAdapter.unmodifiableList()) item.setSelected(item == group);
-        group.setSelected(true);
+        // Sync every bound row, not just the last one touched here: the group
+        // selected at launch was marked by the adapter and would stay lit.
+        for (int i = 0; i < mBinding.group.getChildCount(); i++) {
+            View view = mBinding.group.getChildAt(i);
+            view.setSelected(view == child.itemView);
+        }
         mGroup = group;
-        mOldView.setSelected(true);
         onItemClick(group);
         resetPass();
     }
@@ -454,6 +525,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         setPosition();
         setUITimer();
         hideEpg();
+        if (mChannelAdapter.getItemCount() == 0) showGroups();
         if (TvMotion.motionEnabled(panel)) {
             panel.animate().translationX(0f)
                     .setDuration(TvMotion.DRAWER)
@@ -556,12 +628,63 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void hideEpg() {
+        dismissEpg();
+        setGroupVisible(false);
+        mBinding.channel.requestFocus();
+    }
+
+    private void dismissEpg() {
         mEpgPanelVisible = false;
         mBinding.epgEmpty.setVisibility(View.GONE);
         mBinding.epgData.setVisibility(View.GONE);
-        mBinding.channel.setVisibility(View.VISIBLE);
-        mBinding.group.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void showGroups() {
+        beginRailTransition();
+        dismissEpg();
+        setGroupVisible(true);
+        mBinding.group.requestFocus();
+    }
+
+    @Override
+    public void showChannels() {
+        if (mChannelAdapter.getItemCount() == 0) return;
+        beginRailTransition();
+        setGroupVisible(false);
         mBinding.channel.requestFocus();
+    }
+
+    private boolean isGroupVisible() {
+        return isVisible(mBinding.group);
+    }
+
+    private void setGroupVisible(boolean visible) {
+        mBinding.group.setVisibility(visible ? View.VISIBLE : View.GONE);
+        mBinding.groupDivider.setVisibility(visible ? View.VISIBLE : View.GONE);
+        mBinding.groupHint.setVisibility(visible ? View.INVISIBLE : View.VISIBLE);
+    }
+
+    private void setChannelHeader(Group group) {
+        mBinding.groupName.setText(group.getName());
+        mBinding.channelCount.setText(String.valueOf(mChannelAdapter.getItemCount()));
+    }
+
+    // Slide the channel rail aside as the group rail fades in, instead of
+    // letting it jump by the group rail's width. List rows are excluded so
+    // only the rails themselves move.
+    private void beginRailTransition() {
+        if (isGone(mBinding.recycler) || !TvMotion.motionEnabled(mBinding.recycler)) return;
+        ChangeBounds bounds = new ChangeBounds();
+        Fade fade = new Fade();
+        for (View list : new View[]{mBinding.group, mBinding.channel, mBinding.epgData}) {
+            bounds.excludeChildren(list, true);
+            fade.excludeChildren(list, true);
+        }
+        TransitionSet transition = new TransitionSet().addTransition(bounds).addTransition(fade);
+        transition.setDuration(TvMotion.DRAWER);
+        transition.setInterpolator(AnimationUtils.loadInterpolator(this, R.interpolator.tv_interp_decelerate));
+        TransitionManager.beginDelayedTransition((ViewGroup) mBinding.getRoot(), transition);
     }
 
     private void renderEpgPanel(boolean requestFocus) {
@@ -746,7 +869,8 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     private void delKeep(Channel item) {
         if (mGroup.isKeep()) mChannelAdapter.remove(item);
-        if (mChannelAdapter.getItemCount() == 0) mBinding.group.requestFocus();
+        if (mGroup.isKeep()) setChannelHeader(mGroup);
+        if (mChannelAdapter.getItemCount() == 0) showGroups();
         getKeep().getChannel().remove(item);
         Keep.delete(item.getName());
     }
@@ -859,11 +983,19 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
 
     @Override
     public void stopPlaybackForRefresh() {
-        stopPlayer();
+        player().clear();
+        player().stopForNext();
+    }
+
+    @Override
+    protected boolean isLivePlayback() {
+        return true;
     }
 
     @Override
     public void startPlayback(Result result, long position, MediaMetadata metadata) {
+        // A URL resolved after the screen was left plays on return instead.
+        if (mHidden) return;
         startPlayer(mPlaybackKey = result.getRealUrl(), result, false, getHome().getTimeout(), position, metadata);
     }
 
@@ -892,6 +1024,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     @Override
     public void renderGroupChannels(Group group) {
         mChannelAdapter.addAll(group.getChannel());
+        setChannelHeader(group);
         mBinding.channel.setSelectedPosition(Math.max(group.getPosition(), 0));
     }
 
@@ -999,6 +1132,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
             iterator.remove();
             first = false;
         }
+        setRailWidth();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -1140,9 +1274,33 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     }
 
     @Override
+    protected void onResume() {
+        // Not owning the player means the base class reclaims it, which plays the channel again already.
+        boolean refresh = mHidden && service() != null && isOwner();
+        mHidden = false;
+        super.onResume();
+        if (refresh) mLive.refresh();
+    }
+
+    @Override
     protected void onStop() {
+        stopWhenHidden();
         super.onStop();
         if (PlayerSetting.isBackgroundOff()) mClock.stop();
+    }
+
+    // A TV has no picture-in-picture, so live playback that went on behind the
+    // launcher could only be heard. Stop the stream instead of pausing it, as a
+    // paused stream resumes behind the live edge, and play the channel again on
+    // return. Video-on-demand still follows the background playback setting.
+    private void stopWhenHidden() {
+        if (isFinishing() || !isActivePlaybackOwner()) return;
+        mHidden = true;
+        // Pause through the controller first so that the base class does not
+        // resume the stopped player when the screen comes back.
+        if (controller() != null) controller().pause();
+        player().reset();
+        player().stop();
     }
 
     @Override
@@ -1151,6 +1309,8 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
             hideControl();
         } else if (isVisible(mBinding.widget.bottom)) {
             hideInfo();
+        } else if (isVisible(mBinding.recycler) && isGroupVisible() && mChannelAdapter.getItemCount() > 0) {
+            showChannels();
         } else if (isVisible(mBinding.recycler)) {
             hideUI();
         } else {

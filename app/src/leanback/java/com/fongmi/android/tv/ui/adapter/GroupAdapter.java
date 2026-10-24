@@ -67,10 +67,14 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.ViewHolder> 
         Group item = mItems.get(position);
         holder.binding.name.setText(item.getName());
         holder.binding.getRoot().setSelected(item.isSelected());
+        holder.binding.getRoot().setRightListener(mListener::showChannels);
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));
     }
 
     public interface OnClickListener {
+
+        void showChannels();
+
         void onItemClick(Group item);
     }
 

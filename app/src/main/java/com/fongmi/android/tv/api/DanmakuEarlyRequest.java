@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.fongmi.android.tv.App;
+import com.fongmi.android.tv.utils.Task;
 import com.github.catvod.net.OkHttp;
 
 import java.io.IOException;
@@ -146,9 +147,14 @@ public final class DanmakuEarlyRequest implements Callback {
 
     private synchronized void discard() {
         discarded = true;
-        call.cancel();
-        if (response != null) response.close();
+        Response unclaimed = response;
         response = null;
+        // Expiry and replacement run on the main thread, and closing an unread body reads the rest
+        // of it from the socket, so both the cancel and the close happen in the background.
+        Task.execute(() -> {
+            call.cancel();
+            if (unclaimed != null) unclaimed.close();
+        });
     }
 
     @Override

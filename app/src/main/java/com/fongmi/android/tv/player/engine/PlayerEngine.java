@@ -37,6 +37,15 @@ public interface PlayerEngine {
 
     void stop();
 
+    /** Stops, keeping the decoders for an item that starts right after, such as the next live channel. */
+    default void stopForNext() {
+        stop();
+    }
+
+    /** Releases the decoders kept by {@link #stopForNext()}, once the next item plays or never came. */
+    default void releaseKeptDecoders() {
+    }
+
     default void setSubtitleStyle() {
     }
 

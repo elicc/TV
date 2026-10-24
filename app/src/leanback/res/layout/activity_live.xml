@@ -58,6 +58,8 @@
         android:visibility="gone"
         tools:visibility="visible">
 
+        <!-- Groups stay collapsed until the user presses Left on a channel;
+             both rails are sized to their content in LiveActivity. -->
         <com.fongmi.android.tv.ui.custom.CustomLiveListView
             android:id="@+id/group"
             android:layout_width="0dp"
@@ -65,24 +67,86 @@
             android:clipChildren="false"
             android:clipToPadding="false"
             android:padding="12dp"
+            android:visibility="gone"
             tools:itemCount="5"
-            tools:listitem="@layout/adapter_group" />
+            tools:listitem="@layout/adapter_group"
+            tools:visibility="visible" />
 
         <View
+            android:id="@+id/groupDivider"
             android:layout_width="1dp"
             android:layout_height="match_parent"
             android:background="@color/tv_border_subtle"
-            android:importantForAccessibility="no" />
+            android:importantForAccessibility="no"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
-        <com.fongmi.android.tv.ui.custom.CustomLiveListView
-            android:id="@+id/channel"
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/channelPane"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:clipChildren="false"
+            android:clipChildren="true"
             android:clipToPadding="false"
-            android:padding="12dp"
-            tools:itemCount="5"
-            tools:listitem="@layout/adapter_channel" />
+            android:orientation="vertical">
+
+            <!-- clipChildren clips each child to its own bounds, so scrolled
+                 channel rows can never draw over the group header. -->
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/channelHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="24dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="4dp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/groupHint"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="@string/tv_live_group_show"
+                    android:src="@drawable/ic_live_group"
+                    app:tint="?attr/tvColorTextSecondary" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/groupName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textColor="?attr/tvColorTextSecondary"
+                    android:textSize="@dimen/tv_text_body"
+                    tools:text="直播" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/channelCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:fontFeatureSettings="tnum"
+                    android:textColor="?attr/tvColorTextMuted"
+                    android:textSize="@dimen/tv_text_caption"
+                    tools:text="165" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <com.fongmi.android.tv.ui.custom.CustomLiveListView
+                android:id="@+id/channel"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:padding="12dp"
+                tools:itemCount="5"
+                tools:listitem="@layout/adapter_channel" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/epgEmpty"

@@ -73,6 +73,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ViewHold
         // affordance must not disappear while EPG data is loading.
         holder.binding.epgArrow.setVisibility(View.VISIBLE);
         holder.binding.getRoot().setSelected(item.isSelected());
+        holder.binding.getRoot().setLeftListener(mListener::showGroups);
         holder.binding.getRoot().setRightListener(() -> mListener.showEpg(item));
         holder.binding.getRoot().setOnClickListener(v -> mListener.onItemClick(item));
         holder.binding.getRoot().setOnLongClickListener(v -> mListener.onLongClick(item));
@@ -84,6 +85,8 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ViewHold
     }
 
     public interface OnClickListener {
+
+        void showGroups();
 
         void showEpg(Channel item);
 

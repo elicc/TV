@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<com.fongmi.android.tv.ui.custom.CustomLeftRightLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -9,8 +9,6 @@
     android:gravity="center_vertical"
     android:minHeight="52dp"
     android:orientation="horizontal"
-    android:paddingStart="4dp"
-    android:paddingEnd="4dp"
     android:stateListAnimator="@animator/tv_focus_scale">
 
     <com.google.android.material.textview.MaterialTextView
@@ -21,7 +19,7 @@
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textColor="@color/text"
-        android:textSize="@dimen/tv_text_card_title"
+        android:textSize="18sp"
         tools:text="收藏" />
 
-</androidx.appcompat.widget.LinearLayoutCompat>
+</com.fongmi.android.tv.ui.custom.CustomLeftRightLayout>

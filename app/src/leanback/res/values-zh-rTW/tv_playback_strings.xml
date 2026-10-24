@@ -10,4 +10,5 @@
     <string name="tv_playback_epg_current">正在播出 · %1$s</string>
     <string name="tv_playback_epg_selected">已選擇 · %1$s</string>
     <string name="tv_playback_epg_open">開啟節目表</string>
+    <string name="tv_live_group_show">顯示頻道分組</string>
 </resources>

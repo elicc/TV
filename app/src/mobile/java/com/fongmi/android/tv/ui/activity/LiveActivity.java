@@ -717,7 +717,14 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
 
     @Override
     public void stopPlaybackForRefresh() {
-        stopPlayer();
+        player().clear();
+        player().stopForNext();
+        checkControl();
+    }
+
+    @Override
+    protected boolean isLivePlayback() {
+        return true;
     }
 
     @Override

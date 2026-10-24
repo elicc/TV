@@ -23,6 +23,7 @@ public class ExoPlayerEngine implements PlayerEngine, AnalyticsListener {
     private final ExoPlayerEffect effect;
     private final ExoDiskPreload preload;
     private final ExoPlayer player;
+    private boolean keepDecoders;
     private PlaySpec spec;
 
     public ExoPlayerEngine(int decode, Player.Listener listener) {
@@ -102,8 +103,28 @@ public class ExoPlayerEngine implements PlayerEngine, AnalyticsListener {
 
     @Override
     public void stop() {
+        releaseKeptDecoders();
         preload.stop();
         player.stop();
+    }
+
+    /**
+     * In foreground mode a stopped player only flushes its decoders, and the next item reuses them: releasing and
+     * creating them again held up the next channel by about 300 ms on a TV.
+     */
+    @Override
+    public void stopForNext() {
+        if (!keepDecoders) player.setForegroundMode(true);
+        keepDecoders = true;
+        preload.stop();
+        player.stop();
+    }
+
+    @Override
+    public void releaseKeptDecoders() {
+        if (!keepDecoders) return;
+        keepDecoders = false;
+        player.setForegroundMode(false);
     }
 
     @Override
@@ -127,7 +148,8 @@ public class ExoPlayerEngine implements PlayerEngine, AnalyticsListener {
         effect.clearAudioEffect();
         if (source == null) player.setMediaItem(item, position);
         else player.setMediaSource(source, position);
-        preload.start(player, item);
+        // A live stream has no end to read ahead to, and probing it costs a request before the stream opens.
+        if (!spec.isLive()) preload.start(player, item);
         prepareAndPlay();
     }
 

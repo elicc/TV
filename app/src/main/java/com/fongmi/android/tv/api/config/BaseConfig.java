@@ -60,8 +60,14 @@ abstract class BaseConfig {
         ConfigEvent.common();
     }
 
+    /**
+     * Whether a VOD config at {@code url} supplies this config too. Before this config is initialised, the one saved
+     * last is compared: treating that state as unset let the VOD config's lives replace the chosen live config
+     * whenever the VOD config finished loading first, as it may on the first start after an update.
+     */
     public boolean needSync(String url) {
-        return sync || config == null || TextUtils.isEmpty(config.getUrl()) || url.equals(config.getUrl());
+        Config current = getConfig();
+        return sync || TextUtils.isEmpty(current.getUrl()) || url.equals(current.getUrl());
     }
 
     public Config getConfig() {

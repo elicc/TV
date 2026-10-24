@@ -10,4 +10,5 @@
     <string name="tv_playback_epg_current">Now playing · %1$s</string>
     <string name="tv_playback_epg_selected">Selected · %1$s</string>
     <string name="tv_playback_epg_open">Open programme guide</string>
+    <string name="tv_live_group_show">Show channel groups</string>
 </resources>

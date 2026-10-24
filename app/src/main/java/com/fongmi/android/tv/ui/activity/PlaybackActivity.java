@@ -137,6 +137,11 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     protected abstract String getPlaybackKey();
 
+    /** Whether this screen plays live streams, which are not read ahead. */
+    protected boolean isLivePlayback() {
+        return false;
+    }
+
     protected boolean isOwner() {
         String key = getPlaybackKey();
         return key == null || (mService != null && key.equals(player().getKey()));
@@ -281,7 +286,7 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
         attachPlayerView();
         updateNavigationKey(key);
         if (result.needParse() || useParse) player().parse(key, result, useParse, metadata, startPositionMs);
-        else player().start(PlaySpec.from(result, key, metadata), timeout, startPositionMs);
+        else player().start(PlaySpec.from(result, key, metadata).setLive(isLivePlayback()), timeout, startPositionMs);
         trace("PLAYER_START_END");
     }
 

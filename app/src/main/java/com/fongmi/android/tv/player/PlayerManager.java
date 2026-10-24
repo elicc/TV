@@ -49,7 +49,10 @@ import java.util.Map;
 
 public class PlayerManager implements ParseCallback {
 
+    private static final long KEEP_DECODERS_MS = 10_000;
+
     private final PlayerEffectManager effects;
+    private final Runnable releaseDecoders;
     private final Runnable runnable;
     private final Callback callback;
     private PendingPreload pendingPreload;
@@ -71,6 +74,7 @@ public class PlayerManager implements ParseCallback {
         this.callback = callback;
         this.decode = PlayerEngine.HARD;
         this.runnable = this::onPlayTimeout;
+        this.releaseDecoders = this::releaseKeptDecoders;
         this.pendingStartPositionMs = C.TIME_UNSET;
         this.engine = PlayerEngineFactory.create(decode, listener);
         this.effects = new PlayerEffectManager(() -> engine);
@@ -81,6 +85,7 @@ public class PlayerManager implements ParseCallback {
 
     public void release() {
         App.removeCallbacks(runnable);
+        App.removeCallbacks(releaseDecoders);
         if (player != null) player.removeListener(listener);
         if (engine != null) engine.release();
         engine = null;
@@ -410,8 +415,21 @@ public class PlayerManager implements ParseCallback {
     }
 
     public void stop() {
+        App.removeCallbacks(releaseDecoders);
         engine.stop();
         stopParse();
+    }
+
+    /** Stops for another item to start at once, keeping the decoders until it plays. */
+    public void stopForNext() {
+        engine.stopForNext();
+        stopParse();
+        App.post(releaseDecoders, KEEP_DECODERS_MS);
+    }
+
+    private void releaseKeptDecoders() {
+        App.removeCallbacks(releaseDecoders);
+        if (engine != null) engine.releaseKeptDecoders();
     }
 
     public void clearMediaItems() {
@@ -670,6 +688,7 @@ public class PlayerManager implements ParseCallback {
         @Override
         public void onPlaybackStateChanged(int state) {
             if (state == Player.STATE_READY || state == Player.STATE_ENDED) App.removeCallbacks(runnable);
+            if (state == Player.STATE_READY) releaseKeptDecoders();
             if (state == Player.STATE_READY) startPreloadIfReady();
             if (state == Player.STATE_READY && danmakuDeferred) notifyDanmakuSourceChanged();
         }
@@ -700,6 +719,7 @@ public class PlayerManager implements ParseCallback {
         @Override
         public void onPlayerError(@NonNull PlaybackException e) {
             if (spec == null) return;
+            releaseKeptDecoders();
             PlayerEngine.ErrorAction action = engine.handleError(e);
             if (action != PlayerEngine.ErrorAction.RECOVERED) App.removeCallbacks(runnable);
             switch (action) {

@@ -41,6 +41,7 @@ ICONS = {
     "ic_danmaku_edit.xml": ("pencil.svg", 16),
     "ic_danmaku_episode_prev.xml": ("chevron-left.svg", 16),
     "ic_danmaku_episode_next.xml": ("chevron-right.svg", 16),
+    "ic_live_group.xml": ("chevron-left.svg", 16),
 }
 
 

@@ -91,18 +91,27 @@ public class Config {
     }
 
     public static Config vod() {
-        Config item = AppDatabase.get().getConfigDao().findOne(0);
-        return item == null ? create(0) : item;
+        return current(0);
     }
 
     public static Config live() {
-        Config item = AppDatabase.get().getConfigDao().findOne(1);
-        return item == null ? create(1) : item;
+        return current(1);
     }
 
     public static Config wall() {
-        Config item = AppDatabase.get().getConfigDao().findOne(2);
-        return item == null ? create(2) : item;
+        return current(2);
+    }
+
+    /**
+     * Returns the config last chosen for a type. {@link #update()} records its URL, which wins over the newest row: a
+     * spider loaded from one source bumped that source's live row in the database on startup, outside this class, so
+     * the newest row is not always the chosen one.
+     */
+    private static Config current(int type) {
+        String url = Prefers.getString("config_" + type);
+        Config item = TextUtils.isEmpty(url) ? null : AppDatabase.get().getConfigDao().find(url, type);
+        if (item == null) item = AppDatabase.get().getConfigDao().findOne(type);
+        return item == null ? create(type) : item;
     }
 
     public static Config find(int id) {

@@ -67,7 +67,7 @@ public class ExoUtil {
     }
 
     static DecodeTrackSelector buildTrackSelector(int decode) {
-        DecodeTrackSelector trackSelector = new DecodeTrackSelector(App.get());
+        DecodeTrackSelector trackSelector = new ExoTrackSelector(App.get());
         DefaultTrackSelector.Parameters.Builder builder = trackSelector.buildUponParameters();
         if (DecodeSetting.isPreferAAC()) builder.setPreferredAudioMimeType(MimeTypes.AUDIO_AAC);
         builder.setPreferredTextLanguages(LangUtil.getPreferredTextLanguages());

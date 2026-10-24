@@ -28,6 +28,7 @@ public class PlaySpec {
     private List<Sub> subs;
     private String format;
     private String key;
+    private boolean live;
     private String url;
     private Drm drm;
 
@@ -120,6 +121,15 @@ public class PlaySpec {
 
     public void setMetadata(MediaMetadata metadata) {
         this.metadata = metadata;
+    }
+
+    public boolean isLive() {
+        return live;
+    }
+
+    public PlaySpec setLive(boolean live) {
+        this.live = live;
+        return this;
     }
 
     public PlaySpec checkUa() {
