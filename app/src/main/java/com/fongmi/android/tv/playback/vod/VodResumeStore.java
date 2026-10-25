@@ -2,8 +2,11 @@ package com.fongmi.android.tv.playback.vod;
 
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.bean.History;
+import com.fongmi.android.tv.bean.Keep;
+import com.fongmi.android.tv.bean.Track;
 import com.fongmi.android.tv.db.AppDatabase;
 import com.fongmi.android.tv.db.dao.HistoryDao;
+import com.fongmi.android.tv.db.dao.TrackDao;
 import com.github.catvod.utils.Prefers;
 
 import java.util.ArrayList;
@@ -62,6 +65,47 @@ public final class VodResumeStore {
             if (stored == null || !isNewer(stored, history)) items.put(history.getKey(), history.copy());
         }
         return new ArrayList<>(items.values());
+    }
+
+    /**
+     * Re-homes the history and keep rows of another config's {@code key} under {@code cid}, for a
+     * provider both configs share. Called on the serial writer so a pending save of the old row
+     * cannot land after the move.
+     */
+    public static void move(int fromCid, String key, int cid) {
+        String newKey = key.substring(0, key.lastIndexOf(AppDatabase.SYMBOL) + AppDatabase.SYMBOL.length()) + cid;
+        Keep keep = Keep.find(fromCid, key);
+        if (keep != null) {
+            keep.delete();
+            if (Keep.find(cid, newKey) == null) keep.save(cid);
+        }
+        History source = read(dao().find(fromCid, key));
+        if (source == null) return;
+        synchronized (VodResumeStore.class) {
+            History cached = pending.remove(key);
+            if (cached != null && isNewer(cached, source)) source = cached;
+        }
+        History target = source.copy().cid(cid);
+        History stored = read(dao().find(cid, newKey));
+        VodSkipStore.copy(source, target);
+        moveTracks(key, newKey, stored == null);
+        Prefers.remove(PREFIX + key);
+        dao().delete(fromCid, key);
+        if (stored != null && isNewer(stored, target)) return;
+        long progressTime = target.getProgressTime();
+        target.save();
+        Prefers.put(PREFIX + newKey, App.gson().toJson(new Info(target, progressTime)));
+    }
+
+    private static void moveTracks(String oldKey, String newKey, boolean keep) {
+        TrackDao tracks = AppDatabase.get().getTrackDao();
+        if (keep && tracks.find(newKey).isEmpty()) {
+            for (Track track : tracks.find(oldKey)) {
+                track.setId(0);
+                tracks.insert(track.key(newKey));
+            }
+        }
+        tracks.delete(oldKey);
     }
 
     /** Called on the serial writer. A visit never replaces the stored episode or position. */

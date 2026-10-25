@@ -49,6 +49,14 @@ public final class VodSkipStore {
         Prefers.put(key, App.gson().toJson(entry));
     }
 
+    /** Carries the work's skips to another config's copy unless that config already has its own. */
+    static void copy(History from, History to) {
+        String source = key(from), target = key(to);
+        if (source == null || target == null || source.equals(target)) return;
+        String value = Prefers.getString(source);
+        if (!value.isEmpty() && Prefers.getString(target).isEmpty()) Prefers.put(target, value);
+    }
+
     public static void clear(int cid) {
         remove(PREFIX + cid + "_");
     }

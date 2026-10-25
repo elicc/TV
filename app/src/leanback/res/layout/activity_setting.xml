@@ -557,7 +557,7 @@
                         android:nextFocusLeft="@id/doh"
                         android:nextFocusUp="@id/settingBack"
                         android:nextFocusRight="@id/incognito"
-                        android:nextFocusDown="@id/vault">
+                        android:nextFocusDown="@id/historySwitch">
                         <com.google.android.material.textview.MaterialTextView
                             style="@style/Tv.Setting.RowTitle"
                             android:layout_width="0dp"
@@ -569,6 +569,25 @@
                             android:layout_width="wrap_content"
                             tools:text="Off" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/historySwitch"
+                        style="@style/Tv.Setting.Row"
+                        android:layout_marginTop="5dp"
+                        android:nextFocusLeft="@id/doh"
+                        android:nextFocusUp="@id/incognito"
+                        android:nextFocusRight="@id/historySwitch"
+                        android:nextFocusDown="@id/vault">
+                        <com.google.android.material.textview.MaterialTextView
+                            style="@style/Tv.Setting.RowTitle"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:text="@string/tv_setting_history_switch" />
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/historySwitchText"
+                            style="@style/Tv.Setting.RowValue"
+                            android:layout_width="wrap_content"
+                            tools:text="每次询问" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
                     <!-- Automatic backup into /storage/emulated/0/TV, the one location that
                          outlives an uninstall. Its value text is the honest status of that
                          mechanism, which is the only place a write failure becomes visible. -->
@@ -577,7 +596,7 @@
                         style="@style/Tv.Setting.Row"
                         android:layout_marginTop="5dp"
                         android:nextFocusLeft="@id/player"
-                        android:nextFocusUp="@id/incognito"
+                        android:nextFocusUp="@id/historySwitch"
                         android:nextFocusRight="@id/vault"
                         android:nextFocusDown="@id/backup">
                         <com.google.android.material.textview.MaterialTextView

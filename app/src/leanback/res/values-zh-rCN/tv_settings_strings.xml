@@ -30,6 +30,9 @@
     <string name="tv_setting_vod_home">选择点播源</string>
     <string name="tv_setting_live_home">选择直播源</string>
     <string name="tv_setting_vod_history">点播配置历史</string>
+    <string name="tv_setting_history_switch">跨配置观看记录</string>
+    <string name="tv_setting_history_switch_ask">每次询问</string>
+    <string name="tv_setting_history_switch_auto">自动切换</string>
     <string name="tv_setting_live_history">直播配置历史</string>
     <string name="tv_setting_wall_default">切换内置壁纸</string>
     <string name="tv_setting_wall_refresh">刷新壁纸，长按查看配置历史</string>

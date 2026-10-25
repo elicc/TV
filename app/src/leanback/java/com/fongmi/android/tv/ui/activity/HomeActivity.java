@@ -20,7 +20,6 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.leanback.widget.ArrayObjectAdapter;
@@ -1227,58 +1226,12 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     public void onItemClick(History item) {
         if (item.getCid() == VodConfig.getCid()) {
             if (canOpenHistory(item)) openHistory(item);
-            return;
+        } else if (mConfigLoading) {
+            // A shared provider can only be matched once the current config has loaded.
+            Notify.show(R.string.tv_history_config_loading);
+        } else {
+            CrossConfigLauncher.open(this, item.getCid(), item.getKey(), item.getVodName(), item.getVodPic());
         }
-        Config config = Config.find(item.getCid());
-        if (config == null) {
-            Notify.show(R.string.tv_history_source_missing);
-            CollectActivity.start(this, item.getVodName());
-            return;
-        }
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.tv_history_switch_title)
-                .setMessage(getString(R.string.tv_history_switch_message, config.getDesc(), getConfig().getDesc()))
-                .setPositiveButton(R.string.tv_history_switch_confirm, (dialog, which) -> loadHistoryConfig(getConfig(), config, item))
-                .setNegativeButton(android.R.string.cancel, null)
-                .create();
-        alertDialog.setOnShowListener(ignored -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus());
-        alertDialog.show();
-    }
-
-    private void loadHistoryConfig(Config previous, Config target, History item) {
-        VodConfig.load(target, new Callback() {
-            @Override
-            public void start() {
-                Notify.progress(getActivity());
-            }
-
-            @Override
-            public void success() {
-                Notify.dismiss();
-                if (!isFinishing() && !isDestroyed()) openHistory(item);
-            }
-
-            @Override
-            public void error(String msg) {
-                restoreHistoryConfig(previous, msg);
-            }
-        });
-    }
-
-    private void restoreHistoryConfig(Config previous, String msg) {
-        VodConfig.load(previous, new Callback() {
-            @Override
-            public void success() {
-                Notify.dismiss();
-                Notify.show(msg);
-            }
-
-            @Override
-            public void error(String restoreError) {
-                Notify.dismiss();
-                Notify.show(TextUtils.isEmpty(restoreError) ? msg : restoreError);
-            }
-        });
     }
 
     private void openHistory(History item) {
@@ -1301,9 +1254,7 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
             else Notify.show(mConfigError);
             return false;
         }
-        Site site = VodConfig.get().getSite(item.getSiteKey());
-        boolean invalidApi = site.getType() != 3 && !site.getApi().startsWith("http");
-        if (site.isEmpty() || invalidApi) {
+        if (!CrossConfigLauncher.isPlayable(VodConfig.get().getSite(item.getSiteKey()))) {
             Notify.show(R.string.tv_history_source_unavailable);
             return false;
         }
@@ -1334,9 +1285,8 @@ public class HomeActivity extends BaseActivity implements CustomTitleView.Listen
     private void scheduleDetailPrefetch(History item) {
         App.removeCallbacks(mPrefetch);
         mPrefetchTarget = item;
-        Site site = VodConfig.get().getSite(item.getSiteKey());
         if (mConfigLoading || mConfigFailed || VodConfig.get().getSites().isEmpty()
-                || site.isEmpty() || (site.getType() != 3 && !site.getApi().startsWith("http"))) return;
+                || !CrossConfigLauncher.isPlayable(VodConfig.get().getSite(item.getSiteKey()))) return;
         App.post(mPrefetch, 250);
     }
 

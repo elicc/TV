@@ -70,6 +70,12 @@ public class Notify {
         get().create(context);
     }
 
+    /** Back cancels the dialog and runs {@code onCancel}; {@link #dismiss()} does not. */
+    public static void progress(Context context, Runnable onCancel) {
+        progress(context);
+        if (get().mDialog != null) get().mDialog.setOnCancelListener(dialog -> onCancel.run());
+    }
+
     public static void dismiss() {
         try {
             if (get().mDialog != null) get().mDialog.dismiss();

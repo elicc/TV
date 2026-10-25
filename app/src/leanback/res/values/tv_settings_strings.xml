@@ -30,6 +30,9 @@
     <string name="tv_setting_vod_home">Choose video source</string>
     <string name="tv_setting_live_home">Choose live source</string>
     <string name="tv_setting_vod_history">Video configuration history</string>
+    <string name="tv_setting_history_switch">Other-configuration history</string>
+    <string name="tv_setting_history_switch_ask">Ask each time</string>
+    <string name="tv_setting_history_switch_auto">Switch automatically</string>
     <string name="tv_setting_live_history">Live configuration history</string>
     <string name="tv_setting_wall_default">Next built-in wallpaper</string>
     <string name="tv_setting_wall_refresh">Refresh wallpaper; hold for configuration history</string>

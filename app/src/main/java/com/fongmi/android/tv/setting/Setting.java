@@ -113,6 +113,15 @@ public class Setting {
         Prefers.put("incognito", incognito);
     }
 
+    /** Whether a history row of another VOD config switches to that config without asking first. */
+    public static boolean isHistoryAutoSwitch() {
+        return Prefers.getBoolean("history_auto_switch");
+    }
+
+    public static void putHistoryAutoSwitch(boolean auto) {
+        Prefers.put("history_auto_switch", auto);
+    }
+
     public static boolean getUpdate() {
         return Prefers.getBoolean("update", true);
     }

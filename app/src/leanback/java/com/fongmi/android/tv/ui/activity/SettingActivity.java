@@ -135,6 +135,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.atmosphereText.setText(Setting.getSwitch(TvTheme.isAtmosphereEnabled()));
         mBinding.dohText.setText(getDohList()[getDohIndex()]);
         mBinding.incognitoText.setText(Setting.getSwitch(Setting.isIncognito()));
+        mBinding.historySwitchText.setText(getHistorySwitch());
         mBinding.sizeText.setText((size = ResUtil.getStringArray(R.array.select_size))[PlayerSetting.getSize()]);
     }
 
@@ -288,7 +289,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         bindSectionFocus(mBinding.navContent, mBinding.vod, mBinding.vodHome, mBinding.vodHistory, mBinding.live, mBinding.liveHome, mBinding.liveHistory, mBinding.doh, mBinding.metadataAgent, mBinding.tclBridge);
         bindSectionFocus(mBinding.navAppearance, mBinding.skin, mBinding.atmosphere, mBinding.wall, mBinding.wallDefault, mBinding.wallRefresh, mBinding.size);
         bindSectionFocus(mBinding.navPlayback, mBinding.player, mBinding.danmaku);
-        bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.vault, mBinding.backup, mBinding.restore, mBinding.cache);
+        bindSectionFocus(mBinding.navData, mBinding.incognito, mBinding.historySwitch, mBinding.vault, mBinding.backup, mBinding.restore, mBinding.cache);
         bindSectionFocus(mBinding.navAbout, mBinding.version);
         mBinding.skin.setOnClickListener(this::setSkin);
         mBinding.atmosphere.setOnClickListener(this::setAtmosphere);
@@ -313,6 +314,7 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
         mBinding.liveHome.setOnClickListener(this::onLiveHome);
         mBinding.wall.setOnLongClickListener(this::onWallEdit);
         mBinding.incognito.setOnClickListener(this::setIncognito);
+        mBinding.historySwitch.setOnClickListener(this::setHistorySwitch);
         mBinding.vodHistory.setOnClickListener(this::onVodHistory);
         mBinding.liveHistory.setOnClickListener(this::onLiveHistory);
         mBinding.wallDefault.setOnClickListener(this::setWallDefault);
@@ -525,6 +527,15 @@ public class SettingActivity extends BaseActivity implements ConfigListener, Sit
     private void setIncognito(View view) {
         Setting.putIncognito(!Setting.isIncognito());
         mBinding.incognitoText.setText(Setting.getSwitch(Setting.isIncognito()));
+    }
+
+    private void setHistorySwitch(View view) {
+        Setting.putHistoryAutoSwitch(!Setting.isHistoryAutoSwitch());
+        mBinding.historySwitchText.setText(getHistorySwitch());
+    }
+
+    private String getHistorySwitch() {
+        return getString(Setting.isHistoryAutoSwitch() ? R.string.tv_setting_history_switch_auto : R.string.tv_setting_history_switch_ask);
     }
 
     private void setSize(View view) {
