@@ -127,6 +127,84 @@ class DanmakuUiContracts(unittest.TestCase):
         self.assertIn("player.play()", chosen)
         self.assertNotIn("isAdded()", picker.split("private static void setDanmaku(", 1)[1].split("\n    }", 1)[0])
 
+    def test_tv_display_switch_is_inline_after_settings(self):
+        root = ET.parse(TV / "res/layout/dialog_danmaku_picker.xml").getroot()
+        views = {x.get(A + "id"): x for x in root.iter()}
+        switch = views["@+id/enabledSwitch"]
+        self.assertEqual(switch.tag, "com.google.android.material.materialswitch.MaterialSwitch")
+        self.assertEqual(switch.get("style"), "@style/TvDanmakuSwitch")
+        self.assertEqual(switch.get(A + "text"), "@string/tv_danmaku_show")
+        actions = next(row for row in root.iter() if views["@+id/setting"] in list(row))
+        self.assertEqual(actions.get(A + "orientation"), "horizontal")
+        self.assertIs(list(actions)[list(actions).index(views["@+id/setting"]) + 1], switch)
+        self.assertEqual(switch.get(A + "layout_width"), "wrap_content")
+        self.assertEqual(switch.get(A + "nextFocusLeft"), "@id/setting")
+        self.assertEqual(views["@+id/setting"].get(A + "nextFocusRight"), "@id/enabledSwitch")
+        picker = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuPickerDialog.java").read_text()
+        self.assertIn("if (!DanmakuSetting.isShow()) binding.enabledSwitch.requestFocus()", picker)
+
+    def test_disabled_sources_are_dimmed_and_noninteractive_including_recycled_items(self):
+        picker = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuPickerDialog.java").read_text()
+        controls = picker.split("private void updateSourceControls()", 1)[1].split("private void updateCurrentSummary()", 1)[0]
+        self.assertIn("ViewGroup.FOCUS_BLOCK_DESCENDANTS", controls)
+        self.assertIn("ViewGroup.FOCUS_AFTER_DESCENDANTS", controls)
+        for call in ["setEnabled(enabled)", "setFocusable(enabled)", "setFocusableInTouchMode(enabled)", "setAlpha(enabled ? 1f : 0.4f)"]:
+            self.assertIn("binding.grid." + call, controls)
+        self.assertIn("if (!enabled && binding.grid.hasFocus()) binding.enabledSwitch.requestFocus()", controls)
+        self.assertIn("adapter.setEnabled(enabled)", controls)
+        click = picker.split("private void onItemClick(Danmaku item)", 1)[1].split("private void onSearch", 1)[0]
+        self.assertLess(click.index("if (!DanmakuSetting.isShow()) return;"), click.index("player.toggleDanmaku(item)"))
+        adapter = (TV / "java/com/fongmi/android/tv/ui/adapter/DanmakuChoiceAdapter.java").read_text()
+        bind = adapter.split("public void onBindViewHolder", 1)[1].split("public static class ViewHolder", 1)[0]
+        for call in ["setEnabled(mEnabled)", "setFocusable(mEnabled)", "setFocusableInTouchMode(mEnabled)", "setClickable(mEnabled)", "setSelected(mEnabled && item.isSelected())"]:
+            self.assertIn(call, bind)
+        self.assertIn("if (mEnabled) mListener.onItemClick(item)", bind)
+        self.assertGreater(bind.index("setClickable(mEnabled)"), bind.index("setOnClickListener"))
+        self.assertNotIn("item.setSelected", adapter)
+        setter = adapter.split("public void setEnabled(boolean enabled)", 1)[1].split("public int getPosition", 1)[0]
+        self.assertIn("notifyDataSetChanged()", setter)
+
+    def test_tv_display_switch_persists_and_applies_without_closing_or_clearing_source(self):
+        picker = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuPickerDialog.java").read_text()
+        init = picker.split("protected void initView()", 1)[1].split("protected void initEvent()", 1)[0]
+        self.assertIn("binding.enabledSwitch.setChecked(DanmakuSetting.isShow())", init)
+        self.assertIn("updateSourceControls()", init)
+        self.assertNotIn("setOnCheckedChangeListener", init)
+        listener = picker.split("binding.enabledSwitch.setOnCheckedChangeListener", 1)[1].split("});", 1)[0]
+        self.assertIn("DanmakuSetting.putShow(enabled)", listener)
+        self.assertIn("player.setDanmakuEnabled(enabled)", listener)
+        self.assertIn("updateSourceControls()", listener)
+        self.assertIn("updateCurrentSummary()", listener)
+        for forbidden in ["putLoad", "setDanmaku(", "toggleDanmaku", "close()", "dismiss()"]:
+            self.assertNotIn(forbidden, listener)
+        summary = picker.split("private void updateCurrentSummary()", 1)[1].split("private void onItemClick", 1)[0]
+        self.assertIn("if (!DanmakuSetting.isShow())", summary)
+        self.assertIn("R.string.tv_danmaku_disabled", summary)
+        self.assertIn("R.string.tv_danmaku_enabled_no_source", summary)
+        self.assertIn("player.getDanmakus()", summary)
+
+    def test_display_preference_is_restored_without_turning_runtime_hiding_into_a_saved_choice(self):
+        setting = (MAIN / "java/com/fongmi/android/tv/setting/DanmakuSetting.java").read_text()
+        self.assertIn('Prefers.getBoolean("danmaku_show", true)', setting)
+        self.assertIn('Prefers.put("danmaku_show", danmakuShow)', setting)
+        manager = (MAIN / "java/com/fongmi/android/tv/player/PlayerManager.java").read_text()
+        self.assertIn("this.danmakuEnabled = DanmakuSetting.isShow()", manager)
+        setter = manager.split("public void setDanmakuEnabled(", 1)[1].split("\n    }", 1)[0]
+        self.assertIn("callback.onDanmakuEnabledChanged(danmakuEnabled)", setter)
+        self.assertNotIn("putShow", setter)
+        playback = (MAIN / "java/com/fongmi/android/tv/ui/activity/PlaybackActivity.java").read_text()
+        self.assertIn("playerView.setDanmakuEnabled(DanmakuSetting.isShow())", playback)
+        self.assertIn("getPlayerView().setDanmakuEnabled(enabled)", playback)
+        # Changing or asynchronously resolving a source must not opt the viewer back in.
+        for method in ["setDanmaku", "toggleDanmaku", "addDanmaku", "setMediaItem"]:
+            body = manager.split("void " + method + "(", 1)[1].split("\n    }", 1)[0]
+            self.assertNotIn("danmakuEnabled =", body)
+            self.assertNotIn("setDanmakuEnabled", body)
+            self.assertNotIn("putShow", body)
+        for path in [TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuFinderDialog.java",
+                     MAIN / "java/com/fongmi/android/tv/playback/vod/VodPlaybackMedia.java"]:
+            self.assertNotIn("putShow", path.read_text())
+
     def test_tv_danmaku_search_is_remote_first(self):
         picker = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuPickerDialog.java").read_text()
         self.assertIn("DanmakuFinderDialog.create()", picker)
@@ -143,6 +221,27 @@ class DanmakuUiContracts(unittest.TestCase):
             self.assertIn(key, ids)
         api = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuApiDialog.java").read_text()
         self.assertIn('binding.testName.setText(getArguments().getString("name", ""))', api)
+
+    def test_tv_danmaku_search_remembers_alias_and_episode_identity(self):
+        store = (MAIN / "java/com/fongmi/android/tv/playback/vod/DanmakuSearchStore.java").read_text()
+        self.assertIn('PREFIX = "danmaku_search_v1_"', store)
+        self.assertIn("public static String getTitle", store)
+        self.assertIn("public static void putTitle", store)
+        finder = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuFinderDialog.java").read_text()
+        self.assertIn("DanmakuSearchStore.getTitle(seriesKey)", finder)
+        self.assertIn("DanmakuSearchStore.putTitle(seriesKey, text)", finder)
+        self.assertIn("DanmakuSearchMatcher.step(episode, episodeNumber, delta)", finder)
+        matcher = (MAIN / "java/com/fongmi/android/tv/api/DanmakuSearchMatcher.java").read_text()
+        self.assertIn("Changes the episode token", matcher)
+        media = (MAIN / "java/com/fongmi/android/tv/playback/vod/VodPlaybackMedia.java").read_text()
+        self.assertIn("EXTRA_EPISODE_NUMBER", media)
+        self.assertIn("DanmakuSearchStore.getTitle(history.getKey())", media)
+
+    def test_danmaku_results_are_ranked_for_auto_and_manual_search(self):
+        api = (MAIN / "java/com/fongmi/android/tv/api/DanmakuApi.java").read_text()
+        self.assertIn("DanmakuSearchMatcher.rank(items, name, episode)", api)
+        finder = (TV / "java/com/fongmi/android/tv/ui/dialog/DanmakuFinderDialog.java").read_text()
+        self.assertIn("DanmakuSearchMatcher.rank(items, keyword", finder)
 
     def test_all_new_strings_are_localized(self):
         for filename in ["tv_danmaku_strings.xml", "tv_danmaku_playback_strings.xml"]:

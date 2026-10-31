@@ -1,5 +1,7 @@
 package com.fongmi.android.tv.playback.vod;
 
+import android.os.Bundle;
+
 import androidx.media3.common.MediaMetadata;
 
 import com.fongmi.android.tv.App;
@@ -21,19 +23,24 @@ public final class VodPlaybackMedia {
         String title = history.getVodName();
         String name = episode.getName();
         if (name.equals(title)) name = "";
-        return MediaItemFactory.buildMetadata(title, name, history.getVodPic(), name);
+        Bundle extras = new Bundle();
+        extras.putString(DanmakuSearchStore.EXTRA_SERIES_KEY, history.getKey());
+        extras.putInt(DanmakuSearchStore.EXTRA_EPISODE_NUMBER, episode.getNumber());
+        extras.putInt(DanmakuSearchStore.EXTRA_EPISODE_INDEX, episode.getIndex());
+        return MediaItemFactory.buildMetadata(title, name, history.getVodPic(), name, extras);
     }
 
     /** Starts the danmaku search together with the play URL request. */
     public static void prefetchDanmaku(String key, History history, Episode episode) {
         if (!canSearchDanmaku(key)) return;
-        if (DanmakuCache.find(history.getVodName(), episode.getName()) != null) return;
-        DanmakuApi.prefetch(history.getVodName(), episode.getName());
+        String name = searchName(history);
+        if (DanmakuCache.find(name, episode.getName()) != null) return;
+        DanmakuApi.prefetch(name, episode.getName());
     }
 
     public static void searchDanmaku(Result result, History history, Episode episode, Consumer<Danmaku> set, Consumer<Danmaku> add) {
         if (!canSearchDanmaku(result.getKey())) return;
-        String name = history.getVodName();
+        String name = searchName(history);
         String episodeName = episode.getName();
         Consumer<Danmaku> apply = danmaku -> {
             if (DanmakuSetting.isSpiderFirst() && !result.getDanmaku().isEmpty()) add.accept(danmaku);
@@ -55,5 +62,10 @@ public final class VodPlaybackMedia {
 
     private static boolean canSearchDanmaku(String key) {
         return DanmakuApi.canSearch() && VodConfig.get().getSite(key).getDanmaku() != 0;
+    }
+
+    private static String searchName(History history) {
+        String saved = DanmakuSearchStore.getTitle(history.getKey());
+        return saved.isEmpty() ? history.getVodName() : saved;
     }
 }

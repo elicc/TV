@@ -9,6 +9,8 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.preload.DiskPreloadManager;
 
 import com.fongmi.android.tv.setting.PreloadSetting;
+import com.fongmi.android.tv.diagnostic.PlaybackResourceSampler;
+import com.orhanobut.logger.Logger;
 
 /**
  * Disk preload for the current item. Progressive HTTP files use {@link ExoReadAhead}, which downloads ahead of the
@@ -18,6 +20,7 @@ import com.fongmi.android.tv.setting.PreloadSetting;
 public class ExoDiskPreload implements Player.Listener {
 
     private final PriorityTaskManager priorityTaskManager;
+    private final PlaybackResourceSampler resourceSampler = new PlaybackResourceSampler();
     private DiskPreloadManager manager;
     private ExoReadAhead readAhead;
     private MediaItem mediaItem;
@@ -32,12 +35,14 @@ public class ExoDiskPreload implements Player.Listener {
             if (this.player != null) this.player.removeListener(this);
             player.addListener(this);
         }
+        resourceSampler.start(ExoPreloadPolicy.isProxy(mediaItem));
         this.mediaItem = mediaItem;
         this.player = player;
         restart();
     }
 
     public void stop() {
+        resourceSampler.stop();
         stopManager();
         stopReadAhead();
         if (player != null) player.removeListener(this);
@@ -56,7 +61,7 @@ public class ExoDiskPreload implements Player.Listener {
 
     private void restart() {
         stopManager();
-        if (player == null || mediaItem == null || !PreloadSetting.isEnabled()) {
+        if (player == null || mediaItem == null || !PreloadSetting.isEnabled() || ExoPreloadPolicy.isProxy(mediaItem)) {
             stopReadAhead();
         } else if (ExoReadAhead.isSupported(mediaItem)) {
             startReadAhead();
@@ -69,7 +74,11 @@ public class ExoDiskPreload implements Player.Listener {
     private void startReadAhead() {
         if (readAhead != null && readAhead.isFor(mediaItem)) return;
         stopReadAhead();
-        readAhead = ExoReadAhead.start(mediaItem, ExoUtil.extractHeaders(mediaItem));
+        try {
+            readAhead = ExoReadAhead.start(mediaItem, ExoUtil.extractHeaders(mediaItem));
+        } catch (IllegalStateException e) {
+            Logger.t("ExoDiskPreload").w("Read-ahead cache unavailable; using upstream");
+        }
     }
 
     private void stopReadAhead() {

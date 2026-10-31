@@ -3,6 +3,7 @@ package com.fongmi.android.tv.ui.dialog;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -20,11 +21,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
 import com.fongmi.android.tv.R;
+import com.fongmi.android.tv.api.DanmakuCache;
 import com.fongmi.android.tv.api.DanmakuApi;
+import com.fongmi.android.tv.api.DanmakuSearchMatcher;
 import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.databinding.DialogDanmakuFinderBinding;
 import com.fongmi.android.tv.impl.DanmakuListener;
 import com.fongmi.android.tv.player.PlayerManager;
+import com.fongmi.android.tv.playback.vod.DanmakuSearchStore;
 import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.ui.adapter.DanmakuResultAdapter;
 import com.fongmi.android.tv.ui.custom.SpaceItemDecoration;
@@ -34,7 +38,6 @@ import com.fongmi.android.tv.utils.Util;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,18 +56,21 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
     private static final Pattern TAG = Pattern.compile("(?i)国语|國語|粤语|粵語|中字|未删减|未刪減|完整版|蓝光|藍光|超清|高清|4K|1080P|\\bHD\\b");
     private static final Pattern SEASON = Pattern.compile("(?i)第[0-9一二三四五六七八九十]+[季部]|\\bS(eason)?\\s*\\d{1,2}\\b");
     private static final Pattern EDGE = Pattern.compile("^[\\s·:：\\-_|]+|[\\s·:：\\-_|]+$");
-    private static final Pattern NUMBER = Pattern.compile("\\d{1,5}");
 
     private final Runnable research = this::search;
     private final List<String> keywords = new ArrayList<>();
+    private final List<SearchQuery> queries = new ArrayList<>();
     private DialogDanmakuFinderBinding binding;
     private DanmakuResultAdapter adapter;
     private PlayerManager player;
+    private String seriesKey = "";
     private String keyword = "";
     private String episode = "";
+    private int episodeNumber;
     private boolean anyEpisode;
     private boolean custom;
     private boolean focusResults;
+    private int queryIndex;
 
     public static DanmakuFinderDialog create() {
         return new DanmakuFinderDialog();
@@ -91,6 +97,10 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
         MediaMetadata metadata = player.getMetadata();
         String title = metadata == null || TextUtils.isEmpty(metadata.title) ? "" : metadata.title.toString().trim();
         episode = metadata == null || TextUtils.isEmpty(metadata.artist) ? "" : metadata.artist.toString().trim();
+        Bundle extras = metadata == null ? null : metadata.extras;
+        seriesKey = extras == null ? "" : extras.getString(DanmakuSearchStore.EXTRA_SERIES_KEY, "");
+        episodeNumber = extras == null ? 0 : extras.getInt(DanmakuSearchStore.EXTRA_EPISODE_NUMBER, 0);
+        if (episodeNumber <= 0) episodeNumber = number(episode);
         anyEpisode = episode.isEmpty();
         adapter = new DanmakuResultAdapter(this::onItemClick);
         binding.recycler.setAdapter(adapter);
@@ -98,7 +108,9 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
         binding.recycler.addItemDecoration(SpaceItemDecoration.of(binding.recycler, 16));
         keywords.addAll(keywords(title));
         for (String text : keywords) addKeyword(text);
-        keyword = keywords.isEmpty() ? "" : keywords.get(0);
+        String saved = DanmakuSearchStore.getTitle(seriesKey);
+        keyword = saved.isEmpty() ? (keywords.isEmpty() ? "" : keywords.get(0)) : saved;
+        custom = !keyword.isEmpty() && !keywords.contains(keyword);
         if (!keywords.isEmpty()) binding.setting.setNextFocusDownId(binding.keywords.getChildAt(0).getId());
         updateKeywords();
         updateEpisode();
@@ -126,9 +138,8 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
         // With the keyboard hidden, LEFT/RIGHT would walk the cursor; keep them for focus.
         binding.keyword.setOnKeyListener((view, keyCode, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            int direction = keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ? View.FOCUS_RIGHT : 0;
-            if (direction == 0) return false;
-            View next = view.focusSearch(direction);
+            if (keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+            View next = view.focusSearch(keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : View.FOCUS_RIGHT);
             return next == null || next.requestFocus();
         });
     }
@@ -156,18 +167,12 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
     }
 
     static int number(String episode) {
-        Matcher matcher = NUMBER.matcher(episode);
-        return matcher.find() ? Integer.parseInt(matcher.group()) : 0;
+        return DanmakuSearchMatcher.number(episode);
     }
 
-    /** Moves the first number of the episode name, keeping its zero padding and wording. */
+    /** Moves the episode token, keeping its zero padding and wording. */
     static String step(String episode, int delta) {
-        Matcher matcher = NUMBER.matcher(episode);
-        if (!matcher.find()) return delta > 0 ? "第1集" : episode;
-        String group = matcher.group();
-        int value = Math.max(1, Integer.parseInt(group) + delta);
-        String digits = String.format(Locale.ROOT, "%0" + (group.startsWith("0") ? group.length() : 1) + "d", value);
-        return episode.substring(0, matcher.start()) + digits + episode.substring(matcher.end());
+        return DanmakuSearchMatcher.step(episode, number(episode), delta);
     }
 
     private void addKeyword(String text) {
@@ -182,6 +187,7 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
     private void onKeyword(String text) {
         keyword = text;
         custom = false;
+        rememberKeyword(text);
         binding.keyword.setText("");
         updateKeywords();
         focusResults = false;
@@ -207,6 +213,7 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
         if (text.isEmpty()) return;
         keyword = text;
         custom = !keywords.contains(text);
+        rememberKeyword(text);
         updateKeywords();
         focusResults = true;
         search();
@@ -222,9 +229,10 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
     }
 
     private void onStep(int delta) {
-        String next = step(episode, delta);
+        String next = DanmakuSearchMatcher.step(episode, episodeNumber, delta);
         if (next.equals(episode) && !anyEpisode) return;
         episode = next;
+        episodeNumber = number(episode);
         anyEpisode = false;
         updateEpisode();
         // Stepping several episodes in a row sends one request.
@@ -243,7 +251,7 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
 
     private void updateEpisode() {
         boolean has = !episode.isEmpty();
-        boolean canPrev = number(episode) > 1;
+        boolean canPrev = episodeNumber > 1;
         binding.episode.setVisibility(has ? VISIBLE : GONE);
         binding.episode.setText(episode);
         binding.episode.setSelected(has && !anyEpisode);
@@ -274,6 +282,9 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
             DanmakuApi.cancel();
             feedback(getString(R.string.tv_danmaku_no_keyword), false, false, false);
         } else {
+            queries.clear();
+            queries.addAll(buildQueries());
+            queryIndex = 0;
             // Earlier results stay, dimmed, so the drawer keeps its height while loading.
             if (adapter.getItemCount() > 0) {
                 binding.recycler.setAlpha(0.5f);
@@ -281,17 +292,51 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
             } else {
                 feedback(getString(R.string.tv_danmaku_searching), true, false, false);
             }
-            DanmakuApi.search(keyword, anyEpisode ? "" : episode, this::onSuccess, this::onError);
+            runQuery();
         }
+    }
+
+    private List<SearchQuery> buildQueries() {
+        Set<String> seen = new LinkedHashSet<>();
+        List<SearchQuery> result = new ArrayList<>();
+        List<String> titles = new ArrayList<>();
+        titles.add(keyword);
+        for (String item : keywords) if (!item.equals(keyword)) titles.add(item);
+        String canonical = episodeNumber > 0 ? "第" + episodeNumber + "集" : episode;
+        for (String title : titles) {
+            addQuery(result, seen, title, anyEpisode ? "" : episode);
+            if (!anyEpisode && !canonical.equals(episode)) addQuery(result, seen, title, canonical);
+        }
+        if (!anyEpisode) {
+            for (String title : titles) addQuery(result, seen, title, "");
+        }
+        return result;
+    }
+
+    private void addQuery(List<SearchQuery> result, Set<String> seen, String title, String episode) {
+        if (title == null || title.isEmpty()) return;
+        String key = title + "\n" + episode;
+        if (seen.add(key)) result.add(new SearchQuery(title, episode));
+    }
+
+    private void runQuery() {
+        if (binding == null || queryIndex >= queries.size()) return;
+        SearchQuery query = queries.get(queryIndex);
+        DanmakuApi.search(query.title, query.episode, this::onSuccess, this::onError);
     }
 
     private void onSuccess(List<Danmaku> items) {
         if (binding == null) return;
         if (items.isEmpty()) {
+            if (++queryIndex < queries.size()) {
+                runQuery();
+                return;
+            }
             feedback(getString(R.string.tv_danmaku_no_result), false, false, false);
             return;
         }
         boolean lost = binding.feedback.hasFocus() || binding.recycler.hasFocus();
+        items = DanmakuSearchMatcher.rank(items, keyword, anyEpisode ? "" : episode);
         adapter.setItems(items, current());
         binding.feedback.setVisibility(GONE);
         binding.recycler.setAlpha(1f);
@@ -351,8 +396,19 @@ public final class DanmakuFinderDialog extends BaseBottomSheetDialog implements 
     }
 
     private void onItemClick(Danmaku item) {
+        rememberKeyword(keyword);
+        DanmakuCache.track(item, keyword, episode);
         player.setDanmaku(item);
         dismiss();
+    }
+
+    private void rememberKeyword(String text) {
+        if (seriesKey.isEmpty()) return;
+        if (!keywords.isEmpty() && keywords.get(0).equals(text)) DanmakuSearchStore.clearTitle(seriesKey);
+        else DanmakuSearchStore.putTitle(seriesKey, text);
+    }
+
+    private record SearchQuery(String title, String episode) {
     }
 
     private void onSetting(View view) {

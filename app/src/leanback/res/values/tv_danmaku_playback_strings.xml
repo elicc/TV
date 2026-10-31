@@ -9,6 +9,9 @@
     <string name="tv_danmaku_search_hint">Check the season and episode before selecting a result.</string>
     <string name="tv_danmaku_setting">Settings</string>
     <string name="tv_danmaku_current">Now: %1$s</string>
+    <string name="tv_danmaku_show">Show danmaku</string>
+    <string name="tv_danmaku_disabled">Danmaku is off</string>
+    <string name="tv_danmaku_enabled_no_source">On · No source selected</string>
     <string name="tv_danmaku_off">No danmaku loaded</string>
     <string name="tv_danmaku_empty">No danmaku sources yet. Search or open a local file.</string>
     <string name="tv_danmaku_finder_title">Find danmaku</string>

@@ -61,7 +61,7 @@ public class DanmakuApi {
         Prefetch pending = prefetch;
         prefetch = null;
         if (pending != null && pending.matches(name, episode)) pending.deliverTo(found);
-        else search(name, episode, items -> items.stream().findFirst().ifPresent(found), error -> {}, true);
+        else search(name, episode, items -> DanmakuSearchMatcher.rank(items, name, episode).stream().findFirst().ifPresent(found), error -> {}, true);
     }
 
     public static void search(String name, String episode, Consumer<List<Danmaku>> success, Consumer<Exception> error) {
@@ -202,7 +202,7 @@ public class DanmakuApi {
 
         void complete(List<Danmaku> items) {
             done = true;
-            result = items.isEmpty() ? null : items.get(0);
+            result = DanmakuSearchMatcher.rank(items, name, episode).stream().findFirst().orElse(null);
             if (found != null && result != null) found.accept(result);
         }
 

@@ -9,6 +9,9 @@
     <string name="tv_danmaku_search_hint">请选择正确的剧季和集数，搜索结果不保证完全匹配。</string>
     <string name="tv_danmaku_setting">设置</string>
     <string name="tv_danmaku_current">当前：%1$s</string>
+    <string name="tv_danmaku_show">显示弹幕</string>
+    <string name="tv_danmaku_disabled">弹幕已关闭</string>
+    <string name="tv_danmaku_enabled_no_source">已开启，未选择来源</string>
     <string name="tv_danmaku_off">未加载弹幕</string>
     <string name="tv_danmaku_empty">暂无弹幕来源，可搜索或加载本地文件</string>
     <string name="tv_danmaku_finder_title">搜索弹幕</string>

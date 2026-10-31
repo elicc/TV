@@ -10,6 +10,9 @@
 https://你的服务域名/你的TOKEN/api/v2/fongmi/danmaku?name={name}&episode={episode}
 ```
 
+对于 `danmu_api` 部署，`http(s)://主机/TOKEN` 是管理页面，不是搜索接口；应填写
+`http(s)://主机/TOKEN/danmaku` 或 `http(s)://主机/TOKEN/api/v2/fongmi/danmaku`。
+
 服务不需要 Token 时去掉对应路径段。不要把示例中的中文域名或 TOKEN 原样填入。`danmu_api` 的 FongMi 兼容路由同时支持 GET 和表单 POST；不带 `{name}` / `{episode}` 的地址仍按原行为接收 `name`、`episode` 两个表单字段。不要向 GitHub 静态 JSON 地址发送搜索请求。
 
 成功响应应为数组，例如：

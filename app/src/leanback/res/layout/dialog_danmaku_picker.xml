@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Full-width playback drawer, aligned with the episode picker: actions first,
+<!-- Full-width playback drawer, aligned with the episode picker: display toggle and actions,
      then sources in one full-width column (single source) or two columns. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -42,8 +42,18 @@
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/setting"
                 style="@style/TvDanmakuPickerAction"
+                android:nextFocusRight="@id/enabledSwitch"
                 android:drawableStart="@drawable/ic_nav_settings"
                 android:text="@string/tv_danmaku_setting" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/enabledSwitch"
+                style="@style/TvDanmakuSwitch"
+                android:layout_width="wrap_content"
+                android:layout_marginTop="0dp"
+                android:minHeight="36dp"
+                android:nextFocusLeft="@id/setting"
+                android:text="@string/tv_danmaku_show" />
 
             <TextView
                 android:id="@+id/current"

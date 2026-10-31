@@ -32,7 +32,10 @@ final class ExoReadAheadDataSource extends BaseDataSource {
      */
     private static final long TAKEOVER_MS = 3_000;
 
-    private final DataSource fallback;
+    private final DataSource cachedFallback;
+    private final DataSource upstream;
+    private DataSource fallback;
+    private boolean bypassCache;
 
     @Nullable
     private ExoReadAhead session;
@@ -48,10 +51,12 @@ final class ExoReadAheadDataSource extends BaseDataSource {
     private long waitStartMs;
     private long position;
     private long end;
+    private long segmentEnd;
 
-    ExoReadAheadDataSource(DataSource fallback) {
+    ExoReadAheadDataSource(DataSource cachedFallback, DataSource upstream) {
         super(true);
-        this.fallback = fallback;
+        this.cachedFallback = cachedFallback;
+        this.upstream = upstream;
         this.claimed = C.INDEX_UNSET;
         this.waitPosition = C.INDEX_UNSET;
     }
@@ -60,8 +65,17 @@ final class ExoReadAheadDataSource extends BaseDataSource {
     public long open(@NonNull DataSpec dataSpec) throws IOException {
         this.dataSpec = dataSpec;
         this.failures = 0;
+        this.bypassCache = ExoPreloadPolicy.isProxy(dataSpec.uri);
+        this.waitPosition = C.INDEX_UNSET;
         transferInitializing(dataSpec);
-        long length = openSession(dataSpec);
+        long length;
+        try {
+            length = openSession(dataSpec);
+        } catch (IllegalStateException e) {
+            if (session != null) session.failCache();
+            bypassCache = true;
+            length = C.LENGTH_UNSET;
+        }
         if (length == C.LENGTH_UNSET || usingFallback) length = openFallback(dataSpec);
         opened = true;
         transferStarted(dataSpec);
@@ -73,26 +87,44 @@ final class ExoReadAheadDataSource extends BaseDataSource {
         if (length == 0) return 0;
         while (true) {
             if (usingFallback) return count(fallback.read(buffer, offset, length));
-            if (position >= end) return C.RESULT_END_OF_INPUT;
             try {
+                if (dataSpec.length != C.LENGTH_UNSET && position - dataSpec.position >= dataSpec.length) return C.RESULT_END_OF_INPUT;
+                if (!session.isUsable()) {
+                    resumeUpstream();
+                    continue;
+                }
+                if (position >= end) return C.RESULT_END_OF_INPUT;
                 if (source == null) openSource();
                 if (usingFallback) continue;
                 int read = source.read(buffer, offset, length);
                 if (read == C.RESULT_END_OF_INPUT) {
+                    if (position < segmentEnd) throw new ExoRangeDataSource.InvalidRangeException("Short cached segment");
                     closeSource();
                     continue;
                 }
                 failures = 0;
                 position += read;
-                session.onRead(position);
+                try {
+                    session.onRead(position);
+                } catch (IllegalStateException e) {
+                    session.failCache();
+                }
+                // Even if cache reporting failed, these bytes have already been consumed: return them once.
                 return count(read);
-            } catch (InterruptedIOException e) {
-                closeSourceQuietly();
-                throw e;
+            } catch (IllegalStateException | ExoRangeDataSource.InvalidRangeException | androidx.media3.datasource.cache.Cache.CacheException e) {
+                if (session == null) throw e;
+                session.failCache();
+                resumeUpstream();
             } catch (IOException e) {
+                if (session == null) throw e;
                 closeSourceQuietly();
-                if (++failures > MAX_RETRIES || session == null || !session.isUsable()) throw e;
-                sleep(RETRY_DELAY_MS * failures);
+                if (Thread.currentThread().isInterrupted()) throw e;
+                if (++failures > MAX_RETRIES || !session.isUsable()) {
+                    session.failCache();
+                    resumeUpstream();
+                } else {
+                    sleep(RETRY_DELAY_MS * failures);
+                }
             }
         }
     }
@@ -129,6 +161,7 @@ final class ExoReadAheadDataSource extends BaseDataSource {
     private long openSession(DataSpec dataSpec) {
         session = ExoReadAhead.get(dataSpec);
         if (session == null || !"GET".equals(dataSpec.getHttpMethodString())) return C.LENGTH_UNSET;
+        bypassCache = true;
         long length = session.prepare();
         if (length == C.LENGTH_UNSET || dataSpec.position >= length) return C.LENGTH_UNSET;
         position = dataSpec.position;
@@ -140,13 +173,14 @@ final class ExoReadAheadDataSource extends BaseDataSource {
     private long openFallback(DataSpec dataSpec) throws IOException {
         session = null;
         usingFallback = true;
+        fallback = bypassCache ? upstream : cachedFallback;
         return fallback.open(dataSpec);
     }
 
     private void openSource() throws IOException {
         while (true) {
             if (!session.isUsable()) {
-                openFallback(dataSpec.subrange(position - dataSpec.position, end - position));
+                resumeUpstream();
                 return;
             }
             long version = session.getVersion();
@@ -170,7 +204,14 @@ final class ExoReadAheadDataSource extends BaseDataSource {
 
     private void openSegment(DataSource source, long length) throws IOException {
         this.source = source;
+        segmentEnd = position + length;
         source.open(session.buildDataSpec(position, length));
+    }
+
+    private void resumeUpstream() throws IOException {
+        closeSourceQuietly();
+        bypassCache = true;
+        openFallback(dataSpec.subrange(position - dataSpec.position));
     }
 
     private void closeSourceQuietly() {
@@ -194,6 +235,8 @@ final class ExoReadAheadDataSource extends BaseDataSource {
         source = null;
         try {
             if (current != null) current.close();
+        } catch (IllegalStateException e) {
+            session.failCache();
         } finally {
             if (claimed != C.INDEX_UNSET) {
                 session.releasePlayer(claimed);

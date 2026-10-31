@@ -52,8 +52,15 @@ public final class VodResumeStore {
     }
 
     public static synchronized void forget(String key) {
+        VodHistoryWriter.forget(key);
         pending.remove(key);
         Prefers.remove(PREFIX + key);
+    }
+
+    /** Also discard never-persisted checkpoints when clearing history; -1 means all configs. */
+    public static synchronized void forgetPending(int cid) {
+        VodHistoryWriter.forgetPending(cid);
+        pending.values().removeIf(history -> cid == -1 || history.getCid() == cid);
     }
 
     static synchronized List<History> candidates(int cid) {
@@ -72,7 +79,8 @@ public final class VodResumeStore {
      * provider both configs share. Called on the serial writer so a pending save of the old row
      * cannot land after the move.
      */
-    public static void move(int fromCid, String key, int cid) {
+    public static synchronized void move(int fromCid, String key, int cid) {
+        VodHistoryWriter.forget(key);
         String newKey = key.substring(0, key.lastIndexOf(AppDatabase.SYMBOL) + AppDatabase.SYMBOL.length()) + cid;
         Keep keep = Keep.find(fromCid, key);
         if (keep != null) {
@@ -80,11 +88,9 @@ public final class VodResumeStore {
             if (Keep.find(cid, newKey) == null) keep.save(cid);
         }
         History source = read(dao().find(fromCid, key));
+        History cached = pending.remove(key);
+        if (cached != null && (source == null || isNewer(cached, source))) source = cached;
         if (source == null) return;
-        synchronized (VodResumeStore.class) {
-            History cached = pending.remove(key);
-            if (cached != null && isNewer(cached, source)) source = cached;
-        }
         History target = source.copy().cid(cid);
         History stored = read(dao().find(cid, newKey));
         VodSkipStore.copy(source, target);
@@ -144,7 +150,7 @@ public final class VodResumeStore {
         }
     }
 
-    private static boolean isNewer(History left, History right) {
+    static boolean isNewer(History left, History right) {
         return left.getProgressTime() > right.getProgressTime()
                 || left.getProgressTime() == right.getProgressTime() && left.getCreateTime() > right.getCreateTime();
     }

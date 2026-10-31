@@ -114,7 +114,7 @@ public class ExoMediaSourceFactory implements MediaSource.Factory {
     }
 
     private DataSource.Factory getDataSourceFactory() {
-        if (dataSourceFactory == null) dataSourceFactory = () -> new ExoReadAheadDataSource(getCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory())).createDataSource());
+        if (dataSourceFactory == null) dataSourceFactory = () -> new ExoReadAheadDataSource(getCacheDataSource(new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory())).createDataSource(), new DefaultDataSource.Factory(App.get(), getHttpDataSourceFactory()).createDataSource());
         return dataSourceFactory;
     }
 

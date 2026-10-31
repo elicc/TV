@@ -128,6 +128,7 @@ public class History implements Diffable<History> {
     }
 
     public static void delete(int cid) {
+        VodResumeStore.forgetPending(cid);
         for (History history : AppDatabase.get().getHistoryDao().findAll())
             if (history.getCid() == cid) VodResumeStore.forget(history.getKey());
         VodSkipStore.clear(cid);
@@ -140,6 +141,7 @@ public class History implements Diffable<History> {
 
     public static void clearAll() {
         Task.executeSerial(() -> {
+            VodResumeStore.forgetPending(-1);
             for (History history : AppDatabase.get().getHistoryDao().findAll()) VodResumeStore.forget(history.getKey());
             VodSkipStore.clearAll();
             AppDatabase.get().getHistoryDao().delete();

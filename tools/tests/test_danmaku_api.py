@@ -23,6 +23,7 @@ STUBS = {
         public static java.util.ArrayDeque<Runnable> queue=new java.util.ArrayDeque<>();
         public static com.google.gson.Gson gson(){return new com.google.gson.Gson();}
         public static void post(Runnable r){queue.add(r);}
+        public static void post(Runnable r,long delay){queue.add(r);}
         public static void drain(){while(!queue.isEmpty())queue.remove().run();}
     }""",
     P+"setting/DanmakuSetting.java": """package com.fongmi.android.tv.setting; public class DanmakuSetting {
@@ -66,6 +67,7 @@ STUBS = {
 
 HARNESS = r'''
 import com.fongmi.android.tv.api.DanmakuApi;
+import com.fongmi.android.tv.api.DanmakuSearchMatcher;
 import com.fongmi.android.tv.App;
 import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.setting.DanmakuSetting;
@@ -94,6 +96,10 @@ public class DanmakuHarness {
         check(get.url().queryParameter("episode").equals("第1集"),"episode encoded once");
         OkHttp.respond(0,200,"[{\"name\":\"来源\",\"url\":\"https://example.com/comment?format=xml\"}]");
         check(successes==0,"callback posted");App.drain();check(successes==1 && items.get(0).getName().equals("来源"),"valid result");
+        check(DanmakuSearchMatcher.number("S01E02")==2,"episode parser uses E02, not season");
+        check(DanmakuSearchMatcher.step("S01E02",2,1).equals("S01E03"),"episode step preserves season");
+        var ranked=DanmakuSearchMatcher.rank(Arrays.asList(Danmaku.from("潜伏在黎明之前(2016) 第2集","u1"),Danmaku.from("黎明之前(2010) 第2集","u2")),"黎明之前","第2集");
+        check(ranked.get(0).getUrl().equals("u2"),"exact title outranks fuzzy title");
         DanmakuSetting.url="https://example.com/private-token/api";
         response("[]");var post=OkHttp.requests.get(1);check(post.method().equals("POST"),"plain URL stays POST");
         var form=(okhttp3.FormBody)post.body();check(form.value(0).equals("片名 & +") && form.name(1).equals("episode"),"form fields");
@@ -134,7 +140,7 @@ class DanmakuApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sources = dict(STUBS)
-            for name in ["api/DanmakuApi.java", "bean/Danmaku.java", "impl/ApiCallback.java"]:
+            for name in ["api/DanmakuApi.java", "api/DanmakuSearchMatcher.java", "bean/Danmaku.java", "impl/ApiCallback.java"]:
                 sources[P+name] = (MAIN/P/name).read_text()
             names = sorted(set(re.findall(r"R.string.(\w+)", sources[P+"api/DanmakuApi.java"])))
             sources[P+"R.java"] = "package com.fongmi.android.tv; public class R { public static class string {" + "".join(

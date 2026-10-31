@@ -20,6 +20,7 @@ public class DanmakuChoiceAdapter extends RecyclerView.Adapter<DanmakuChoiceAdap
     private final OnClickListener mListener;
     private final List<Danmaku> mItems;
     private int mNextFocusUpId = View.NO_ID;
+    private boolean mEnabled = true;
 
     public DanmakuChoiceAdapter(OnClickListener listener) {
         mListener = listener;
@@ -39,6 +40,12 @@ public class DanmakuChoiceAdapter extends RecyclerView.Adapter<DanmakuChoiceAdap
 
     public void setNextFocusUpId(int id) {
         mNextFocusUpId = id;
+    }
+
+    public void setEnabled(boolean enabled) {
+        if (mEnabled == enabled) return;
+        mEnabled = enabled;
+        notifyDataSetChanged();
     }
 
     public int getPosition() {
@@ -66,13 +73,19 @@ public class DanmakuChoiceAdapter extends RecyclerView.Adapter<DanmakuChoiceAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Danmaku item = mItems.get(position);
         holder.binding.text.setText(item.getName());
-        holder.binding.text.setSelected(item.isSelected());
+        holder.binding.text.setSelected(mEnabled && item.isSelected());
+        holder.binding.text.setEnabled(mEnabled);
+        holder.binding.text.setFocusableInTouchMode(mEnabled);
+        holder.binding.text.setFocusable(mEnabled);
         holder.binding.text.setNextFocusUpId(mNextFocusUpId);
         holder.binding.text.setOnFocusChangeListener((view, focused) -> {
             holder.binding.text.setHorizontallyScrolling(focused);
             holder.binding.text.setEllipsize(focused ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
         });
-        holder.binding.text.setOnClickListener(view -> mListener.onItemClick(item));
+        holder.binding.text.setOnClickListener(view -> {
+            if (mEnabled) mListener.onItemClick(item);
+        });
+        holder.binding.text.setClickable(mEnabled);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

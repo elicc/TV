@@ -29,9 +29,15 @@ import java.util.stream.IntStream;
 public final class MediaItemFactory {
 
     public static MediaMetadata buildMetadata(String title, String artist, String artUri, String displayName) {
+        return buildMetadata(title, artist, artUri, displayName, null);
+    }
+
+    public static MediaMetadata buildMetadata(String title, String artist, String artUri, String displayName, Bundle extras) {
         title = TextUtils.isEmpty(title) ? "" : title;
         artist = TextUtils.isEmpty(artist) ? "" : artist;
-        return new MediaMetadata.Builder().setTitle(title).setArtist(artist).setDisplayTitle(formatDisplayTitle(title, displayName)).setArtworkUri(getArtworkUri(artUri)).build();
+        MediaMetadata.Builder builder = new MediaMetadata.Builder().setTitle(title).setArtist(artist).setDisplayTitle(formatDisplayTitle(title, displayName)).setArtworkUri(getArtworkUri(artUri));
+        if (extras != null) builder.setExtras(extras);
+        return builder.build();
     }
 
     public static Uri getArtworkUri(String artUri) {

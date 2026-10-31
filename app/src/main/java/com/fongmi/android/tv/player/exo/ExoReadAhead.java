@@ -16,7 +16,6 @@ import androidx.media3.datasource.cache.Cache;
 import androidx.media3.datasource.cache.CacheDataSink;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.datasource.cache.CacheSpan;
-import androidx.media3.datasource.cache.ContentMetadata;
 import androidx.media3.datasource.cache.ContentMetadataMutations;
 
 import com.fongmi.android.tv.setting.PreloadSetting;
@@ -31,11 +30,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
+import okhttp3.Call;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -59,7 +60,6 @@ final class ExoReadAhead {
 
     private static final String TAG = ExoReadAhead.class.getSimpleName();
     private static final Map<String, ExoReadAhead> SESSIONS = new ConcurrentHashMap<>();
-    private static final String METADATA_LENGTH = ContentMetadata.KEY_CUSTOM_PREFIX + "read_ahead_length";
     private static final long CHUNK_BYTES = 4L * 1024 * 1024;
     private static final long MIN_WINDOW_BYTES = 64L * 1024 * 1024;
     private static final long MAX_BACK_BYTES = 256L * 1024 * 1024;
@@ -75,7 +75,8 @@ final class ExoReadAhead {
     private final Map<Long, Long> retryAt = new HashMap<>();
     private final AtomicLong downloadedBytes = new AtomicLong();
     private final AtomicLong lastReportMs = new AtomicLong();
-    private final DataSource.Factory upstreamFactory;
+    private final Set<Call> calls = ConcurrentHashMap.newKeySet();
+    private final String lookupKey;
     private final Map<String, String> headers;
     private final Cache.Listener listener;
     private final Object probeLock;
@@ -101,11 +102,12 @@ final class ExoReadAhead {
     private ExoReadAhead(MediaItem mediaItem, Map<String, String> headers) {
         MediaItem.LocalConfiguration config = mediaItem.localConfiguration;
         this.uri = config.uri;
-        this.key = getKey(mediaItem);
+        this.lookupKey = getKey(mediaItem);
+        // A proxy URL/cache key can be reused for a different file. Never share length metadata across sessions.
+        this.key = lookupKey + ":read-ahead:" + UUID.randomUUID();
         this.headers = headers;
         this.probeLock = new Object();
         this.cache = ExoMediaSourceFactory.getCache();
-        this.upstreamFactory = ExoMediaSourceFactory.createUpstreamDataSourceFactory(headers);
         this.listener = new SpanListener();
         this.cache.addListener(key, listener);
     }
@@ -120,7 +122,7 @@ final class ExoReadAhead {
 
     static ExoReadAhead start(MediaItem mediaItem, Map<String, String> headers) {
         ExoReadAhead session = new ExoReadAhead(mediaItem, headers);
-        ExoReadAhead previous = SESSIONS.put(session.key, session);
+        ExoReadAhead previous = SESSIONS.put(session.lookupKey, session);
         if (previous != null) previous.release();
         return session;
     }
@@ -130,8 +132,10 @@ final class ExoReadAhead {
     }
 
     static boolean isProtected(CacheSpan span) {
-        ExoReadAhead session = SESSIONS.get(span.key);
-        return session != null && session.protects(span);
+        for (ExoReadAhead session : SESSIONS.values()) {
+            if (session.key.equals(span.key) && session.isUsable()) return session.protects(span);
+        }
+        return false;
     }
 
     private static String getKey(MediaItem mediaItem) {
@@ -140,7 +144,7 @@ final class ExoReadAhead {
     }
 
     boolean isFor(MediaItem mediaItem) {
-        return !released && isSupported(mediaItem) && key.equals(getKey(mediaItem));
+        return !released && isSupported(mediaItem) && lookupKey.equals(getKey(mediaItem));
     }
 
     boolean isUsable() {
@@ -150,15 +154,24 @@ final class ExoReadAhead {
     void setDurationMs(long durationMs) {
         if (durationMs == C.TIME_UNSET || durationMs <= 0 || durationMs == this.durationMs) return;
         this.durationMs = durationMs;
-        updateWindow();
+        try {
+            updateWindow();
+        } catch (IllegalStateException e) {
+            failCache();
+        }
     }
 
     void release() {
         if (released) return;
         released = true;
-        SESSIONS.remove(key, this);
-        cache.removeListener(key, listener);
-        if (executor != null) executor.shutdownNow();
+        SESSIONS.remove(lookupKey, this);
+        cancelDownloads();
+        try {
+            cache.removeListener(key, listener);
+        } catch (IllegalStateException e) {
+            // The cache may already be unusable. Network cancellation must still complete.
+            failCache();
+        }
         signal();
     }
 
@@ -169,10 +182,7 @@ final class ExoReadAhead {
     long prepare() {
         synchronized (probeLock) {
             if (isUsable() && contentLength == C.LENGTH_UNSET) {
-                // A length stored by an earlier probe means range requests already worked for this resource.
-                long length = cache.getContentMetadata(key).get(METADATA_LENGTH, C.LENGTH_UNSET);
-                if (length > 0) start(length);
-                else probe();
+                probe();
             }
         }
         return isUsable() ? contentLength : C.LENGTH_UNSET;
@@ -270,7 +280,7 @@ final class ExoReadAhead {
      */
     DataSource createDownloader(boolean player) {
         int flags = player ? CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR : 0;
-        return new CacheDataSource(cache, upstreamFactory.createDataSource(), new FileDataSource(), new CacheDataSink(cache, CHUNK_BYTES), flags, null);
+        return new CacheDataSource(cache, new ExoRangeDataSource(this, headers, contentLength), new FileDataSource(), new CacheDataSink(cache, CHUNK_BYTES), flags, null);
     }
 
     DataSpec buildDataSpec(long position, long length) {
@@ -278,20 +288,30 @@ final class ExoReadAhead {
     }
 
     private void probe() {
-        // Start at byte 1: some spider proxies answer any range starting at 0 with a full 200 response.
-        Request.Builder builder = new Request.Builder().url(uri.toString()).header("Range", "bytes=1-1");
+        Request.Builder builder = new Request.Builder().url(uri.toString());
         for (Map.Entry<String, String> entry : headers.entrySet()) builder.header(entry.getKey(), entry.getValue());
-        try (Response response = OkHttp.player().newCall(builder.build()).execute()) {
-            long length = response.code() == 206 ? getTotalLength(response.header("Content-Range")) : C.LENGTH_UNSET;
-            if (length <= 0) {
-                disable("range unsupported, code=" + response.code());
+        builder.header("Range", "bytes=1-1").header("Accept-Encoding", "identity");
+        Call call = OkHttp.player().newCall(builder.build());
+        track(call);
+        try (Response response = call.execute()) {
+            if (response.code() != 206) {
+                disable("range unsupported");
                 return;
             }
-            storeContentLength(length);
+            long length = ExoRangeDataSource.parseTotal(response.header("Content-Range"), 1, 1);
+            if (!isUsable()) return;
+            ContentMetadataMutations mutations = new ContentMetadataMutations();
+            ContentMetadataMutations.setContentLength(mutations, length);
+            cache.applyContentMetadataMutations(key, mutations);
             start(length);
-        } catch (Exception e) {
-            Logger.t(TAG).w("Probe failed: %s", e.getMessage());
+        } catch (ExoRangeDataSource.InvalidRangeException | Cache.CacheException e) {
+            failCache();
+        } catch (IOException e) {
             if (++probeFailures >= MAX_PROBE_FAILURES) disable("probe failed");
+        } catch (IllegalStateException e) {
+            failCache();
+        } finally {
+            untrack(call);
         }
     }
 
@@ -301,24 +321,24 @@ final class ExoReadAhead {
         startWorkers();
     }
 
-    private static long getTotalLength(String contentRange) {
-        if (contentRange == null) return C.LENGTH_UNSET;
-        int index = contentRange.lastIndexOf('/');
-        if (index < 0) return C.LENGTH_UNSET;
-        try {
-            return Long.parseLong(contentRange.substring(index + 1).trim());
-        } catch (NumberFormatException e) {
-            return C.LENGTH_UNSET;
-        }
+    void track(Call call) {
+        calls.add(call);
+        // Covers release racing with registration, without holding a cache/session monitor during cancel.
+        if (!isUsable()) call.cancel();
     }
 
-    private void storeContentLength(long length) {
-        try {
-            ContentMetadataMutations mutations = new ContentMetadataMutations();
-            ContentMetadataMutations.setContentLength(mutations, length);
-            mutations.set(METADATA_LENGTH, length);
-            cache.applyContentMetadataMutations(key, mutations);
-        } catch (Cache.CacheException ignored) {
+    void untrack(Call call) {
+        calls.remove(call);
+    }
+
+    void failCache() {
+        disable("invalid cache/range; using upstream");
+    }
+
+    private void cancelDownloads() {
+        for (Call call : calls) call.cancel();
+        synchronized (this) {
+            if (executor != null) executor.shutdownNow();
         }
     }
 
@@ -335,9 +355,13 @@ final class ExoReadAhead {
     }
 
     private void disable(String reason) {
-        Logger.t(TAG).d("Read-ahead disabled: %s", reason);
-        disabled = true;
+        synchronized (this) {
+            if (disabled) return;
+            disabled = true;
+        }
+        cancelDownloads();
         signal();
+        Logger.t(TAG).w("Read-ahead disabled: %s", reason);
     }
 
     private void signal() {
@@ -348,7 +372,7 @@ final class ExoReadAhead {
     }
 
     private synchronized void startWorkers() {
-        if (executor != null || released) return;
+        if (executor != null || !isUsable()) return;
         int threads = PreloadSetting.getThreads();
         maxConnections = threads;
         executor = Executors.newFixedThreadPool(threads, runnable -> new Thread(runnable, "ExoReadAhead"));
@@ -390,6 +414,15 @@ final class ExoReadAhead {
     }
 
     private void work() {
+        try {
+            workChunks();
+        } catch (IllegalStateException e) {
+            // Includes scheduler/cache reads and close(), not just the network read loop.
+            failCache();
+        }
+    }
+
+    private void workChunks() {
         byte[] buffer = new byte[BUFFER_SIZE];
         int errors = 0;
         while (!Thread.currentThread().isInterrupted()) {
@@ -399,13 +432,20 @@ final class ExoReadAhead {
             try {
                 download(chunk, buffer);
                 errors = 0;
+            } catch (ExoRangeDataSource.InvalidRangeException | Cache.CacheException e) {
+                failCache();
+                return;
             } catch (IOException e) {
                 if (!isUsable()) return;
-                Logger.t(TAG).w("Chunk %d failed: %s", chunk, e.getMessage());
+                if (++errors >= 3) {
+                    disable("repeated download failures");
+                    return;
+                }
+                Logger.t(TAG).w("Read-ahead chunk failed (%s)", e.getClass().getSimpleName());
                 synchronized (this) {
                     retryAt.put(chunk, SystemClock.elapsedRealtime() + RETRY_DELAY_MS);
                 }
-                delayMs = Math.min(MAX_ERROR_DELAY_MS, RETRY_DELAY_MS << Math.min(errors++, 3));
+                delayMs = Math.min(MAX_ERROR_DELAY_MS, RETRY_DELAY_MS << Math.min(errors - 1, 3));
             } finally {
                 releaseWorker(chunk);
             }

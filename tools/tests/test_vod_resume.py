@@ -50,6 +50,31 @@ public class HistoryDao {
 }
 """,
 }
+# Host boundaries for the current history store (including its asynchronous writer).
+STUBS.update({
+    "android/database/CursorWindowAllocationException.java": "package android.database; public class CursorWindowAllocationException extends RuntimeException {}",
+    "android/os/SystemClock.java": "package android.os; public class SystemClock {public static long now; public static long elapsedRealtime(){return now;}}",
+    "com/orhanobut/logger/Logger.java": "package com.orhanobut.logger; public class Logger {public static Logger t(String t){return new Logger();} public void w(String s,Object... args){}}",
+    P+"event/RefreshEvent.java": "package com.fongmi.android.tv.event; public class RefreshEvent {public static int count; public static void history(){count++;}}",
+    P+"utils/Task.java": """package com.fongmi.android.tv.utils;
+public class Task {
+ public static java.util.ArrayDeque<Runnable> tasks=new java.util.ArrayDeque<>();
+ public static java.util.TreeMap<Long,java.util.List<Runnable>> timers=new java.util.TreeMap<>();
+ public static void executeSerial(Runnable r){tasks.add(r);}
+ public static void schedule(Runnable r,long d,java.util.concurrent.TimeUnit u){timers.computeIfAbsent(android.os.SystemClock.now+u.toMillis(d),k->new java.util.ArrayList<>()).add(r);}
+ public static void advance(long ms){android.os.SystemClock.now+=ms;while(!timers.isEmpty()&&timers.firstKey()<=android.os.SystemClock.now){for(Runnable r:timers.pollFirstEntry().getValue())r.run();}flush();}
+ public static void flush(){int n=0;while(!tasks.isEmpty()){if(++n>10000)throw new AssertionError("unbounded drain");tasks.remove().run();}}
+} """,
+    P+"bean/Keep.java": "package com.fongmi.android.tv.bean; public class Keep {public static Keep find(int c,String k){return null;} public void delete(){} public void save(int c){}}",
+    P+"bean/Track.java": "package com.fongmi.android.tv.bean; public class Track {public void setId(int i){} public Track key(String k){return this;}}",
+    P+"db/dao/TrackDao.java": "package com.fongmi.android.tv.db.dao; public class TrackDao {public java.util.List<com.fongmi.android.tv.bean.Track> find(String k){return java.util.List.of();} public void delete(String k){} public void insert(com.fongmi.android.tv.bean.Track t){}}",
+    P+"playback/vod/VodSkipStore.java": "package com.fongmi.android.tv.playback.vod; import com.fongmi.android.tv.bean.History; public class VodSkipStore {public static void clear(int c){} public static void clearAll(){} public static boolean has(History h){return false;} public static void copy(History a,History b){} public static void apply(History h,boolean s){}}",
+})
+STUBS[P+"db/AppDatabase.java"] = STUBS[P+"db/AppDatabase.java"].replace("public Track getTrackDao(){return new Track();}", "public com.fongmi.android.tv.db.dao.TrackDao getTrackDao(){return new com.fongmi.android.tv.db.dao.TrackDao();}")
+STUBS[P+"db/dao/HistoryDao.java"] = STUBS[P+"db/dao/HistoryDao.java"].replace(
+    "public History find(int cid,String key){", "public int failures,findCalls,writeCalls; public History find(int cid,String key){findCalls++;if(failures>0){failures--;throw new android.database.CursorWindowAllocationException();}")
+STUBS[P+"db/dao/HistoryDao.java"] = STUBS[P+"db/dao/HistoryDao.java"].replace("public void insertOrUpdate(History h){", "public void insertOrUpdate(History h){writeCalls++;")
+
 for annotation in ("androidx/annotation/NonNull", "androidx/annotation/Nullable", "androidx/room/Entity", "androidx/room/Ignore", "androidx/room/PrimaryKey"):
     package, name = annotation.rsplit("/", 1)
     package = package.replace("/", ".")
@@ -332,13 +357,56 @@ public class CacheIdentityHarness {
                 dest=root/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(code)
             production = [P+"bean/History.java",P+"bean/Episode.java",P+"bean/Flag.java",P+"impl/Diffable.java"]
             production += [P+"metadata/"+name+".java" for name in ("MovieIdentity","MetadataMatcher")]
-            production += [P+"playback/vod/"+name+".java" for name in ("VodResumeMatcher","VodResumeStore","VodHistoryPolicy","VodResumeGuard")]
+            production += [P+"playback/vod/"+name+".java" for name in ("VodResumeMatcher","VodResumeStore","VodHistoryPolicy","VodResumeGuard","VodHistoryWriter")]
             cmd=["javac","-encoding","UTF-8","-cp",str(gson),"-d",str(root)]+[str(root/p) for p in sources]+[str(MAIN/p) for p in production]
             result=subprocess.run(cmd,capture_output=True,text=True)
             self.assertEqual(0,result.returncode,result.stderr)
             result=subprocess.run(["java","-cp",str(root)+":"+str(gson),"com.fongmi.android.tv.playback.vod."+name],capture_output=True,text=True)
             self.assertEqual(0,result.returncode,result.stdout+result.stderr)
             print(result.stdout.strip())
+
+    def test_history_resource_failure_recovery(self):
+        self.run_harness(r"""package com.fongmi.android.tv.playback.vod;
+import com.fongmi.android.tv.bean.History;
+import com.fongmi.android.tv.db.AppDatabase;
+import com.fongmi.android.tv.utils.Task;
+import com.fongmi.android.tv.event.RefreshEvent;
+public class WriterHarness {
+ static int checks;
+ static void check(boolean v,String s){checks++;if(!v)throw new AssertionError(s);}
+ static History h(String key,long time,long position){History h=new History();h.setKey(key);h.setCid(1);h.setVodName(key);h.setVodRemarks("1");h.setVodFlag("line");h.setPosition(position);h.setDuration(100000);h.setCreateTime(time);h.setProgressTime(time);return h;}
+ public static void main(String[] args){
+  var dao=AppDatabase.get().history;var policy=new VodHistoryPolicy();
+  dao.failures=1;policy.save(h("retry",1,10),true);Task.flush();
+  check(dao.rows.get("retry")==null&&RefreshEvent.count==0,"failure is not a successful save");
+  check(Task.timers.size()==1&&Task.tasks.isEmpty(),"one delayed wake, no busy retry");
+  for(int i=2;i<=100;i++)policy.save(h("retry",i,i));
+  Task.advance(1999);check(dao.findCalls==1,"new updates cannot bypass cooldown");
+  Task.advance(1);check(dao.rows.get("retry").getPosition()==100&&RefreshEvent.count==1,"coalesce latest and preserve exit notification");
+  check(dao.writeCalls==1,"one write for the coalesced key");
+  policy.save(h("visit",200,50));policy.saveStarted(h("visit",201,0),201);Task.flush();
+  check(dao.rows.get("visit").getPosition()==50,"visit cannot discard pending progress");
+  policy.save(h("stale",300,80));policy.save(h("stale",299,5));Task.flush();
+  check(dao.rows.get("stale").getPosition()==80,"stale enqueue rejected");
+  dao.failures=100;int start=dao.findCalls;policy.save(h("exhaust",400,99));Task.flush();Task.advance(2000);Task.advance(4000);
+  check(dao.findCalls-start==3&&Task.timers.isEmpty(),"at most three attempts without new input");
+  check(VodResumeStore.candidates(1).stream().anyMatch(h->h.getKey().equals("exhaust")&&h.getPosition()==99),"unsaved checkpoint remains visible");
+  dao.failures=0;policy.save(h("exhaust",401,100));Task.advance(29999);check(dao.rows.get("exhaust")==null,"shared cooldown after exhaustion");
+  Task.advance(1);check(dao.rows.get("exhaust").getPosition()==100,"new update recovers after cooldown");
+  dao.failures=1;policy.save(h("deleted",500,20));Task.flush();VodResumeStore.forget("deleted");Task.advance(2000);
+  check(dao.rows.get("deleted")==null,"forgotten row not resurrected by retry");
+  dao.failures=1;policy.save(h("clear-never-persisted",550,20));Task.flush();History.delete(1);Task.advance(2000);
+  check(!dao.rows.containsKey("clear-never-persisted"),"clear config also removes unpersisted retries");
+  dao.failures=1;policy.save(h("before-move@@@vod@@@1",560,30));Task.flush();dao.failures=0;VodResumeStore.move(1,"before-move@@@vod@@@1",2);Task.advance(2000);
+  check(!dao.rows.containsKey("before-move@@@vod@@@1")&&dao.rows.get("before-move@@@vod@@@2").getPosition()==30,"move transfers pending progress and invalidates old retry");
+  int written=dao.writeCalls;for(int i=0;i<200;i++)policy.save(h("bounded"+i,600+i,i));
+  check(Task.tasks.size()==1,"one serial drain regardless of update count");Task.flush();
+  check(dao.writeCalls-written==128,"bounded pending keys");
+  policy.save(h("private",1000,50));com.fongmi.android.tv.setting.Setting.incognito=true;Task.flush();
+  check(!dao.rows.containsKey("private"),"queued writes obey incognito at execution");
+  System.out.println("PASS history resource recovery: "+checks+" checks");
+ }
+}""", "WriterHarness")
 
     def test_controller_and_schema_contract(self):
         controller=(MAIN/P/"playback/vod/VodPlaybackController.java").read_text()

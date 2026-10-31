@@ -21,6 +21,7 @@ import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.Danmaku;
 import com.fongmi.android.tv.databinding.DialogDanmakuPickerBinding;
 import com.fongmi.android.tv.player.PlayerManager;
+import com.fongmi.android.tv.setting.DanmakuSetting;
 import com.fongmi.android.tv.ui.adapter.DanmakuChoiceAdapter;
 import com.fongmi.android.tv.ui.motion.TvMotion;
 import com.fongmi.android.tv.utils.FileChooser;
@@ -88,20 +89,51 @@ public class DanmakuPickerDialog extends BaseAlertDialog {
         // Search stays available without an interface; the drawer explains how to set one up.
         boolean canSearch = player.getMetadata() != null;
         binding.search.setVisibility(canSearch ? View.VISIBLE : View.GONE);
+        binding.enabledSwitch.setChecked(DanmakuSetting.isShow());
         // The grid lets UP leave its first row (focusOutFront); land on the leading action.
         adapter.setNextFocusUpId((canSearch ? binding.search : binding.choose).getId());
-        Danmaku selected = adapter.getSelected();
-        binding.current.setText(selected == null ? getString(R.string.tv_danmaku_off) : getString(R.string.tv_danmaku_current, selected.getName()));
+        updateSourceControls();
+        updateCurrentSummary();
     }
 
     @Override
     protected void initEvent() {
+        binding.enabledSwitch.setOnCheckedChangeListener((button, enabled) -> {
+            DanmakuSetting.putShow(enabled);
+            player.setDanmakuEnabled(enabled);
+            updateSourceControls();
+            updateCurrentSummary();
+        });
         binding.search.setOnClickListener(this::onSearch);
         binding.choose.setOnClickListener(this::onChoose);
         binding.setting.setOnClickListener(this::onSetting);
     }
 
+    private void updateSourceControls() {
+        boolean enabled = DanmakuSetting.isShow();
+        if (!enabled && binding.grid.hasFocus()) binding.enabledSwitch.requestFocus();
+        binding.grid.setDescendantFocusability(enabled ? ViewGroup.FOCUS_AFTER_DESCENDANTS : ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        binding.grid.setFocusableInTouchMode(enabled);
+        binding.grid.setFocusable(enabled);
+        binding.grid.setEnabled(enabled);
+        binding.grid.setAlpha(enabled ? 1f : 0.4f);
+        binding.empty.setAlpha(enabled ? 1f : 0.4f);
+        binding.enabledSwitch.setNextFocusDownId(enabled && adapter.getItemCount() > 0 ? binding.grid.getId() : binding.enabledSwitch.getId());
+        adapter.setEnabled(enabled);
+    }
+
+    private void updateCurrentSummary() {
+        if (!DanmakuSetting.isShow()) {
+            binding.current.setText(R.string.tv_danmaku_disabled);
+            return;
+        }
+        // Read the player: an automatic search may have changed the source while the drawer was open.
+        Danmaku selected = player.getDanmakus().stream().filter(Danmaku::isSelected).findFirst().orElse(null);
+        binding.current.setText(selected == null ? getString(R.string.tv_danmaku_enabled_no_source) : getString(R.string.tv_danmaku_current, selected.getName()));
+    }
+
     private void onItemClick(Danmaku item) {
+        if (!DanmakuSetting.isShow()) return;
         player.toggleDanmaku(item);
         close();
     }
@@ -149,10 +181,11 @@ public class DanmakuPickerDialog extends BaseAlertDialog {
     }
 
     private void focusDefault() {
-        // Land on the playing source first; otherwise the first available action.
+        // Keep re-enabling one click away; otherwise retain the source-first navigation.
         binding.grid.post(() -> {
             if (!isAdded() || getDialog() == null || !getDialog().isShowing()) return;
-            if (adapter.getItemCount() > 0) binding.grid.setSelectedPosition(adapter.getPosition(), holder -> holder.itemView.requestFocus());
+            if (!DanmakuSetting.isShow()) binding.enabledSwitch.requestFocus();
+            else if (adapter.getItemCount() > 0) binding.grid.setSelectedPosition(adapter.getPosition(), holder -> holder.itemView.requestFocus());
             else (binding.search.getVisibility() == View.VISIBLE ? binding.search : binding.choose).requestFocus();
         });
     }

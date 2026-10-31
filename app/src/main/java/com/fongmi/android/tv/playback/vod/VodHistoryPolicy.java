@@ -9,9 +9,7 @@ import com.fongmi.android.tv.bean.Episode;
 import com.fongmi.android.tv.bean.Flag;
 import com.fongmi.android.tv.bean.History;
 import com.fongmi.android.tv.bean.Vod;
-import com.fongmi.android.tv.event.RefreshEvent;
 import com.fongmi.android.tv.setting.Setting;
-import com.fongmi.android.tv.utils.Task;
 
 import java.util.List;
 
@@ -126,10 +124,7 @@ public class VodHistoryPolicy {
         if (history == null || !history.canSave() || Setting.isIncognito()) return;
         History copy = copyForSave(history);
         VodResumeStore.remember(copy);
-        Task.executeSerial(() -> {
-            VodResumeStore.persist(copy, true);
-            if (exit) RefreshEvent.history();
-        });
+        VodHistoryWriter.enqueue(copy, true, exit);
     }
 
     public void saveProgress(History history, boolean exit, long time, long position, long duration) {
@@ -162,10 +157,7 @@ public class VodHistoryPolicy {
         // without waiting for the serial database writer. Invalid checkpoints
         // are deliberately rejected by remember().
         VodResumeStore.remember(copy);
-        Task.executeSerial(() -> {
-            VodResumeStore.persist(copy, false);
-            if (exit) RefreshEvent.history();
-        });
+        VodHistoryWriter.enqueue(copy, false, exit);
     }
 
     public void saveCurrent(History history) {

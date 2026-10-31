@@ -51,6 +51,11 @@ final class ExoPlayerSession {
     }
 
     void preload(MediaItem mediaItem, long startPositionMs) {
+        // A second proxy request can fan out into many plugin-owned threads, even with a small player buffer.
+        if (ExoPreloadPolicy.isProxy(mediaItem) || ExoPreloadPolicy.isProxy(player.getCurrentMediaItem())) {
+            clearPreload();
+            return;
+        }
         PreloadRequest request = new PreloadRequest(mediaItem, Math.max(0, startPositionMs));
         if (request.equals(preloadRequest)) return;
         clearPreload();
