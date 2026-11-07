@@ -243,6 +243,9 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
     protected void onStateChanged(int state) {
     }
 
+    protected void onFirstFrame() {
+    }
+
     protected void onSizeChanged(VideoSize size) {
     }
 
@@ -680,7 +683,9 @@ public abstract class PlaybackActivity extends BaseActivity implements MediaCont
 
     @Override
     public void onRenderedFirstFrame() {
-        if (isActivePlaybackOwner()) trace("PLAYER_FIRST_FRAME");
+        if (!isActivePlaybackOwner()) return;
+        trace("PLAYER_FIRST_FRAME");
+        onFirstFrame();
     }
 
     @Override

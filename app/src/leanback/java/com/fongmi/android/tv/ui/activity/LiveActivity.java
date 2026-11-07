@@ -108,6 +108,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private Runnable mR3;
     private Runnable mR4;
     private Runnable mR5;
+    private Runnable mR6;
     private List<Group> mHides;
     private Group mGroup;
     private Channel mChannel;
@@ -117,7 +118,20 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private EpgState mEpgState = EpgState.IDLE;
     private boolean mEpgPanelVisible;
     private boolean mHidden;
+    // A load is under way; its loading indicator shows only if it is still going after a delay.
+    private boolean mLoading;
     private int count;
+
+    // Most channel switches draw within a second, so the indicator stays away for them.
+    private static final long LOADING_SWITCH_DELAY = 1000;
+    // A stall freezes the picture with no other feedback, so it is shown sooner.
+    private static final long LOADING_STALL_DELAY = 500;
+    // The download speed only helps once loading is clearly slow. The first sample only sets
+    // the baseline, so the speed appears a second after this.
+    private static final long TRAFFIC_DELAY = 2000;
+    private static final long SWITCH_FADE_IN = 150;
+    private static final long LOADING_FADE_IN = 200;
+    private static final long LOADING_FADE_OUT = 150;
 
     private enum EpgState {
         IDLE,
@@ -190,6 +204,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         mR3 = this::hideInfo;
         mR4 = this::hideUI;
         mR5 = this::setProgram;
+        mR6 = this::revealProgress;
         setRecyclerView();
         setVideoView();
         setViewModel();
@@ -378,7 +393,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     private void getLive() {
         mBinding.control.action.home.setText(LiveConfig.isOnly() ? getString(R.string.live_refresh) : getHome().getName());
         mViewModel.parse(getHome());
-        showProgress();
+        showProgressNow();
     }
 
     private void setGroup(Live live) {
@@ -594,10 +609,17 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     }
 
     @Override
+    protected void onFirstFrame() {
+        // A moving picture reads as playing, which is often a little before READY.
+        hideProgress();
+        if (isBuffering()) startLoading(LOADING_SWITCH_DELAY, false);
+    }
+
+    @Override
     protected void onStateChanged(int state) {
         switch (state) {
             case Player.STATE_BUFFERING:
-                showProgress();
+                startLoading(LOADING_STALL_DELAY, false);
                 break;
             case Player.STATE_READY:
                 hideProgress();
@@ -740,18 +762,66 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         if (requestFocus) mBinding.epgData.requestFocus();
     }
 
+    /** A channel or line switch: the info bar answers the key at once, the indicator only a slow start. */
     @Override
     public void showProgress() {
-        mBinding.progress.getRoot().setVisibility(View.VISIBLE);
-        App.post(mR2, 0);
+        startLoading(LOADING_SWITCH_DELAY, true);
+    }
+
+    /** Loading a config or live list has no other feedback, so the indicator shows at once. */
+    private void showProgressNow() {
+        startLoading(0, false);
+    }
+
+    private void startLoading(long delay, boolean switching) {
         hideCenter();
         hideError();
+        if (switching) fadeIn(mBinding.switching, SWITCH_FADE_IN);
+        // A new switch starts its own wait; BUFFERING within the same load keeps the start time.
+        if (mLoading && !switching) return;
+        mLoading = true;
+        App.post(mR6, delay);
+    }
+
+    private void revealProgress() {
+        mBinding.progress.traffic.setVisibility(View.GONE);
+        fadeIn(mBinding.progress.getRoot(), LOADING_FADE_IN);
+        Traffic.reset();
+        App.post(mR2, TRAFFIC_DELAY);
     }
 
     private void hideProgress() {
-        mBinding.progress.getRoot().setVisibility(View.GONE);
-        App.removeCallbacks(mR2);
+        mLoading = false;
+        App.removeCallbacks(mR2, mR6);
         Traffic.reset();
+        fadeOut(mBinding.progress.getRoot(), LOADING_FADE_OUT);
+        fadeOut(mBinding.switching, LOADING_FADE_OUT);
+    }
+
+    private void fadeIn(View view, long duration) {
+        if (view.getVisibility() == View.VISIBLE && view.getAlpha() == 1f) return;
+        view.animate().cancel();
+        view.setVisibility(View.VISIBLE);
+        if (!TvMotion.motionEnabled(view)) {
+            view.setAlpha(1f);
+            return;
+        }
+        if (view.getAlpha() == 1f) view.setAlpha(0f);
+        view.animate().alpha(1f).setDuration(duration).start();
+    }
+
+    private void fadeOut(View view, long duration) {
+        if (view.getVisibility() != View.VISIBLE) return;
+        view.animate().cancel();
+        if (!TvMotion.motionEnabled(view)) {
+            view.setVisibility(View.GONE);
+            view.setAlpha(1f);
+            return;
+        }
+        view.animate().alpha(0f).setDuration(duration).withEndAction(() -> {
+            view.setVisibility(View.GONE);
+            view.setAlpha(1f);
+        }).start();
     }
 
     private void showError(String text) {
@@ -1203,7 +1273,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         return new Callback() {
             @Override
             public void start() {
-                showProgress();
+                showProgressNow();
             }
 
             @Override
@@ -1442,7 +1512,7 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
     protected void onDestroy() {
         mClock.release();
         Source.get().exit();
-        App.removeCallbacks(mR0, mR1, mR2, mR3, mR4, mR5);
+        App.removeCallbacks(mR0, mR1, mR2, mR3, mR4, mR5, mR6);
         super.onDestroy();
     }
 }
