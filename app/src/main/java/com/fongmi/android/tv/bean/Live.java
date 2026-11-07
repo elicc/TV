@@ -240,7 +240,8 @@ public class Live {
     }
 
     public long getTimeout() {
-        return timeout == null ? Constant.TIMEOUT_PLAY : TimeUnit.SECONDS.toMillis(Math.max(timeout, 1));
+        // TvBox configs write 0 for "not set"; Math.max(0, 1) made that a 1 s start timeout.
+        return timeout == null || timeout <= 0 ? Constant.TIMEOUT_PLAY : TimeUnit.SECONDS.toMillis(timeout);
     }
 
     public Map<String, String> getHeader() {

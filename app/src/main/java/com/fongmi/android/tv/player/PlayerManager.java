@@ -693,6 +693,13 @@ public class PlayerManager implements ParseCallback {
             if (state == Player.STATE_READY && danmakuDeferred) notifyDanmakuSourceChanged();
         }
 
+        // A decoded frame means the stream is connected; later stalls are left to the
+        // player's own read timeout and rebuffering instead of reporting a connect timeout.
+        @Override
+        public void onRenderedFirstFrame() {
+            App.removeCallbacks(runnable);
+        }
+
         @Override
         public void onVideoSizeChanged(@NonNull VideoSize size) {
             videoSize = size;
